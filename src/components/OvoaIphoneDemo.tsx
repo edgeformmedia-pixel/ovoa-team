@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /**
  * OVOA "Running late" demo: an iPhone playing an iMessage conversation with
- * OVOA, voiced by the clips in `audioBase`. Self-contained — no Tailwind or
+ * OVOA, voiced by the clips in `audioBase`. Pass `script` for another
+ * conversation; steps without clips play silently. Self-contained — no Tailwind or
  * other dependencies beyond React.
  *
  *   <OvoaIphoneDemo />                       // clips at /audio/*.mp3
@@ -16,21 +17,23 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 type Who = "me" | "ovoa";
 
-interface Step {
+export interface DemoStep {
   who: Who;
   text: string;
   /** Seconds after the previous message lands before this one starts. */
   wait: number;
   /** Seconds of typing (me) or of the typing indicator (OVOA). */
   dur: number;
-  clip: string;
+  /** Voice clip in `audioBase`; steps without one play silently. */
+  clip?: string;
   /** Clip length in seconds, so the timeline is known before audio loads. */
-  clipLen: number;
+  clipLen?: number;
   /** Voice starts with the typing ("begin") or when the bubble appears ("lands"). */
-  anchor: "begin" | "lands";
+  anchor?: "begin" | "lands";
 }
 
-const STEPS: Step[] = [
+/** The default, voiced "Running late" conversation. */
+export const RUNNING_LATE: DemoStep[] = [
   {
     who: "me", wait: 0, dur: 10.8, clip: "rachel1.mp3", clipLen: 10.815, anchor: "begin",
     text: "Hey OVOA, I’m going to be late. Let everyone on my 3 PM meeting know I’ll be about 15 minutes late, draft an apology, and move the meeting if there’s an opening later today.",
@@ -62,29 +65,32 @@ const LOOP_HOLD = 4;
 const SEND_ANIM = 0.42;
 const POP_ANIM = 0.14;
 
+type Timeline = ReturnType<typeof buildTimeline>;
+
 // Absolute times (seconds) for every beat of the script.
-const TIMELINE = (() => {
+function buildTimeline(steps: DemoStep[]) {
   let t = START_DELAY;
   let end = 0;
-  const rows = STEPS.map((s) => {
+  const rows = steps.map((s) => {
     const begin = t + s.wait;
     const typed = begin + s.dur;
     const lands = typed + (s.who === "me" ? SEND_ANIM : POP_ANIM);
     const voice = s.anchor === "lands" ? lands : begin;
-    end = Math.max(end, voice + s.clipLen);
+    const clipLen = s.clip ? (s.clipLen ?? 0) : 0;
+    end = Math.max(end, voice + clipLen);
     t = lands;
-    return { begin, typed, lands, voice, voiceEnd: voice + s.clipLen };
+    return { begin, typed, lands, voice, voiceEnd: voice + clipLen };
   });
   return { rows, total: Math.max(t, end) };
-})();
+}
 
 type Island = "idle" | "listening" | "thinking" | "speaking";
 
 /** What the Dynamic Island shows at a given moment. */
-function islandAt(sec: number): Island {
-  for (let i = 0; i < STEPS.length; i++) {
-    const r = TIMELINE.rows[i];
-    if (STEPS[i].who === "me") {
+function islandAt(sec: number, steps: DemoStep[], timeline: Timeline): Island {
+  for (let i = 0; i < steps.length; i++) {
+    const r = timeline.rows[i];
+    if (steps[i].who === "me") {
       if (sec >= r.begin && sec < Math.max(r.lands, r.voiceEnd)) return "listening";
     } else {
       if (sec >= r.begin && sec < r.lands) return "thinking";
@@ -108,9 +114,10 @@ interface AudioRig {
   nodes: AudioBufferSourceNode[];
 }
 
-async function fetchClips(rig: AudioRig, base: string): Promise<AudioRig> {
+async function fetchClips(rig: AudioRig, base: string, steps: DemoStep[]): Promise<AudioRig> {
   await Promise.all(
-    STEPS.map(async (s) => {
+    steps.map(async (s) => {
+      if (!s.clip) return;
       try {
         const res = await fetch(base + s.clip);
         if (!res.ok) throw new Error(String(res.status));
@@ -124,11 +131,13 @@ async function fetchClips(rig: AudioRig, base: string): Promise<AudioRig> {
 }
 
 export interface OvoaIphoneDemoProps {
+  /** The conversation to play. Pass a module-level constant so it stays stable. */
+  script?: DemoStep[];
   /** Folder the clips are served from, with trailing slash. */
   audioBase?: string;
   /** The phone scales down to fit its container, up to this width in px. */
   maxWidth?: number;
-  /** Show the sound button under the phone. */
+  /** Show the sound button under the phone (only when the script has voice). */
   showControls?: boolean;
   /** Start with sound on (subject to the browser's autoplay rules). */
   defaultSound?: boolean;
@@ -141,6 +150,7 @@ const DEVICE_W = 422;
 const DEVICE_H = 876;
 
 export default function OvoaIphoneDemo({
+  script = RUNNING_LATE,
   audioBase = "/audio/",
   maxWidth = 360,
   showControls = true,
@@ -151,6 +161,9 @@ export default function OvoaIphoneDemo({
   const rootRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(maxWidth / DEVICE_W);
+  const timeline = useMemo(() => buildTimeline(script), [script]);
+  const hasVoice = script.some((s) => s.clip);
+  const wantSound = defaultSound && hasVoice;
 
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
@@ -158,9 +171,9 @@ export default function OvoaIphoneDemo({
   const [receipt, setReceipt] = useState<"Delivered" | "Read" | null>(null);
   const [island, setIsland] = useState<Island>("idle");
   const [inView, setInView] = useState(false);
-  const [soundOn, setSoundOn] = useState(defaultSound);
+  const [soundOn, setSoundOn] = useState(wantSound);
   /** Sound is wanted but the browser hasn't allowed audio yet. */
-  const [blocked, setBlocked] = useState(defaultSound);
+  const [blocked, setBlocked] = useState(wantSound);
 
   const t0 = useRef(0);
   const audio = useRef<AudioRig | null>(null);
@@ -205,9 +218,9 @@ export default function OvoaIphoneDemo({
     if (!a || a.ctx.state !== "running" || !soundRef.current || !inViewRef.current) return;
     stopVoice();
     const now = (performance.now() - t0.current) / 1000;
-    STEPS.forEach((s, i) => {
-      const r = TIMELINE.rows[i];
-      const buf = a.buffers.get(s.clip);
+    script.forEach((s, i) => {
+      const r = timeline.rows[i];
+      const buf = s.clip && a.buffers.get(s.clip);
       if (!buf || r.voiceEnd <= now) return;
       const src = a.ctx.createBufferSource();
       src.buffer = buf;
@@ -218,7 +231,7 @@ export default function OvoaIphoneDemo({
       src.start(a.ctx.currentTime + Math.max(0, r.voice - now), into);
       a.nodes.push(src);
     });
-  }, [stopVoice]);
+  }, [script, timeline, stopVoice]);
 
   // One shared load. Whenever the browser lets the context run, the voice
   // joins the conversation wherever it currently is.
@@ -233,13 +246,13 @@ export default function OvoaIphoneDemo({
         if (rig.ctx.state === "running") startVoice();
       };
       setBlocked(rig.ctx.state !== "running");
-      loading.current = fetchClips(rig, audioBase).then((r) => {
+      loading.current = fetchClips(rig, audioBase, script).then((r) => {
         startVoice();
         return r;
       });
     }
     return loading.current;
-  }, [audioBase, startVoice]);
+  }, [audioBase, script, startVoice]);
 
   // Sound on by default: try to start straight away. Browsers only allow audio
   // after the visitor has interacted with the site, so if it's refused, the
@@ -281,7 +294,7 @@ export default function OvoaIphoneDemo({
     const until = (sec: number) => sleep(t0.current + sec * 1000 - performance.now());
 
     const tick = window.setInterval(() => {
-      setIsland(islandAt((performance.now() - t0.current) / 1000));
+      setIsland(islandAt((performance.now() - t0.current) / 1000, script, timeline));
     }, 100);
 
     (async () => {
@@ -293,9 +306,9 @@ export default function OvoaIphoneDemo({
         t0.current = performance.now();
         if (soundRef.current) startVoice();
 
-        for (let i = 0; i < STEPS.length && alive; i++) {
-          const s = STEPS[i];
-          const r = TIMELINE.rows[i];
+        for (let i = 0; i < script.length && alive; i++) {
+          const s = script[i];
+          const r = timeline.rows[i];
 
           if (s.who === "me") {
             await until(r.begin);
@@ -327,7 +340,7 @@ export default function OvoaIphoneDemo({
             setMsgs((m) => [...m, { id: nextId++, who: "ovoa", text: s.text }]);
           }
         }
-        await until(TIMELINE.total + LOOP_HOLD);
+        await until(timeline.total + LOOP_HOLD);
       }
     })();
 
@@ -337,7 +350,7 @@ export default function OvoaIphoneDemo({
       stopVoice();
       setIsland("idle");
     };
-  }, [inView, startVoice, stopVoice]);
+  }, [inView, script, timeline, startVoice, stopVoice]);
 
   // Keep the newest message in view.
   useEffect(() => {
@@ -475,7 +488,7 @@ export default function OvoaIphoneDemo({
         </div>
       </div>
 
-      {showControls && (
+      {showControls && hasVoice && (
         <div className="ovp-controls">
           <button type="button" onClick={toggleSound} aria-pressed={audible}>
             {audible ? (

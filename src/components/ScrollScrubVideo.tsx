@@ -70,12 +70,20 @@ export function ScrollScrubVideo() {
         className="relative flex h-[calc(100svh-3.5rem)] min-h-[620px] sm:h-[calc(100svh-4rem)] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
       >
         <div className="shrink-0">
-          <p className="text-sm text-landing-muted sm:text-base">Woven Band</p>
+          <a
+            href="#band"
+            className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-landing-line px-3.5 py-1 text-xs font-medium text-landing-ink transition-colors hover:bg-landing-control sm:mb-4 sm:text-sm"
+          >
+            <span className="text-landing-action">New</span>
+            OVOA Band brings OVOA to your wrist
+            <span aria-hidden="true">›</span>
+          </a>
+          <p className="text-sm text-landing-muted sm:text-base">OVOA for iPhone</p>
           <h1 className="mt-1.5 text-[clamp(2.65rem,6vw,5.25rem)] font-semibold leading-[0.98] tracking-normal text-landing-ink">
-            Made to move.
+            Your own Jarvis.
           </h1>
           <p className="mt-2 text-lg text-landing-muted sm:text-2xl">
-            Comfort in every moment.
+            Ask once. It’s handled.
           </p>
         </div>
 
@@ -97,10 +105,10 @@ export function ScrollScrubVideo() {
           href="/checkout"
           className="mt-6 inline-flex h-12 w-[min(88vw,18rem)] shrink-0 sm:mt-8 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
         >
-          Explore options
+          Get started
         </a>
 
-        <p className="mt-3 text-[11px] text-landing-muted/70">Band in motion</p>
+        <p className="mt-3 text-[11px] text-landing-muted/70">Shown with the new OVOA Band</p>
 
         {showDemo && wide && (
           <div className="hero-demo-swoop absolute bottom-12 left-[max(1.5rem,4vw)] z-10 w-[min(260px,calc((100svh-22.5rem)/2.08))]">
