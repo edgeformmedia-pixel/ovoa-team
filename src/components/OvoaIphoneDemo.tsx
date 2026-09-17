@@ -39,12 +39,7 @@ export const RUNNING_LATE: DemoStep[] = [
     text: "Hey OVOA, I’m going to be late. Let everyone on my 3 PM meeting know I’ll be about 15 minutes late, draft an apology, and move the meeting if there’s an opening later today.",
   },
   {
-    who: "ovoa", wait: 0.8, dur: 2.5, clip: "ovoa1.mp3", clipLen: 4.545, anchor: "lands",
-    text: "I can handle that. I found an opening at 4:30. Want me to move it?",
-  },
-  { who: "me", wait: 5.15, dur: 0.85, clip: "rachel2.mp3", clipLen: 0.836, anchor: "begin", text: "yes" },
-  {
-    who: "ovoa", wait: 0.6, dur: 1.8, clip: "ovoa2.mp3", clipLen: 1.985, anchor: "lands",
+    who: "ovoa", wait: 0.8, dur: 1.8, clip: "ovoa2.mp3", clipLen: 1.985, anchor: "lands",
     text: "Done. Everyone’s been updated.",
   },
   {
