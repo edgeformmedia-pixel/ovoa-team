@@ -1,0 +1,784 @@
+/* ============================================================================
+   NEUMORPHIC UI KIT — COMPLETE REFERENCE
+   ----------------------------------------------------------------------------
+   Everything you need to recreate this project's "Soft UI" (neumorphism) look
+   in any Tailwind CSS v4 project, in one file.
+
+   CONTENTS
+   1. Setup notes (Tailwind v4 + fonts)
+   2. Theme token mapping (@theme inline)
+   3. Theme palettes (Light / Charcoal / Midnight / Concrete / Custom-color)
+   4. Core neumorphic utilities (raised, inset, field)
+   5. Engraved / embossed text utilities
+   6. The .neo-btn button (with hover/press physics)
+   7. Helper classes (no-scrollbar, mobile compression)
+   8. ThemeToggle.tsx — full component with RGB custom-color picker
+   9. Copy-paste usage examples (buttons, inputs, cards, sections)
+
+   ----------------------------------------------------------------------------
+   1. SETUP NOTES
+   ----------------------------------------------------------------------------
+   - This file assumes Tailwind CSS v4 (CSS-first config, no tailwind.config.js).
+     Your entry CSS must start with:
+
+        @import "tailwindcss" source(none);
+        @source "../src";              // adjust to your source folder
+
+   - Font: this design uses "Comfortaa" (soft rounded geometric sans).
+     Load it with a <link> in your root layout/head, NEVER @import a URL in CSS:
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap"
+          rel="stylesheet"
+        />
+
+   - THE CORE IDEA OF NEUMORPHISM:
+     Elements sit ON the same surface as the page background (same hue).
+     Depth is faked with two opposing shadows:
+       * a DARK shadow cast bottom-right  (var(--neu-dark))
+       * a LIGHT highlight cast top-left   (var(--neu-light))
+     "Raised" elements get outer shadows + subtle inner shading.
+     "Inset"  elements (wells/inputs) get ONLY inner shadows, so they look
+     pressed INTO the surface.
+     Text gets tiny 1px light/dark text-shadows so it looks engraved or
+     embossed rather than flat digital ink.
+   ========================================================================== */
+
+
+/* ============================================================================
+   2. THEME TOKEN MAPPING  (@theme inline)
+   ----------------------------------------------------------------------------
+   Maps the CSS variables (defined per-theme below) into Tailwind color tokens
+   so you can write bg-background, text-foreground, bg-card, etc.
+   `@theme inline` is REQUIRED so utilities inline the var() values correctly.
+   ========================================================================== */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-stage: var(--stage);
+
+  --font-display: "Comfortaa", ui-rounded, system-ui, sans-serif;
+}
+
+/* Class-based dark mode variant (Tailwind v4 way — no JS config) */
+@custom-variant dark (&:is(.dark *));
+
+
+/* ============================================================================
+   3. THEME PALETTES
+   ----------------------------------------------------------------------------
+   Each theme defines:
+     --background / --foreground / --card ...   standard semantic colors
+     --stage                                     the 3D-viewer background
+     --neu-tile     gradient used on RAISED surfaces (subtle, same hue family)
+     --neu-well     flat color used on INSET surfaces
+     --neu-dark     the dark shadow color (bottom-right)
+     --neu-light    the light highlight color (top-left)
+     --neu-in-dark  inner shadow for inset/field depths
+     --neu-in-light inner highlight for inset/field depths
+
+   RULE OF THUMB: shadows are tinted toward the background hue — never pure
+   black/white — that's what makes the effect feel like molded material.
+   ========================================================================== */
+
+/* ---------- LIGHT (soft light-grey, the default) ---------- */
+:root {
+  --radius: 0.875rem;
+  --background: oklch(0.925 0.005 265);
+  --foreground: oklch(0.28 0.012 265);
+  --stage: oklch(0.925 0.005 265);
+  --card: oklch(0.945 0.004 265);
+  --card-foreground: oklch(0.28 0.012 265);
+  --popover: oklch(0.945 0.004 265);
+  --popover-foreground: oklch(0.28 0.012 265);
+  --primary: oklch(0.3 0.012 265);
+  --primary-foreground: oklch(0.97 0.003 265);
+  --secondary: oklch(0.925 0.005 265);
+  --secondary-foreground: oklch(0.3 0.012 265);
+  --muted: oklch(0.925 0.005 265);
+  --muted-foreground: oklch(0.56 0.012 265);
+  --accent: oklch(0.93 0.005 265);
+  --accent-foreground: oklch(0.3 0.012 265);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0.003 95);
+  --border: transparent;   /* neumorphism uses shadows, not borders */
+  --input: transparent;
+  --ring: oklch(0.7 0.01 265);
+
+  --neu-tile: linear-gradient(155deg, #f2f4f9, #dfe3ec);
+  --neu-well: #e2e5ec;
+  --neu-dark: rgba(163, 177, 198, 0.55);
+  --neu-light: rgba(255, 255, 255, 0.9);
+  --neu-in-dark: rgba(163, 177, 198, 0.5);
+  --neu-in-light: rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- CHARCOAL (default dark — soft dark grey, NOT black) ---------- */
+.dark {
+  --background: oklch(0.215 0.008 262);
+  --foreground: oklch(0.92 0.005 265);
+  --stage: oklch(0.215 0.008 262);
+  --card: oklch(0.235 0.008 262);
+  --card-foreground: oklch(0.92 0.005 265);
+  --popover: oklch(0.235 0.008 262);
+  --popover-foreground: oklch(0.92 0.005 265);
+  --primary: oklch(0.93 0.005 265);
+  --primary-foreground: oklch(0.2 0.008 262);
+  --secondary: oklch(0.26 0.008 262);
+  --secondary-foreground: oklch(0.92 0.005 265);
+  --muted: oklch(0.26 0.008 262);
+  --muted-foreground: oklch(0.68 0.01 262);
+  --accent: oklch(0.28 0.01 262);
+  --accent-foreground: oklch(0.92 0.005 265);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: transparent;
+  --input: transparent;
+  --ring: oklch(0.6 0.01 262);
+
+  /* Dark mode: the "light" highlight becomes a barely-visible white wash */
+  --neu-tile: linear-gradient(155deg, #1c1f26, #101216);
+  --neu-well: #16181d;
+  --neu-dark: rgba(0, 0, 0, 0.55);
+  --neu-light: rgba(255, 255, 255, 0.03);
+  --neu-in-dark: rgba(0, 0, 0, 0.6);
+  --neu-in-light: rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- MIDNIGHT (near-black variant of charcoal) ---------- */
+.dark.theme-black {
+  --background: oklch(0.14 0.004 262);
+  --stage: oklch(0.14 0.004 262);
+  --card: oklch(0.17 0.004 262);
+  --popover: oklch(0.17 0.004 262);
+  --secondary: oklch(0.18 0.004 262);
+  --muted: oklch(0.18 0.004 262);
+  --muted-foreground: oklch(0.62 0.008 262);
+  --accent: oklch(0.2 0.005 262);
+
+  --neu-tile: linear-gradient(155deg, #14161a, #06070a);
+  --neu-well: #0b0c0f;
+  --neu-dark: rgba(0, 0, 0, 0.75);
+  --neu-light: rgba(255, 255, 255, 0.025);
+  --neu-in-dark: rgba(0, 0, 0, 0.8);
+  --neu-in-light: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- CONCRETE (mid grey — a "grey mode" that isn't dark or light) --- */
+.theme-concrete {
+  --background: oklch(0.63 0.004 262);
+  --foreground: oklch(0.22 0.008 262);
+  --stage: oklch(0.63 0.004 262);
+  --card: oklch(0.66 0.004 262);
+  --card-foreground: oklch(0.22 0.008 262);
+  --popover: oklch(0.66 0.004 262);
+  --popover-foreground: oklch(0.22 0.008 262);
+  --primary: oklch(0.25 0.008 262);
+  --primary-foreground: oklch(0.95 0.003 262);
+  --secondary: oklch(0.66 0.004 262);
+  --secondary-foreground: oklch(0.25 0.008 262);
+  --muted: oklch(0.66 0.004 262);
+  --muted-foreground: oklch(0.38 0.008 262);
+  --accent: oklch(0.67 0.004 262);
+  --accent-foreground: oklch(0.25 0.008 262);
+  --border: transparent;
+  --input: transparent;
+  --ring: oklch(0.45 0.008 262);
+
+  --neu-tile: linear-gradient(155deg, #adb1b9, #8b8f97);
+  --neu-well: #9a9ea6;
+  --neu-dark: rgba(74, 78, 86, 0.5);
+  --neu-light: rgba(255, 255, 255, 0.5);
+  --neu-in-dark: rgba(74, 78, 86, 0.45);
+  --neu-in-light: rgba(255, 255, 255, 0.45);
+}
+
+/* ---------- CUSTOM COLOR MODE (.theme-custom) ----------
+   Used by the RGB picker. JS sets the variables inline on <html>
+   (see ThemeToggle.tsx in section 8). This selector only needs to exist
+   so you have a hook; all values come from inline styles. */
+.theme-custom {
+  /* variables injected at runtime by ThemeToggle */
+}
+
+
+/* ============================================================================
+   BASE RESET
+   ========================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  body {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+
+/* ============================================================================
+   4. CORE NEUMORPHIC SURFACE UTILITIES
+   ----------------------------------------------------------------------------
+   RAISED = element pops OUT of the surface:
+     - outer dark shadow bottom-right + outer light shadow top-left
+     - a barely-there inner top highlight / bottom shade to round it off
+   INSET = element is pressed INTO the surface (input wells):
+     - inner shadows ONLY, on a slightly darker flat color (--neu-well)
+
+   The 155deg gradient on raised tiles mimics a light source from top-left
+   and keeps large flat areas from looking dead.
+   ========================================================================== */
+
+/* Large raised surface — cards, panels */
+@utility neu-raised {
+  background: var(--neu-tile);
+  box-shadow:
+    18px 18px 42px var(--neu-dark),
+    -18px -18px 42px var(--neu-light),
+    inset 7px 7px 7px var(--neu-in-light),
+    inset -7px -7px 5px var(--neu-in-dark);
+}
+
+/* Medium raised surface — small cards, chips */
+@utility neu-raised-sm {
+  background: var(--neu-tile);
+  box-shadow:
+    12px 12px 28px var(--neu-dark),
+    -12px -12px 28px var(--neu-light),
+    inset 5px 5px 5px var(--neu-in-light),
+    inset -5px -5px 4px var(--neu-in-dark);
+}
+
+/* Tiny raised surface — icon buttons, swatches, toggles */
+@utility neu-raised-xs {
+  background: var(--neu-tile);
+  box-shadow:
+    7px 7px 16px var(--neu-dark),
+    -7px -7px 16px var(--neu-light),
+    inset 3px 3px 3px var(--neu-in-light),
+    inset -3px -3px 3px var(--neu-in-dark);
+}
+
+/* Inset well — containers that recede (trays, track grooves) */
+@utility neu-inset {
+  background: var(--neu-well);
+  box-shadow:
+    inset 6px 6px 12px var(--neu-in-dark),
+    inset -6px -6px 12px var(--neu-in-light);
+}
+
+/* Neumorphic INPUT FIELD — the text looks engraved into the surface.
+   Key trick: text-shadow with a light line below and a dark line above
+   makes glyphs look pressed into the material instead of floating on it. */
+@utility neu-field {
+  background: var(--neu-well);
+  border: none;
+  border-radius: 1rem;
+  box-shadow:
+    inset 5px 5px 10px var(--neu-in-dark),
+    inset -5px -5px 10px var(--neu-in-light);
+  transition:
+    box-shadow 200ms ease,
+    color 200ms ease;
+  /* slightly translucent so text feels "in" the well, not on top of it */
+  color: color-mix(in oklab, var(--color-foreground) 78%, var(--neu-well));
+  text-shadow:
+    0 1px 0 var(--neu-in-light),
+    0 -1px 1px var(--neu-in-dark);
+
+  &::placeholder {
+    color: color-mix(in oklab, var(--color-muted-foreground) 72%, var(--neu-well));
+    text-shadow:
+      0 1px 0 var(--neu-in-light),
+      0 -1px 1px var(--neu-in-dark);
+  }
+
+  &:focus {
+    outline: none;
+    color: var(--color-foreground);
+    box-shadow:
+      inset 6px 6px 12px var(--neu-in-dark),
+      inset -6px -6px 12px var(--neu-in-light);
+  }
+}
+
+
+/* ============================================================================
+   5. ENGRAVED / EMBOSSED TEXT
+   ----------------------------------------------------------------------------
+   .neu-engraved  → for text on the FLAT background that should look pressed
+                    in (section labels, captions, muted values)
+   .neu-embossed  → for text sitting ON raised surfaces (button labels,
+                    headings on tiles) — inverted shadows, looks raised
+   ========================================================================== */
+
+.neu-engraved {
+  color: color-mix(in oklab, var(--color-muted-foreground) 80%, var(--color-background));
+  text-shadow:
+    0 1px 0 var(--neu-light),
+    0 -1px 1px var(--neu-dark);
+}
+
+.neu-embossed {
+  text-shadow:
+    0 -1px 0 var(--neu-in-dark),
+    0 1px 0 var(--neu-in-light);
+}
+
+
+/* ============================================================================
+   6. THE NEO BUTTON (.neo-btn)
+   ----------------------------------------------------------------------------
+   The signature control. Same raised recipe as neu-raised-sm, plus:
+     - slow 700ms springy easing so it feels like soft material
+     - hover: lifts 1px and shadows grow (like it's being pulled up)
+     - active: FLIPS to an inset well — the button physically "presses in"
+     - ::before radial sheen appears on press for a fingertip-contact feel
+   Works on <button>, and also on round icon buttons / swatches when given
+   explicit size + rounded-full (see ThemeToggle usage).
+   ========================================================================== */
+
+.neo-btn {
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+  background: var(--neu-tile);
+  box-shadow:
+    12px 12px 28px var(--neu-dark),
+    -12px -12px 28px var(--neu-light),
+    inset 5px 5px 5px var(--neu-in-light),
+    inset -5px -5px 4px var(--neu-in-dark);
+  transition:
+    box-shadow 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* soft sheen layer (hidden until press) */
+.neo-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.22), transparent 55%);
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+/* keep label above the sheen */
+.neo-btn > * {
+  position: relative;
+  z-index: 2;
+}
+
+.neo-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    16px 16px 36px var(--neu-dark),
+    -16px -16px 36px var(--neu-light),
+    inset 5px 5px 5px var(--neu-in-light),
+    inset -5px -5px 4px var(--neu-in-dark);
+}
+
+.neo-btn:active {
+  transform: scale(0.985);
+  background: var(--neu-well);
+  box-shadow:
+    inset 7px 7px 12px var(--neu-in-dark),
+    inset -7px -7px 10px var(--neu-in-light);
+}
+
+.neo-btn:active::before {
+  opacity: 0.3;
+}
+
+
+/* ============================================================================
+   7. HELPERS
+   ========================================================================== */
+
+/* Invisible scrollbar — page may scroll as a fallback but never shows a bar */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile compression: shrink fields/buttons/gaps on small screens so dense
+   forms (like a checkout) fit the viewport without scrolling.
+   Apply `.mobile-shrinks` to the container wrapping the form. */
+@media (max-width: 1023px) {
+  .mobile-shrinks {
+    --input-h: 1.75rem;
+    --input-fs: 0.75rem;
+    --btn-h: 2.25rem;
+    --heading-mb: 0.25rem;
+    --section-gap: 0.5rem;
+    --grid-gap: 0.375rem;
+  }
+  .mobile-shrinks input,
+  .mobile-shrinks button {
+    font-size: var(--input-fs);
+  }
+  .mobile-shrinks input {
+    height: var(--input-h);
+  }
+  .mobile-shrinks button {
+    height: var(--btn-h);
+  }
+  .mobile-shrinks form {
+    gap: var(--section-gap);
+  }
+  .mobile-shrinks .grid {
+    gap: var(--grid-gap);
+  }
+  .mobile-shrinks h2 {
+    margin-bottom: var(--heading-mb);
+  }
+}
+
+/* Extra-compression tier for very short viewports (landscape phones etc.) */
+@media (max-height: 700px) and (max-width: 1023px) {
+  .mobile-shrinks {
+    --input-h: 1.5rem;
+    --input-fs: 0.7rem;
+    --btn-h: 2rem;
+    --section-gap: 0.375rem;
+    --grid-gap: 0.25rem;
+  }
+}
+
+
+/* ============================================================================
+   8. THEME TOGGLE COMPONENT  (ThemeToggle.tsx)
+   ----------------------------------------------------------------------------
+   React component that renders a row of theme swatches:
+     Light · Charcoal · Midnight · Concrete · [RGB color picker]
+
+   HOW THE CUSTOM (RGB) MODE WORKS:
+   - The user picks any hex color.
+   - We compute its luminance to decide dark vs light text.
+   - We derive EVERYTHING from that one color: tile gradient (lighter/darker
+     shifts), well color, tinted shadows, inner highlights — then set them as
+     inline CSS variables on <html>, overriding the preset themes.
+   - Themes persist via localStorage ("theme" + "theme-custom").
+
+   Paste this whole component into your project; it needs only React and the
+   CSS variables above.
+
+   ```tsx
+   import { useCallback, useEffect, useState } from "react";
+
+   type ThemeId = "light" | "charcoal" | "black" | "concrete" | "custom";
+
+   const PRESETS: { id: Exclude<ThemeId, "custom">; label: string; swatch: string }[] = [
+     { id: "light",    label: "Light",    swatch: "linear-gradient(155deg,#f2f4f9,#dfe3ec)" },
+     { id: "charcoal", label: "Charcoal", swatch: "linear-gradient(155deg,#2b2f38,#1a1c22)" },
+     { id: "black",    label: "Midnight", swatch: "linear-gradient(155deg,#14161a,#06070a)" },
+     { id: "concrete", label: "Concrete", swatch: "linear-gradient(155deg,#adb1b9,#8b8f97)" },
+   ];
+
+   // Every CSS variable the custom color overrides
+   const CUSTOM_VARS = [
+     "--background", "--foreground", "--stage", "--card", "--card-foreground",
+     "--popover", "--popover-foreground", "--primary", "--primary-foreground",
+     "--secondary", "--secondary-foreground", "--muted", "--muted-foreground",
+     "--accent", "--accent-foreground", "--ring",
+     "--neu-tile", "--neu-well", "--neu-dark", "--neu-light",
+     "--neu-in-dark", "--neu-in-light",
+   ];
+
+   function hexToRgb(hex: string) {
+     const h = hex.replace("#", "");
+     return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+   }
+
+   // Shift a hex toward white (amount > 0) or toward black (amount < 0)
+   function shift(hex: string, amount: number) {
+     const { r, g, b } = hexToRgb(hex);
+     const f = (v: number) =>
+       Math.round(Math.min(255, Math.max(0, amount > 0 ? v + (255 - v) * amount : v * (1 + amount))));
+     return `#${[f(r), f(g), f(b)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+   }
+
+   // Derive a complete neumorphic palette from ONE hex color
+   function applyCustom(hex: string) {
+     const el = document.documentElement;
+     const { r, g, b } = hexToRgb(hex);
+     const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+     const isDark = lum < 0.5;
+
+     const fg     = isDark ? "#eceef2" : "#1b1d22";
+     const muted  = isDark ? shift(hex, 0.55) : shift(hex, -0.5);
+     const tileA  = shift(hex, isDark ? 0.08 : 0.12);   // gradient light stop
+     const tileB  = shift(hex, isDark ? -0.28 : -0.12); // gradient dark stop
+     const well   = shift(hex, isDark ? -0.15 : -0.05); // inset surfaces
+     const shadow = isDark
+       ? "rgba(0,0,0,0.6)"
+       : `rgba(${Math.round(r * 0.45)},${Math.round(g * 0.45)},${Math.round(b * 0.45)},0.5)`;
+     const light  = isDark ? "rgba(255,255,255,0.035)" : "rgba(255,255,255,0.7)";
+
+     const set = (k: string, v: string) => el.style.setProperty(k, v);
+     set("--background", hex);
+     set("--stage", hex);
+     set("--foreground", fg);
+     set("--card", tileA);
+     set("--card-foreground", fg);
+     set("--popover", tileA);
+     set("--popover-foreground", fg);
+     set("--primary", fg);
+     set("--primary-foreground", hex);
+     set("--secondary", tileA);
+     set("--secondary-foreground", fg);
+     set("--muted", tileA);
+     set("--muted-foreground", muted);
+     set("--accent", tileA);
+     set("--accent-foreground", fg);
+     set("--ring", muted);
+     set("--neu-tile", `linear-gradient(155deg, ${tileA}, ${tileB})`);
+     set("--neu-well", well);
+     set("--neu-dark", shadow);
+     set("--neu-light", light);
+     set("--neu-in-dark", shadow);
+     set("--neu-in-light", light);
+
+     el.classList.toggle("dark", isDark);
+   }
+
+   function clearCustom() {
+     const el = document.documentElement;
+     CUSTOM_VARS.forEach((v) => el.style.removeProperty(v));
+   }
+
+   function applyTheme(theme: ThemeId, custom: string) {
+     const el = document.documentElement;
+     el.classList.remove("dark", "theme-black", "theme-concrete", "theme-custom");
+     clearCustom();
+
+     if (theme === "charcoal") el.classList.add("dark");
+     if (theme === "black")    el.classList.add("dark", "theme-black");
+     if (theme === "concrete") el.classList.add("theme-concrete");
+     if (theme === "custom") {
+       el.classList.add("theme-custom");
+       applyCustom(custom);
+     }
+   }
+
+   export function ThemeToggle() {
+     const [theme, setTheme] = useState<ThemeId>("light");
+     const [custom, setCustom] = useState("#5b6cff");
+
+     // Restore saved theme on mount
+     useEffect(() => {
+       const storedTheme = (localStorage.getItem("theme") as ThemeId | null) ?? "light";
+       const storedCustom = localStorage.getItem("theme-custom") ?? "#5b6cff";
+       const valid: ThemeId[] = ["light", "charcoal", "black", "concrete", "custom"];
+       const next = valid.includes(storedTheme) ? storedTheme : "light";
+       setTheme(next);
+       setCustom(storedCustom);
+       applyTheme(next, storedCustom);
+     }, []);
+
+     const pick = useCallback((id: ThemeId) => {
+       setTheme(id);
+       localStorage.setItem("theme", id);
+       applyTheme(id, custom);
+     }, [custom]);
+
+     const onCustomChange = (value: string) => {
+       setCustom(value);
+       setTheme("custom");
+       localStorage.setItem("theme", "custom");
+       localStorage.setItem("theme-custom", value);
+       applyTheme("custom", value);
+     };
+
+     return (
+       <div className="flex items-center gap-2">
+         {PRESETS.map((p) => (
+           <button
+             key={p.id}
+             type="button"
+             onClick={() => pick(p.id)}
+             aria-label={p.label}
+             title={p.label}
+             aria-pressed={theme === p.id}
+             className="neo-btn h-7 w-7 shrink-0 rounded-full p-0"
+             style={{
+               background: p.swatch,
+               outline: theme === p.id ? "2px solid var(--color-foreground)" : "none",
+               outlineOffset: "2px",
+             }}
+           >
+             <span className="sr-only">{p.label}</span>
+           </button>
+         ))}
+
+         {/* RGB picker — rainbow wheel button wrapping an invisible <input type="color"> */}
+         <label
+           title="Custom color"
+           className="neo-btn relative h-7 w-7 shrink-0 cursor-pointer overflow-hidden rounded-full p-0"
+           style={{
+             background:
+               "conic-gradient(#ff004c,#ff8a00,#ffe600,#28d17c,#00c2ff,#6a5bff,#e152ff,#ff004c)",
+             outline: theme === "custom" ? "2px solid var(--color-foreground)" : "none",
+             outlineOffset: "2px",
+           }}
+         >
+           <span className="sr-only">Custom color</span>
+           <input
+             type="color"
+             value={custom}
+             onChange={(e) => onCustomChange(e.target.value)}
+             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+           />
+         </label>
+       </div>
+     );
+   }
+   ```
+   ========================================================================== */
+
+
+/* ============================================================================
+   9. USAGE EXAMPLES
+   ----------------------------------------------------------------------------
+   Cheat sheet for composing the look. Tailwind classes handle layout/spacing;
+   the neu-* classes handle the material.
+
+   ── PRIMARY BUTTON ────────────────────────────────────────────────────────
+   ```tsx
+   <button className="neo-btn h-12 w-full text-[12px] uppercase tracking-[0.18em]">
+     <span className="neu-embossed">Pay $27</span>
+   </button>
+   ```
+   Notes: `neu-embossed` on the label makes it look raised off the button.
+   `> *` z-index rule keeps the span above the press sheen.
+
+   ── ROUND ICON BUTTON / SWATCH ────────────────────────────────────────────
+   ```tsx
+   <button className="neo-btn h-7 w-7 rounded-full p-0" aria-label="Light theme" />
+   ```
+   Just shrink + rounded-full; the press-in physics still work.
+
+   ── INPUT FIELD (engraved text) ───────────────────────────────────────────
+   ```tsx
+   <input
+     placeholder="Email"
+     className="neu-field h-10 w-full px-3 text-[13px] outline-none"
+   />
+   ```
+   Placeholder AND typed text both get the engraved text-shadow automatically.
+
+   ── RAISED CARD / PANEL ───────────────────────────────────────────────────
+   ```tsx
+   <div className="neu-raised rounded-3xl p-8">
+     <h2 className="neu-embossed text-lg">Card title</h2>
+     <p className="neu-engraved mt-1 text-sm">Muted supporting text</p>
+   </div>
+   ```
+   Use neu-raised (big), neu-raised-sm (medium), neu-raised-xs (tiny chips).
+
+   ── INSET WELL / TRAY ─────────────────────────────────────────────────────
+   ```tsx
+   <div className="neu-inset rounded-2xl p-4">
+     <p className="neu-engraved text-sm">This area recedes into the surface.</p>
+   </div>
+   ```
+
+   ── SECTION LABEL (pressed into the page background) ──────────────────────
+   ```tsx
+   <h2 className="neu-engraved mb-2 text-[10px] uppercase tracking-[0.2em]">
+     Shipping
+   </h2>
+   ```
+
+   ── HEADLINE ON THE PAGE BACKGROUND (subtle emboss) ───────────────────────
+   ```tsx
+    <h1 className="neu-embossed text-[15px] font-medium tracking-tight text-foreground">
+      Health Band
+    </h1>
+   ```
+
+   ── PAGE SHELL ────────────────────────────────────────────────────────────
+   ```tsx
+   // Background comes from body { background: var(--color-background) } —
+   // don't paint your own page background or the shadows lose their reference.
+   <main className="flex h-dvh flex-col lg:grid lg:grid-cols-[1.15fr_1fr]">
+     <section className="bg-stage">{/* 3D viewer / hero area */}</section>
+     <section className="no-scrollbar overflow-y-auto">{/* content */}</section>
+   </main>
+   ```
+
+   ── MOBILE-COMPRESSED FORM ────────────────────────────────────────────────
+   ```tsx
+   <div className="mobile-shrinks mx-auto flex w-full max-w-[420px] flex-1 flex-col">
+     <form className="mt-3 flex flex-1 flex-col gap-3">
+       <input className="neu-field h-10 w-full px-3 text-[13px]" placeholder="Email" />
+       <button className="neo-btn mt-auto h-12 w-full">
+         <span className="neu-embossed">Submit</span>
+       </button>
+     </form>
+   </div>
+   ```
+   The .mobile-shrinks media queries override h-10/h-12/gap values on small
+   screens so everything fits the viewport with no scrolling.
+
+   ── GOLDEN RULES ──────────────────────────────────────────────────────────
+   1. Never use pure black/white or hard borders — depth comes from the
+      paired --neu-dark / --neu-light shadows only.
+   2. Raised text on raised surfaces → .neu-embossed.
+      Text on the flat background → .neu-engraved.
+   3. Keep the 155deg gradient direction consistent everywhere — the "light
+      source" must stay top-left for the illusion to hold.
+   4. Interactive press = swap raised shadows for inset shadows (see .neo-btn
+      :active). That flip is the entire tactile trick.
+   5. Spacing matters: neumorphic shadows are large (12–18px), so leave at
+      least ~1rem gaps between raised elements or shadows bleed together.
+   ========================================================================== */
