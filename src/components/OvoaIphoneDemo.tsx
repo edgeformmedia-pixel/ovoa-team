@@ -516,6 +516,8 @@ const CSS = `
   --ovp-field: #3a3a3c;
 }
 .ovp-root *, .ovp-root *::before, .ovp-root *::after { box-sizing: border-box; }
+/* Don't inherit centered text from the page; iMessage reads left-aligned. */
+.ovp-root { text-align: left; }
 .ovp-slot { position: relative; width: 100%; }
 .ovp-slot > .ovp-device { position: absolute; left: 50%; top: 0; margin-left: -${DEVICE_W / 2}px; transform-origin: top center; }
 
