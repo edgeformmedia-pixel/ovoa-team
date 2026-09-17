@@ -67,7 +67,7 @@ export function ScrollScrubVideo() {
     <>
       <section
         aria-label="Band product demonstration"
-        className="relative flex h-svh min-h-[620px] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
+        className="relative flex h-[calc(100svh-3.5rem)] min-h-[620px] sm:h-[calc(100svh-4rem)] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
       >
         <div className="shrink-0">
           <p className="text-sm text-landing-muted sm:text-base">Woven Band</p>
@@ -95,7 +95,7 @@ export function ScrollScrubVideo() {
 
         <a
           href="/checkout"
-          className="inline-flex h-12 w-[min(88vw,18rem)] items-center justify-center rounded-full bg-landing-action px-6 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
+          className="mt-6 inline-flex h-12 w-[min(88vw,18rem)] shrink-0 sm:mt-8 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
         >
           Explore options
         </a>
@@ -103,8 +103,7 @@ export function ScrollScrubVideo() {
         <p className="mt-3 text-[11px] text-landing-muted/70">Band in motion</p>
 
         {showDemo && wide && (
-          // The hero sits under the 4rem header, so its bottom edge is 4rem below the viewport.
-          <div className="hero-demo-swoop absolute bottom-[5rem] left-[max(1.5rem,4vw)] z-10 w-[min(260px,calc((100svh-17rem)/2.35))]">
+          <div className="hero-demo-swoop absolute bottom-12 left-[max(1.5rem,4vw)] z-10 w-[min(260px,calc((100svh-22.5rem)/2.08))]">
             <OvoaIphoneDemo maxWidth={260} />
           </div>
         )}
