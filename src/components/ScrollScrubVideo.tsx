@@ -1,34 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 
 import bandScrollVideo from "@/assets/band-hero.webm.asset.json";
-import OvoaIphoneDemo from "@/components/OvoaIphoneDemo";
 
-// How long after the hero video starts playing the phone demo appears.
-const DEMO_DELAY_MS = 4500;
+// How long after the hero video starts playing the headline swaps.
+const HEADLINE_SWAP_MS = 3000;
 
 export function ScrollScrubVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showDemo, setShowDemo] = useState(false);
-  // Only one demo is mounted at a time so its voice never plays twice.
-  const [wide, setWide] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setWide(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const [swapped, setSwapped] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let demoTimer: number | undefined;
-    const scheduleDemo = () => {
-      if (demoTimer === undefined) {
-        demoTimer = window.setTimeout(() => setShowDemo(true), DEMO_DELAY_MS);
+    let swapTimer: number | undefined;
+    const scheduleSwap = () => {
+      if (swapTimer === undefined) {
+        swapTimer = window.setTimeout(() => setSwapped(true), HEADLINE_SWAP_MS);
       }
     };
 
@@ -40,90 +29,85 @@ export function ScrollScrubVideo() {
 
     if (video.readyState >= 1) handleMetadata();
     else video.addEventListener("loadedmetadata", handleMetadata, { once: true });
-    video.addEventListener("playing", scheduleDemo, { once: true });
+    video.addEventListener("playing", scheduleSwap, { once: true });
     video.load();
 
     // Give the page a moment to settle, then play the clip through once.
     const playTimer = window.setTimeout(() => {
       if (reducedMotion) {
-        scheduleDemo();
+        scheduleSwap();
         return;
       }
       video.play().catch(() => {
         // Autoplay can be blocked; the first frame stays visible as fallback.
-        scheduleDemo();
+        scheduleSwap();
       });
     }, 1000);
 
     return () => {
       window.clearTimeout(playTimer);
-      window.clearTimeout(demoTimer);
+      window.clearTimeout(swapTimer);
+      video.removeEventListener("playing", scheduleSwap);
       video.removeEventListener("loadedmetadata", handleMetadata);
-      video.removeEventListener("playing", scheduleDemo);
     };
   }, []);
 
   return (
-    <>
-      <section
-        aria-label="Band product demonstration"
-        className="relative flex h-[calc(100svh-3.5rem)] min-h-[620px] sm:h-[calc(100svh-4rem)] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
-      >
-        <div className="shrink-0">
-          <a
-            href="#band"
-            className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-landing-line px-3.5 py-1 text-xs font-medium text-landing-ink transition-colors hover:bg-landing-control sm:mb-4 sm:text-sm"
-          >
-            <span className="text-landing-action">New</span>
-            OVOA Band brings OVOA to your wrist
-            <span aria-hidden="true">›</span>
-          </a>
-          <p className="text-sm text-landing-muted sm:text-base">OVOA for iPhone</p>
-          <h1 className="mt-1.5 text-[clamp(2.65rem,6vw,5.25rem)] font-semibold leading-[0.98] tracking-normal text-landing-ink">
-            Your own Jarvis.
-          </h1>
-          <p className="mt-2 text-lg text-landing-muted sm:text-2xl">
-            Ask once. It’s handled.
-          </p>
-        </div>
-
-        <div className="relative mt-5 flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden sm:mt-7">
-          <div className="relative aspect-video w-screen shrink-0">
-            <video
-              ref={videoRef}
-              src={bandScrollVideo.url}
-              muted
-              playsInline
-              preload="auto"
-              aria-label="Band rotating before being placed on a wrist"
-              className="pointer-events-none absolute inset-0 size-full transform-gpu object-cover mix-blend-multiply will-change-transform"
-            />
-          </div>
-        </div>
-
+    <section
+      aria-label="Band product demonstration"
+      className="relative flex h-[calc(100svh-3.5rem)] min-h-[620px] sm:h-[calc(100svh-4rem)] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
+    >
+      <div className="shrink-0">
         <a
-          href="/checkout"
-          className="mt-6 inline-flex h-12 w-[min(88vw,18rem)] shrink-0 sm:mt-8 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
+          href="#band"
+          className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-landing-line px-3.5 py-1 text-xs font-medium text-landing-ink transition-colors hover:bg-landing-control sm:mb-4 sm:text-sm"
         >
-          Get started
+          <span className="text-landing-action">New</span>
+          OVOA Band brings OVOA to your wrist
+          <span aria-hidden="true">›</span>
         </a>
+        <p className="text-sm text-landing-muted sm:text-base">OVOA for iPhone</p>
+        <h1 className="mt-1.5 grid text-[clamp(2.65rem,6vw,5.25rem)] font-semibold leading-[0.98] tracking-normal text-landing-ink">
+          {/* Both lines share one grid cell so the swap cross-fades in place. */}
+          <span
+            aria-hidden={swapped}
+            className={`col-start-1 row-start-1 transition-opacity duration-700 ease-out ${swapped ? "opacity-0" : "opacity-100"}`}
+          >
+            Your own Jarvis.
+          </span>
+          <span
+            aria-hidden={!swapped}
+            className={`col-start-1 row-start-1 transition-opacity duration-700 ease-out ${swapped ? "opacity-100" : "opacity-0"}`}
+          >
+            Your life assistant.
+          </span>
+        </h1>
+        <p className="mt-2 text-lg text-landing-muted sm:text-2xl">Ask once. It’s handled.</p>
+      </div>
 
-        <p className="mt-3 text-[11px] text-landing-muted/70">Shown with the new OVOA Band</p>
-
-        {showDemo && wide && (
-          <div className="hero-demo-swoop absolute bottom-12 left-[max(1.5rem,4vw)] z-10 w-[min(260px,calc((100svh-22.5rem)/2.08))]">
-            <OvoaIphoneDemo maxWidth={260} />
-          </div>
-        )}
-      </section>
-
-      {showDemo && !wide && (
-        <div className="hero-demo-fade flex justify-center bg-landing-canvas px-6 pb-16 pt-4">
-          <div className="w-[min(78vw,300px)]">
-            <OvoaIphoneDemo maxWidth={300} />
-          </div>
+      <div className="relative mt-5 flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden sm:mt-7">
+        {/* Shifted down so the wrist, which sits ~37% down the clip, lands mid-frame. */}
+        <div className="relative aspect-video w-screen shrink-0 translate-y-[13%]">
+          <video
+            ref={videoRef}
+            src={bandScrollVideo.url}
+            muted
+            playsInline
+            preload="auto"
+            aria-label="Band rotating before being placed on a wrist"
+            className="pointer-events-none absolute inset-0 size-full transform-gpu object-cover mix-blend-multiply will-change-transform"
+          />
         </div>
-      )}
-    </>
+      </div>
+
+      <a
+        href="/checkout"
+        className="mt-6 inline-flex h-12 w-[min(88vw,18rem)] shrink-0 sm:mt-8 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
+      >
+        Get started
+      </a>
+
+      <p className="mt-3 text-[11px] text-landing-muted/70">Shown with the new OVOA Band</p>
+    </section>
   );
 }

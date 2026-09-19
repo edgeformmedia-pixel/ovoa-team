@@ -11,6 +11,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import OvoaIphoneDemo, { type DemoStep } from "@/components/OvoaIphoneDemo";
+import { HowItWorksDemo } from "@/components/HowItWorksDemo";
 import { ScrollScrubVideo } from "@/components/ScrollScrubVideo";
 import { SiteFooter } from "@/components/SiteFooter";
 import bandFront from "@/assets/product/band-front-cutout.png";
@@ -211,6 +212,8 @@ function Landing() {
       </header>
 
       <ScrollScrubVideo />
+
+      <HowItWorksDemo />
 
       <section className="border-t border-landing-line bg-landing-canvas px-6 py-24 text-center sm:py-36">
         <div className="mx-auto max-w-4xl">
