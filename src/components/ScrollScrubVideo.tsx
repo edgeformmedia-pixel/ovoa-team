@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import bandScrollVideo from "@/assets/band-hero.webm.asset.json";
+
+const HEADLINE = "Hey OVOA!";
 
 // How long after the hero video starts playing the headline swaps.
 const HEADLINE_SWAP_MS = 3000;
@@ -73,7 +75,18 @@ export function ScrollScrubVideo() {
             aria-hidden={swapped}
             className={`col-start-1 row-start-1 transition-opacity duration-700 ease-out ${swapped ? "opacity-0" : "opacity-100"}`}
           >
-            Your own Jarvis.
+            <span className="sr-only">{HEADLINE}</span>
+            <span aria-hidden="true">
+              {Array.from(HEADLINE).map((char, i) =>
+                char === " " ? (
+                  " "
+                ) : (
+                  <span key={i} className="hero-letter" style={{ "--i": i } as CSSProperties}>
+                    {char}
+                  </span>
+                ),
+              )}
+            </span>
           </span>
           <span
             aria-hidden={!swapped}

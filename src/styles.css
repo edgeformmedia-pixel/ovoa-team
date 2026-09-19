@@ -469,6 +469,32 @@
   }
 }
 
+/* Hero headline: each letter hops in turn, left to right, on first load. */
+@keyframes hero-letter-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-0.22em);
+  }
+  70% {
+    transform: translateY(0.03em);
+  }
+}
+
+.hero-letter {
+  display: inline-block;
+  animation: hero-letter-bounce 650ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation-delay: calc(400ms + var(--i) * 70ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-letter {
+    animation: none;
+  }
+}
+
 /* Mobile checkout uses one natural page scroll so browser chrome never covers it. */
 @media (max-width: 1023px) {
   .mobile-shrinks {
