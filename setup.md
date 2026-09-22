@@ -71,7 +71,7 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 ## Test it first on the Cloudflare Worker (optional, recommended)
 
-Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://ovoa-site-test.edgeformmedia.workers.dev**, in the Edgeformmedia Cloudflare account. It has its own small database (Cloudflare D1), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
+Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev**, in the Edgeformmedia Cloudflare account. It has its own small database (Cloudflare D1), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
 
 1. Log Wrangler into the right account (pick **Edgeformmedia@gmail.com's Account** in the browser):
 
@@ -83,7 +83,7 @@ npx wrangler login
 3. Load Stripe into the test Worker. From the `ovoa-team` folder, with your `sk_test_` key:
 
 ```bash
-node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site-test.edgeformmedia.workers.dev --cloudflare
+node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev --cloudflare
 ```
 
 This does Step 3 for the test Worker and uploads the secrets to it; nothing to paste. Keep the printed lines anyway (the admin key opens the admin page).
@@ -94,7 +94,7 @@ This does Step 3 for the test Worker and uploads the secrets to it; nothing to p
 npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
 ```
 
-5. Run Step 8's checks at https://ovoa-site-test.edgeformmedia.workers.dev/early-access and `/early-access/admin`.
+5. Run Step 8's checks at https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev/early-access and `/early-access/admin`.
 
 To ship code changes to the test Worker: `npm run cf:deploy`. If a new file shows up in `migrations/`, run `npm run cf:migrate` first.
 

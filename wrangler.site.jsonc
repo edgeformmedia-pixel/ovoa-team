@@ -9,7 +9,7 @@
 // inside Lovable. Secrets are set with `npx wrangler secret put NAME -c wrangler.site.jsonc`
 // (scripts/stripe-setup.mjs --cloudflare sets the Stripe ones for you).
 {
-  "name": "ovoa-site-test",
+  "name": "edgeformmedia-pixel-ovoa-team",
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],

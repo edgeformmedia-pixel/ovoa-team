@@ -12,7 +12,7 @@
 //          --new-webhook   replace the webhook and print a fresh secret
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
 //          --cloudflare    also upload the secrets to the Cloudflare test Worker
-//                          (use with --site https://ovoa-site-test.edgeformmedia.workers.dev)
+//                          (use with --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev)
 //
 // Safe to run again: it reuses what exists and only creates what's missing.
 // A changed price creates a new Stripe price and moves the lookup key to it;
