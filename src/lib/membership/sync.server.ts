@@ -1,11 +1,9 @@
-// Keeps public.members in step with Stripe, and TestFlight access in step with
-// members. Everything here is idempotent: the webhook and the welcome page can
-// both run it for the same purchase, in either order, as often as they like.
-// Subscription state is always re-read from Stripe rather than trusted from
-// an event payload, so events arriving out of order can't roll it back.
+// Keeps the members table in step with Stripe, and TestFlight access in step
+// with members. Everything here is idempotent: the webhook and the welcome page
+// can both run it for the same purchase, in either order, as often as they
+// like. Subscription state is always re-read from Stripe rather than trusted
+// from an event payload, so events arriving out of order can't roll it back.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   AFFILIATE_PERCENT,
   COMMISSION_MONTHS,
@@ -17,34 +15,12 @@ import {
   type PlanId,
   type PublicPlan,
 } from "./plans";
+import { now } from "./db.server";
 import { stripe, stripeConfigured } from "./stripe.server";
+import { DuplicateError, store, type Member, type MemberPatch } from "./store.server";
 import { inviteTester, removeTester, testflightInvitesConfigured } from "./testflight.server";
 
-// The generated Database type doesn't know these tables until Lovable
-// regenerates it after the migration, so they're used untyped here.
-export const db = () => supabaseAdmin as unknown as SupabaseClient;
-
-export type Member = {
-  id: string;
-  email: string;
-  name: string | null;
-  plan: MemberPlan;
-  status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  stripe_payment_intent_id: string | null;
-  checkout_session_id: string | null;
-  trial_ends_at: string | null;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
-  canceled_at: string | null;
-  ref_code: string | null;
-  testflight_state: string;
-  testflight_tester_id: string | null;
-  testflight_error: string | null;
-  note: string | null;
-  created_at: string;
-};
+export type { Member };
 
 // ---------- Stripe shapes (only the fields read here) ----------
 
@@ -140,29 +116,20 @@ function planFromPrice(price: StripePrice | undefined): PlanId {
 // ---------- Members ----------
 
 async function insertOrUpdate(
-  conflictColumn: "stripe_subscription_id" | "checkout_session_id",
+  keyColumn: "stripe_subscription_id" | "checkout_session_id",
   key: string,
-  insert: Partial<Member>,
-  update: Partial<Member>,
+  insert: MemberPatch,
+  update: MemberPatch,
 ): Promise<Member> {
-  const table = db().from("members");
-  const existing = await table.select("*").eq(conflictColumn, key).maybeSingle();
-  if (existing.error) throw new Error(existing.error.message);
-  if (existing.data) {
-    const res = await db()
-      .from("members")
-      .update(update)
-      .eq("id", (existing.data as Member).id)
-      .select("*")
-      .single();
-    if (res.error) throw new Error(res.error.message);
-    return res.data as Member;
+  const existing = await store().findMember(keyColumn, key);
+  if (existing) return store().updateMember(existing.id, update);
+  try {
+    return await store().insertMember(insert);
+  } catch (error) {
+    // The webhook and the welcome page raced to create the same row.
+    if (error instanceof DuplicateError) return insertOrUpdate(keyColumn, key, insert, update);
+    throw error;
   }
-  const created = await db().from("members").insert(insert).select("*").single();
-  if (!created.error) return created.data as Member;
-  // The webhook and the welcome page raced to create the same row.
-  if (created.error.code === "23505") return insertOrUpdate(conflictColumn, key, insert, update);
-  throw new Error(created.error.message);
 }
 
 async function retrieveSubscription(id: string) {
@@ -185,7 +152,7 @@ export async function syncSubscription(
       : subscriptionOrId;
   const item = sub.items.data[0];
   const customerId = idOf(sub.customer);
-  const billing: Partial<Member> = {
+  const billing: MemberPatch = {
     plan: planFromPrice(item?.price),
     status: sub.status,
     stripe_customer_id: customerId,
@@ -247,14 +214,9 @@ export async function syncCheckoutSession(sessionId: string): Promise<Member | n
   if (session.mode !== "payment") return null;
   const paid = session.payment_status === "paid";
   const paymentIntentId = idOf(session.payment_intent);
-  const existing = await db()
-    .from("members")
-    .select("status")
-    .eq("checkout_session_id", session.id)
-    .maybeSingle();
+  const existing = await store().findMember("checkout_session_id", session.id);
   // A refund recorded earlier stays recorded.
-  const status =
-    existing.data?.status === "refunded" ? "refunded" : paid ? "lifetime" : "incomplete";
+  const status = existing?.status === "refunded" ? "refunded" : paid ? "lifetime" : "incomplete";
 
   const member = await insertOrUpdate(
     "checkout_session_id",
@@ -287,18 +249,14 @@ export async function syncCheckoutSession(sessionId: string): Promise<Member | n
 // ---------- TestFlight ----------
 
 async function otherEntitledRow(member: Member): Promise<boolean> {
-  const { data } = await db()
-    .from("members")
-    .select("id, status")
-    .eq("email", member.email.toLowerCase())
-    .neq("id", member.id);
-  return (data ?? []).some((row: { status: string }) => isEntitled(row.status));
+  const rows = await store().membersByEmail(member.email.toLowerCase());
+  return rows.some((row) => row.id !== member.id && isEntitled(row.status));
 }
 
 export async function syncTestflight(member: Member, { force = false } = {}): Promise<Member> {
   if (!testflightInvitesConfigured()) {
     if (member.testflight_state === "pending")
-      return patchMember(member, { testflight_state: "off" });
+      return patchTestflight(member, { testflight_state: "off" });
     return member;
   }
 
@@ -307,7 +265,7 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
   try {
     if (entitled && (!invited || force)) {
       const testerId = await inviteTester(member.email, member.name);
-      return patchMember(member, {
+      return patchTestflight(member, {
         testflight_state: "invited",
         testflight_tester_id: testerId,
         testflight_error: null,
@@ -316,14 +274,14 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
     if (!entitled && invited) {
       // Someone who switched from monthly to lifetime keeps their access.
       if (await otherEntitledRow(member))
-        return patchMember(member, { testflight_state: "removed" });
+        return patchTestflight(member, { testflight_state: "removed" });
       await removeTester(member.testflight_tester_id, member.email);
-      return patchMember(member, { testflight_state: "removed", testflight_error: null });
+      return patchTestflight(member, { testflight_state: "removed", testflight_error: null });
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[membership] TestFlight", member.email, message);
-    return patchMember(member, {
+    return patchTestflight(member, {
       testflight_state: "failed",
       testflight_error: message.slice(0, 500),
     });
@@ -331,15 +289,8 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
   return member;
 }
 
-async function patchMember(member: Member, patch: Partial<Member>): Promise<Member> {
-  const res = await db()
-    .from("members")
-    .update({ ...patch, testflight_updated_at: new Date().toISOString() })
-    .eq("id", member.id)
-    .select("*")
-    .single();
-  if (res.error) throw new Error(res.error.message);
-  return res.data as Member;
+function patchTestflight(member: Member, patch: MemberPatch): Promise<Member> {
+  return store().updateMember(member.id, { ...patch, testflight_updated_at: now() });
 }
 
 // ---------- Partner commissions ----------
@@ -358,31 +309,21 @@ async function recordCommission(
   cutoff.setMonth(cutoff.getMonth() + COMMISSION_MONTHS);
   if (Date.now() > cutoff.getTime()) return;
 
-  const { data: affiliate } = await db()
-    .from("affiliates")
-    .select("code, percent, status, email")
-    .eq("code", member.ref_code)
-    .maybeSingle();
+  const affiliate = await store().getAffiliate(member.ref_code);
   if (!affiliate || affiliate.status !== "approved") return;
   // No commission on your own purchase.
-  if (String(affiliate.email).toLowerCase() === member.email.toLowerCase()) return;
+  if (affiliate.email.toLowerCase() === member.email.toLowerCase()) return;
 
   const percent = Number(affiliate.percent ?? AFFILIATE_PERCENT);
-  const { error } = await db()
-    .from("affiliate_commissions")
-    .upsert(
-      {
-        affiliate_code: affiliate.code,
-        member_id: member.id,
-        source_id: payment.sourceId,
-        payment_intent_id: payment.paymentIntentId,
-        amount_cents: payment.amountCents,
-        commission_cents: Math.round((payment.amountCents * percent) / 100),
-        currency: payment.currency,
-      },
-      { onConflict: "source_id", ignoreDuplicates: true },
-    );
-  if (error) console.error("[membership] commission", payment.sourceId, error.message);
+  await store().insertCommission({
+    affiliate_code: affiliate.code,
+    member_id: member.id,
+    source_id: payment.sourceId,
+    payment_intent_id: payment.paymentIntentId,
+    amount_cents: payment.amountCents,
+    commission_cents: Math.round((payment.amountCents * percent) / 100),
+    currency: payment.currency,
+  });
 }
 
 type StripeInvoice = {
@@ -421,36 +362,13 @@ export async function handleChargeRefunded(charge: StripeCharge) {
   const invoiceId = idOf(charge.invoice);
 
   // Commissions on refunded money are void, unless already paid out.
-  const sources = [
-    paymentIntentId && `payment_intent_id.eq.${paymentIntentId}`,
-    invoiceId && `source_id.eq.${invoiceId}`,
-  ]
-    .filter(Boolean)
-    .join(",");
-  if (sources) {
-    await db()
-      .from("affiliate_commissions")
-      .update({ status: "void" })
-      .eq("status", "owed")
-      .or(sources);
-  }
+  if (paymentIntentId || invoiceId) await store().voidCommissions(paymentIntentId, invoiceId);
 
   // A fully refunded lifetime purchase ends that membership. (Subscriptions end
   // through customer.subscription.deleted when you cancel them.)
   if (charge.refunded && paymentIntentId) {
-    const { data } = await db()
-      .from("members")
-      .select("*")
-      .eq("stripe_payment_intent_id", paymentIntentId)
-      .eq("plan", "lifetime");
-    for (const row of (data ?? []) as Member[]) {
-      const updated = await db()
-        .from("members")
-        .update({ status: "refunded" })
-        .eq("id", row.id)
-        .select("*")
-        .single();
-      if (updated.data) await syncTestflight(updated.data as Member);
+    for (const row of await store().lifetimeByPaymentIntent(paymentIntentId)) {
+      await syncTestflight(await store().updateMember(row.id, { status: "refunded" }));
     }
   }
 }

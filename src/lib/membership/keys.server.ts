@@ -1,3 +1,5 @@
+import { envVar } from "./db.server";
+
 export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -11,7 +13,7 @@ export function checkKey(
   envName: "OVOA_ADMIN_KEY" | "MEMBERSHIP_API_KEY",
   given: unknown,
 ): boolean {
-  const expected = process.env[envName];
+  const expected = envVar(envName);
   if (!expected || expected.length < 16 || typeof given !== "string") return false;
   return safeEqual(given.trim(), expected);
 }

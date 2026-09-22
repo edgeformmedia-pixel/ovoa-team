@@ -14,7 +14,8 @@ export const Route = createFileRoute("/api/public/billing/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["STRIPE_WEBHOOK_SECRET"];
+        const { envVar } = await import("@/lib/membership/db.server");
+        const secret = envVar("STRIPE_WEBHOOK_SECRET");
         if (!secret) return new Response("STRIPE_WEBHOOK_SECRET is not set", { status: 500 });
 
         const { verifyStripeSignature } = await import("@/lib/membership/stripe.server");

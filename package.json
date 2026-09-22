@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "cf:deploy": "vite build && npx wrangler deploy -c wrangler.site.jsonc",
+    "cf:migrate": "npx wrangler d1 migrations apply ovoa-site-test-db --remote -c wrangler.site.jsonc",
+    "cf:dev": "vite build && npx wrangler dev -c wrangler.site.jsonc --local"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.43",

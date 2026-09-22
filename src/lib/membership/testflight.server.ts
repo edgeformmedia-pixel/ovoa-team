@@ -6,16 +6,18 @@
 // membership ends. Without them, the welcome page shows TESTFLIGHT_PUBLIC_URL
 // instead.
 
+import { envVar } from "./db.server";
+
 const ASC_API = "https://api.appstoreconnect.apple.com/v1";
 
 export function testflightInvitesConfigured(): boolean {
   return ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_PRIVATE_KEY", "TESTFLIGHT_GROUP_ID"].every((name) =>
-    Boolean(process.env[name]),
+    Boolean(envVar(name)),
   );
 }
 
 export function testflightPublicUrl(): string | null {
-  const url = process.env["TESTFLIGHT_PUBLIC_URL"]?.trim();
+  const url = envVar("TESTFLIGHT_PUBLIC_URL")?.trim();
   return url && /^https:\/\/testflight\.apple\.com\//.test(url) ? url : null;
 }
 
@@ -81,9 +83,9 @@ let cachedToken: { token: string; until: number } | null = null;
 
 async function token(): Promise<string> {
   if (cachedToken && cachedToken.until > Date.now()) return cachedToken.token;
-  const keyId = process.env["ASC_KEY_ID"];
-  const issuerId = process.env["ASC_ISSUER_ID"];
-  const privateKey = process.env["ASC_PRIVATE_KEY"];
+  const keyId = envVar("ASC_KEY_ID");
+  const issuerId = envVar("ASC_ISSUER_ID");
+  const privateKey = envVar("ASC_PRIVATE_KEY");
   if (!keyId || !issuerId || !privateKey) throw new AscError("App Store Connect key is not set", 0);
   const value = await ascToken({ keyId: keyId.trim(), issuerId: issuerId.trim(), privateKey });
   cachedToken = { token: value, until: Date.now() + 10 * 60 * 1000 };
@@ -118,7 +120,7 @@ async function asc<T = { data?: unknown }>(
 }
 
 function groupId(): string {
-  const id = process.env["TESTFLIGHT_GROUP_ID"]?.trim();
+  const id = envVar("TESTFLIGHT_GROUP_ID")?.trim();
   if (!id) throw new AscError("TESTFLIGHT_GROUP_ID is not set", 0);
   return id;
 }

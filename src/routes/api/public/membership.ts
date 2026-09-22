@@ -31,16 +31,16 @@ export const Route = createFileRoute("/api/public/membership")({
           return Response.json({ error: "email required" }, { status: 400 });
         }
 
-        const { db } = await import("@/lib/membership/sync.server");
+        const { store } = await import("@/lib/membership/store.server");
         const { isEntitled } = await import("@/lib/membership/plans");
-        const { data, error } = await db()
-          .from("members")
-          .select("plan, status, trial_ends_at, current_period_end, created_at")
-          .eq("email", email)
-          .order("created_at", { ascending: false });
-        if (error) return Response.json({ error: "lookup failed" }, { status: 500 });
+        let rows: Row[];
+        try {
+          rows = await store().membersByEmail(email);
+        } catch (error) {
+          console.error("[membership] lookup", error);
+          return Response.json({ error: "lookup failed" }, { status: 500 });
+        }
 
-        const rows = (data ?? []) as Row[];
         // The best row wins: a live membership over an ended one.
         const best = rows.find((r) => isEntitled(r.status)) ?? rows[0];
         return Response.json({

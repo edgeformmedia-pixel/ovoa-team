@@ -1,0 +1,34 @@
+// The Cloudflare TEST Worker for this site. Lovable stays the real site;
+// this copy exists to try paid early access end to end in Stripe test mode.
+//
+//   npm run cf:deploy    build and deploy
+//   npm run cf:migrate   create/update the D1 tables (migrations/)
+//
+// It runs the same build Lovable does (.output from `vite build`), plus its own
+// D1 database for members, since Lovable's Supabase service key only exists
+// inside Lovable. Secrets are set with `npx wrangler secret put NAME -c wrangler.site.jsonc`
+// (scripts/stripe-setup.mjs --cloudflare sets the Stripe ones for you).
+{
+  "name": "ovoa-site-test",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-04-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
+  "assets": { "binding": "ASSETS", "directory": ".output/public" },
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "SITE_DB",
+      "database_name": "ovoa-site-test-db",
+      "database_id": "REPLACE_WITH_D1_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Public values (the same ones in .env); the site's sign-in pages use them.
+  "vars": {
+    "SUPABASE_URL": "https://uteidkbevflbdnrczkqs.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RuvJ-6sHrZi7505MXp_1WA_6BXWhHJa"
+  },
+  "observability": { "enabled": true }
+}

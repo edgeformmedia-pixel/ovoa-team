@@ -154,8 +154,8 @@ export const recordReferralClick = createServerFn({ method: "POST" })
     return { code };
   })
   .handler(async ({ data }) => {
-    const { db } = await import("./sync.server");
-    await db().rpc("record_affiliate_click", { p_code: data.code });
+    const { store } = await import("./store.server");
+    await store().recordClick(data.code);
     return { ok: true };
   });
 
@@ -193,11 +193,10 @@ export const applyAffiliate = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }): Promise<{ ok: true } | { ok: false; message: string }> => {
-    const { db } = await import("./sync.server");
+    const { store, DuplicateError } = await import("./store.server");
     const { AFFILIATE_PERCENT } = await import("./plans");
-    const { error } = await db()
-      .from("affiliates")
-      .insert({
+    try {
+      await store().insertAffiliate({
         code: data.code,
         name: data.name,
         email: data.email,
@@ -205,9 +204,11 @@ export const applyAffiliate = createServerFn({ method: "POST" })
         payout_email: data.payoutEmail,
         percent: AFFILIATE_PERCENT,
       });
-    if (error?.code === "23505") return { ok: false, message: "That code is taken. Try another." };
-    if (error) {
-      console.error("[membership] apply", error.message);
+    } catch (error) {
+      if (error instanceof DuplicateError) {
+        return { ok: false, message: "That code is taken. Try another." };
+      }
+      console.error("[membership] apply", error);
       return { ok: false, message: "That didn't go through. Try again in a minute." };
     }
     return { ok: true };
@@ -234,33 +235,18 @@ export const getPartnerStats = createServerFn({ method: "POST" })
     return { code, key };
   })
   .handler(async ({ data }): Promise<PartnerStats | null> => {
-    const { db } = await import("./sync.server");
+    const { store } = await import("./store.server");
     const { safeEqual } = await import("./keys.server");
-    const { data: affiliate } = await db()
-      .from("affiliates")
-      .select("*")
-      .eq("code", data.code)
-      .maybeSingle();
-    if (!affiliate || !safeEqual(String(affiliate.dashboard_key), data.key)) return null;
+    const affiliate = await store().getAffiliate(data.code);
+    if (!affiliate || !safeEqual(affiliate.dashboard_key, data.key)) return null;
 
-    const [members, commissions] = await Promise.all([
-      db().from("members").select("status").eq("ref_code", data.code).limit(10000),
-      db()
-        .from("affiliate_commissions")
-        .select("amount_cents, commission_cents, status, created_at")
-        .eq("affiliate_code", data.code)
-        .order("created_at", { ascending: false })
-        .limit(10000),
+    const [members, rows] = await Promise.all([
+      store().membersByRef(data.code),
+      store().listCommissions(data.code),
     ]);
-    const rows = (commissions.data ?? []) as {
-      amount_cents: number;
-      commission_cents: number;
-      status: string;
-      created_at: string;
-    }[];
     const sum = (status: string) =>
       rows.filter((r) => r.status === status).reduce((t, r) => t + r.commission_cents, 0);
-    const statuses = ((members.data ?? []) as { status: string }[]).map((m) => m.status);
+    const statuses = members.map((m) => m.status);
     return {
       code: affiliate.code,
       name: affiliate.name,
@@ -354,63 +340,59 @@ export type AdminOverview = {
   affiliates: AdminAffiliate[];
 };
 
+const EMPTY_STATS: AdminOverview["stats"] = {
+  trialing: 0,
+  paying: 0,
+  lifetime: 0,
+  comp: 0,
+  ended: 0,
+  mrrCents: 0,
+  trialMrrCents: 0,
+  lifetimeCents: 0,
+  owedCents: 0,
+};
+
 export const getAdminOverview = createServerFn({ method: "POST" })
   .inputValidator(adminInput(() => ({})))
   .handler(async ({ data }): Promise<AdminOverview> => {
     await requireAdmin(data.key);
     const sync = await import("./sync.server");
     const tf = await import("./testflight.server");
+    const { envVar } = await import("./db.server");
+    const { store, StoreNotReadyError } = await import("./store.server");
 
     const config = {
       stripe: sync.stripeConfigured(),
-      webhook: Boolean(process.env["STRIPE_WEBHOOK_SECRET"]),
+      webhook: Boolean(envVar("STRIPE_WEBHOOK_SECRET")),
       invites: tf.testflightInvitesConfigured(),
       publicLink: Boolean(tf.testflightPublicUrl()),
-      membershipApi: (process.env["MEMBERSHIP_API_KEY"] ?? "").length >= 16,
+      membershipApi: (envVar("MEMBERSHIP_API_KEY") ?? "").length >= 16,
       database: true,
     };
 
-    const [membersRes, affiliatesRes, commissionsRes] = await Promise.all([
-      sync.db().from("members").select("*").order("created_at", { ascending: false }).limit(5000),
-      sync.db().from("affiliates").select("*").order("created_at", { ascending: false }),
-      sync
-        .db()
-        .from("affiliate_commissions")
-        .select("affiliate_code, commission_cents, status")
-        .limit(20000),
-    ]);
-    if (membersRes.error) {
-      // Most likely the migration hasn't been applied yet.
+    let loaded;
+    try {
+      loaded = await Promise.all([
+        store().listMembers(5000),
+        store().listAffiliates(),
+        store().listCommissions(),
+      ]);
+    } catch (error) {
+      if (!(error instanceof StoreNotReadyError)) throw error;
       return {
         config: { ...config, database: false },
-        stats: {
-          trialing: 0,
-          paying: 0,
-          lifetime: 0,
-          comp: 0,
-          ended: 0,
-          mrrCents: 0,
-          trialMrrCents: 0,
-          lifetimeCents: 0,
-          owedCents: 0,
-        },
+        stats: EMPTY_STATS,
         members: [],
         affiliates: [],
       };
     }
-
-    const members = (membersRes.data ?? []) as import("./sync.server").Member[];
-    const commissions = (commissionsRes.data ?? []) as {
-      affiliate_code: string;
-      commission_cents: number;
-      status: string;
-    }[];
+    const [members, affiliateRows, commissions] = loaded;
 
     let prices = new Map<string, number>();
     if (config.stripe) {
       try {
-        const loaded = await sync.loadPrices();
-        prices = new Map([...loaded].map(([id, p]) => [id, p.unit_amount ?? 0]));
+        const current = await sync.loadPrices();
+        prices = new Map([...current].map(([id, p]) => [id, p.unit_amount ?? 0]));
       } catch {
         /* stats fall back to zero revenue */
       }
@@ -422,17 +404,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
           ? Math.round((prices.get("annual") ?? 0) / 12)
           : 0;
 
-    const stats = {
-      trialing: 0,
-      paying: 0,
-      lifetime: 0,
-      comp: 0,
-      ended: 0,
-      mrrCents: 0,
-      trialMrrCents: 0,
-      lifetimeCents: 0,
-      owedCents: 0,
-    };
+    const stats = { ...EMPTY_STATS };
     for (const m of members) {
       if (m.status === "trialing") {
         stats.trialing++;
@@ -447,20 +419,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       else stats.ended++;
     }
 
-    type AffiliateRow = {
-      id: string;
-      code: string;
-      name: string;
-      email: string;
-      payout_email: string | null;
-      audience: string | null;
-      status: string;
-      percent: number | string;
-      clicks: number;
-      dashboard_key: string;
-      created_at: string;
-    };
-    const affiliates: AdminAffiliate[] = ((affiliatesRes.data ?? []) as AffiliateRow[]).map((a) => {
+    const affiliates: AdminAffiliate[] = affiliateRows.map((a) => {
       const mine = commissions.filter((c) => c.affiliate_code === a.code);
       const total = (status: string) =>
         mine.filter((c) => c.status === status).reduce((t, c) => t + c.commission_cents, 0);
@@ -472,7 +431,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         payoutEmail: a.payout_email,
         audience: a.audience,
         status: a.status,
-        percent: Number(a.percent),
+        percent: a.percent,
         clicks: a.clicks,
         signups: members.filter((m) => m.ref_code === a.code).length,
         owedCents: total("owed"),
@@ -510,17 +469,13 @@ export const setAffiliateStatus = createServerFn({ method: "POST" })
   .inputValidator(
     adminInput((input) => ({
       id: String(input["id"] ?? ""),
-      status: input["status"] === "approved" ? "approved" : "rejected",
+      status: (input["status"] === "approved" ? "approved" : "rejected") as "approved" | "rejected",
     })),
   )
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
-    const { db } = await import("./sync.server");
-    const { error } = await db()
-      .from("affiliates")
-      .update({ status: data.status })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const { store } = await import("./store.server");
+    await store().setAffiliateStatus(data.id, data.status);
     return { ok: true };
   });
 
@@ -528,13 +483,8 @@ export const markAffiliatePaid = createServerFn({ method: "POST" })
   .inputValidator(adminInput((input) => ({ code: cleanRef(input["code"]) ?? "" })))
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
-    const { db } = await import("./sync.server");
-    const { error } = await db()
-      .from("affiliate_commissions")
-      .update({ status: "paid", paid_at: new Date().toISOString() })
-      .eq("affiliate_code", data.code)
-      .eq("status", "owed");
-    if (error) throw new Error(error.message);
+    const { store } = await import("./store.server");
+    await store().markCommissionsPaid(data.code);
     return { ok: true };
   });
 
@@ -543,16 +493,10 @@ export const retryTestflight = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
     const sync = await import("./sync.server");
-    const { data: row } = await sync
-      .db()
-      .from("members")
-      .select("*")
-      .eq("id", data.id)
-      .maybeSingle();
+    const { store } = await import("./store.server");
+    const row = await store().findMember("id", data.id);
     if (!row) throw new Error("No such member.");
-    const member = await sync.syncTestflight(row as import("./sync.server").Member, {
-      force: true,
-    });
+    const member = await sync.syncTestflight(row, { force: true });
     return { state: member.testflight_state, error: member.testflight_error };
   });
 
@@ -561,11 +505,8 @@ export const listTestflightGroups = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
     const tf = await import("./testflight.server");
-    if (
-      !process.env["ASC_KEY_ID"] ||
-      !process.env["ASC_ISSUER_ID"] ||
-      !process.env["ASC_PRIVATE_KEY"]
-    ) {
+    const { envVar } = await import("./db.server");
+    if (!envVar("ASC_KEY_ID") || !envVar("ASC_ISSUER_ID") || !envVar("ASC_PRIVATE_KEY")) {
       throw new Error("Add ASC_KEY_ID, ASC_ISSUER_ID and ASC_PRIVATE_KEY first.");
     }
     return tf.listBetaGroups();
@@ -596,22 +537,17 @@ export const grantAccess = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
     const sync = await import("./sync.server");
+    const { store } = await import("./store.server");
     const { testflightInvitesConfigured } = await import("./testflight.server");
-    const { data: row, error } = await sync
-      .db()
-      .from("members")
-      .insert({
-        email: data.email,
-        name: data.name,
-        note: data.note,
-        plan: "comp",
-        status: "comp",
-        testflight_state: testflightInvitesConfigured() ? "pending" : "off",
-      })
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    const member = await sync.syncTestflight(row as import("./sync.server").Member);
+    const row = await store().insertMember({
+      email: data.email,
+      name: data.name,
+      note: data.note,
+      plan: "comp",
+      status: "comp",
+      testflight_state: testflightInvitesConfigured() ? "pending" : "off",
+    });
+    const member = await sync.syncTestflight(row);
     return { state: member.testflight_state, error: member.testflight_error };
   });
 
@@ -620,15 +556,13 @@ export const endCompAccess = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
     const sync = await import("./sync.server");
-    const { data: row, error } = await sync
-      .db()
-      .from("members")
-      .update({ status: "canceled", canceled_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .eq("plan", "comp")
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    await sync.syncTestflight(row as import("./sync.server").Member);
+    const { store } = await import("./store.server");
+    const row = await store().findMember("id", data.id);
+    if (!row || row.plan !== "comp") throw new Error("Only free access can be ended here.");
+    const ended = await store().updateMember(row.id, {
+      status: "canceled",
+      canceled_at: new Date().toISOString(),
+    });
+    await sync.syncTestflight(ended);
     return { ok: true };
   });

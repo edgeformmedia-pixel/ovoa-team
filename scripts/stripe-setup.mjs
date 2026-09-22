@@ -10,12 +10,19 @@
 //
 // Options: --monthly 9.99 --annual 99.99 --lifetime 249  (USD; these are the defaults)
 //          --new-webhook   replace the webhook and print a fresh secret
+//          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
+//          --cloudflare    also upload the secrets to the Cloudflare test Worker
+//                          (use with --site https://ovoa-site-test.edgeformmedia.workers.dev)
 //
 // Safe to run again: it reuses what exists and only creates what's missing.
 // A changed price creates a new Stripe price and moves the lookup key to it;
 // people already subscribed keep what they pay today.
 
+import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 
 const API = process.env.STRIPE_API_BASE ?? "https://api.stripe.com/v1";
@@ -242,6 +249,32 @@ async function main() {
     say(`OVOA_ADMIN_KEY=${adminKey}`);
     say(`MEMBERSHIP_API_KEY=${appKey}`);
     say("\n(The two keys above are freshly made. If you already set them, keep your old ones.)");
+  }
+
+  // ---- Cloudflare test Worker ----
+  if (opts.cloudflare) {
+    const secrets = {
+      STRIPE_SECRET_KEY: SECRET,
+      ...(webhookSecret ? { STRIPE_WEBHOOK_SECRET: webhookSecret } : {}),
+      ...(opts["no-keys"] ? {} : { OVOA_ADMIN_KEY: adminKey, MEMBERSHIP_API_KEY: appKey }),
+    };
+    const file = join(tmpdir(), `ovoa-secrets-${randomBytes(6).toString("hex")}.json`);
+    writeFileSync(file, JSON.stringify(secrets));
+    try {
+      say(`\nUploading ${Object.keys(secrets).join(", ")} to the Cloudflare test Worker…`);
+      const res = spawnSync(`npx wrangler secret bulk "${file}" -c wrangler.site.jsonc`, {
+        shell: true,
+        stdio: "inherit",
+        cwd: new URL("..", import.meta.url),
+      });
+      if (res.status !== 0)
+        throw new Error(
+          "wrangler secret bulk failed (is `npx wrangler login` on the right account?)",
+        );
+      say("✓ Secrets are on the Worker. Save the lines above in your password manager too.");
+    } finally {
+      rmSync(file, { force: true });
+    }
   }
   say("\nDone. Next: setup.md, the step after this one.");
 }

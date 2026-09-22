@@ -1,7 +1,10 @@
 // A small Stripe client over fetch, so nothing Node-only has to run on the
 // Workers host. Only the handful of calls paid early access needs.
 
-const STRIPE_API = "https://api.stripe.com/v1";
+import { envVar } from "./db.server";
+
+// STRIPE_API_BASE exists only so a local test run can point at a fake Stripe.
+const stripeApi = () => envVar("STRIPE_API_BASE") ?? "https://api.stripe.com/v1";
 
 // Pinned so field names don't move under us. Webhook payloads use the version
 // the endpoint was created with (scripts/stripe-setup.mjs pins the same one);
@@ -26,11 +29,11 @@ export class StripeError extends Error {
 }
 
 export function stripeConfigured(): boolean {
-  return Boolean(process.env["STRIPE_SECRET_KEY"]);
+  return Boolean(envVar("STRIPE_SECRET_KEY"));
 }
 
 function secretKey(): string {
-  const key = process.env["STRIPE_SECRET_KEY"];
+  const key = envVar("STRIPE_SECRET_KEY");
   if (!key) throw new MembershipConfigError("STRIPE_SECRET_KEY");
   return key;
 }
@@ -58,7 +61,8 @@ export async function stripe<T = Record<string, unknown>>(
   params?: Record<string, FormValue>,
 ): Promise<T> {
   const form = params ? encodeForm(params) : "";
-  const url = method === "POST" || !form ? `${STRIPE_API}${path}` : `${STRIPE_API}${path}?${form}`;
+  const url =
+    method === "POST" || !form ? `${stripeApi()}${path}` : `${stripeApi()}${path}?${form}`;
   const res = await fetch(url, {
     method,
     headers: {

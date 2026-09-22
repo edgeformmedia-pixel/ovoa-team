@@ -69,6 +69,39 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 ---
 
+## Test it first on the Cloudflare Worker (optional, recommended)
+
+Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://ovoa-site-test.edgeformmedia.workers.dev**, in the Edgeformmedia Cloudflare account. It has its own small database (Cloudflare D1), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
+
+1. Log Wrangler into the right account (pick **Edgeformmedia@gmail.com's Account** in the browser):
+
+```bash
+npx wrangler login
+```
+
+2. Do Part A's Steps 1 and 2 below (Stripe account and settings), in test mode.
+3. Load Stripe into the test Worker. From the `ovoa-team` folder, with your `sk_test_` key:
+
+```bash
+node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site-test.edgeformmedia.workers.dev --cloudflare
+```
+
+This does Step 3 for the test Worker and uploads the secrets to it; nothing to paste. Keep the printed lines anyway (the admin key opens the admin page).
+
+4. Give it the TestFlight link once you have one (Step 7), pasting the link when asked:
+
+```bash
+npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
+```
+
+5. Run Step 8's checks at https://ovoa-site-test.edgeformmedia.workers.dev/early-access and `/early-access/admin`.
+
+To ship code changes to the test Worker: `npm run cf:deploy`. If a new file shows up in `migrations/`, run `npm run cf:migrate` first.
+
+When it all works, do Part A for real on Lovable. The test Worker's Stripe webhook is separate from Lovable's (each site address gets its own), so they don't interfere.
+
+---
+
 ## Part A: take payments (required)
 
 ### Step 1. Create your Stripe account
