@@ -21,7 +21,7 @@
     {
       "binding": "SITE_DB",
       "database_name": "ovoa-site-test-db",
-      "database_id": "REPLACE_WITH_D1_ID",
+      "database_id": "ac7ebf47-a234-4d0e-bb61-21460cfa1ec4",
       "migrations_dir": "migrations"
     }
   ],
