@@ -192,6 +192,12 @@ function Landing() {
 
           <div className="flex items-center gap-5 sm:gap-7">
             <Link
+              to="/early-access"
+              className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+            >
+              Get the app
+            </Link>
+            <Link
               to="/about"
               aria-label="Search product information"
               title="Search"
@@ -455,6 +461,28 @@ function Landing() {
               be forgotten about.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-landing-ink px-6 py-24 text-center text-landing-action-foreground sm:py-32">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-medium">
+            <span className="text-landing-action">Early access</span>
+            <span className="text-landing-action-foreground/60"> · iPhone</span>
+          </p>
+          <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal">
+            Use OVOA today.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-xl">
+            The app is in private beta. Founding members get it on their iPhone now and keep their
+            price. Try it free for 7 days.
+          </p>
+          <Link
+            to="/early-access"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
+          >
+            Get early access
+          </Link>
         </div>
       </section>
 

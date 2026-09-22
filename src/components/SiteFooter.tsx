@@ -2,9 +2,11 @@ import { Link } from "@tanstack/react-router";
 
 const links = [
   { to: "/", label: "Home" },
+  { to: "/early-access", label: "Early access" },
   { to: "/checkout", label: "Checkout" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
+  { to: "/partners", label: "Partners" },
 ] as const;
 
 export function SiteFooter() {

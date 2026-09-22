@@ -20,6 +20,15 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Xmxhi72185Char3723ndgdjngfg17w7DothtmlRouteImport } from './routes/xmxhi72185%23ndgdjngfg17w7[.]html'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
+import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
+import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
+import { Route as PartnersIndexRouteImport } from './routes/partners/index'
+import { Route as PartnersDashboardRouteImport } from './routes/partners/dashboard'
+import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
+import { Route as ApiPublicBillingCheckoutRouteImport } from './routes/api/public/billing/checkout'
+import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
+import { Route as ApiPublicBillingWebhookRouteImport } from './routes/api/public/billing/webhook'
 import { Route as ApiPublicHooksRunTasksRouteImport } from './routes/api/public/hooks/run-tasks'
 
 const IndexRoute = IndexRouteImport.update({
@@ -79,6 +88,52 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EarlyAccessIndexRoute = EarlyAccessIndexRouteImport.update({
+  id: '/early-access/',
+  path: '/early-access/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarlyAccessAdminRoute = EarlyAccessAdminRouteImport.update({
+  id: '/early-access/admin',
+  path: '/early-access/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarlyAccessWelcomeRoute = EarlyAccessWelcomeRouteImport.update({
+  id: '/early-access/welcome',
+  path: '/early-access/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersIndexRoute = PartnersIndexRouteImport.update({
+  id: '/partners/',
+  path: '/partners/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersDashboardRoute = PartnersDashboardRouteImport.update({
+  id: '/partners/dashboard',
+  path: '/partners/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
+  id: '/api/public/membership',
+  path: '/api/public/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBillingCheckoutRoute =
+  ApiPublicBillingCheckoutRouteImport.update({
+    id: '/api/public/billing/checkout',
+    path: '/api/public/billing/checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
+  id: '/api/public/billing/portal',
+  path: '/api/public/billing/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBillingWebhookRoute = ApiPublicBillingWebhookRouteImport.update({
+  id: '/api/public/billing/webhook',
+  path: '/api/public/billing/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksRunTasksRoute = ApiPublicHooksRunTasksRouteImport.update({
   id: '/api/public/hooks/run-tasks',
   path: '/api/public/hooks/run-tasks',
@@ -97,6 +152,15 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/early-access/': typeof EarlyAccessIndexRoute
+  '/partners/': typeof PartnersIndexRoute
+  '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRoutesByTo {
@@ -111,6 +175,15 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/early-access': typeof EarlyAccessIndexRoute
+  '/partners': typeof PartnersIndexRoute
+  '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRoutesById {
@@ -126,6 +199,15 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/early-access/': typeof EarlyAccessIndexRoute
+  '/partners/': typeof PartnersIndexRoute
+  '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRouteTypes {
@@ -142,6 +224,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/xmxhi72185%23ndgdjngfg17w7.html'
     | '/.well-known/oauth-protected-resource'
+    | '/early-access/admin'
+    | '/early-access/welcome'
+    | '/partners/dashboard'
+    | '/early-access/'
+    | '/partners/'
+    | '/api/public/membership'
+    | '/api/public/billing/checkout'
+    | '/api/public/billing/portal'
+    | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -156,6 +247,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/xmxhi72185%23ndgdjngfg17w7.html'
     | '/.well-known/oauth-protected-resource'
+    | '/early-access/admin'
+    | '/early-access/welcome'
+    | '/partners/dashboard'
+    | '/early-access'
+    | '/partners'
+    | '/api/public/membership'
+    | '/api/public/billing/checkout'
+    | '/api/public/billing/portal'
+    | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   id:
     | '__root__'
@@ -170,6 +270,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/xmxhi72185%23ndgdjngfg17w7.html'
     | '/.well-known/oauth-protected-resource'
+    | '/early-access/admin'
+    | '/early-access/welcome'
+    | '/partners/dashboard'
+    | '/early-access/'
+    | '/partners/'
+    | '/api/public/membership'
+    | '/api/public/billing/checkout'
+    | '/api/public/billing/portal'
+    | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   fileRoutesById: FileRoutesById
 }
@@ -185,6 +294,15 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute: typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
+  EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
+  PartnersDashboardRoute: typeof PartnersDashboardRoute
+  EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
+  PartnersIndexRoute: typeof PartnersIndexRoute
+  ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
+  ApiPublicBillingCheckoutRoute: typeof ApiPublicBillingCheckoutRoute
+  ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
+  ApiPublicBillingWebhookRoute: typeof ApiPublicBillingWebhookRoute
   ApiPublicHooksRunTasksRoute: typeof ApiPublicHooksRunTasksRoute
 }
 
@@ -267,6 +385,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/early-access/': {
+      id: '/early-access/'
+      path: '/early-access'
+      fullPath: '/early-access/'
+      preLoaderRoute: typeof EarlyAccessIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/early-access/admin': {
+      id: '/early-access/admin'
+      path: '/early-access/admin'
+      fullPath: '/early-access/admin'
+      preLoaderRoute: typeof EarlyAccessAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/early-access/welcome': {
+      id: '/early-access/welcome'
+      path: '/early-access/welcome'
+      fullPath: '/early-access/welcome'
+      preLoaderRoute: typeof EarlyAccessWelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners/': {
+      id: '/partners/'
+      path: '/partners'
+      fullPath: '/partners/'
+      preLoaderRoute: typeof PartnersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners/dashboard': {
+      id: '/partners/dashboard'
+      path: '/partners/dashboard'
+      fullPath: '/partners/dashboard'
+      preLoaderRoute: typeof PartnersDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/membership': {
+      id: '/api/public/membership'
+      path: '/api/public/membership'
+      fullPath: '/api/public/membership'
+      preLoaderRoute: typeof ApiPublicMembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/billing/checkout': {
+      id: '/api/public/billing/checkout'
+      path: '/api/public/billing/checkout'
+      fullPath: '/api/public/billing/checkout'
+      preLoaderRoute: typeof ApiPublicBillingCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/billing/portal': {
+      id: '/api/public/billing/portal'
+      path: '/api/public/billing/portal'
+      fullPath: '/api/public/billing/portal'
+      preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/billing/webhook': {
+      id: '/api/public/billing/webhook'
+      path: '/api/public/billing/webhook'
+      fullPath: '/api/public/billing/webhook'
+      preLoaderRoute: typeof ApiPublicBillingWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/run-tasks': {
       id: '/api/public/hooks/run-tasks'
       path: '/api/public/hooks/run-tasks'
@@ -291,6 +472,15 @@ const rootRouteChildren: RootRouteChildren = {
     Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  EarlyAccessAdminRoute: EarlyAccessAdminRoute,
+  EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
+  PartnersDashboardRoute: PartnersDashboardRoute,
+  EarlyAccessIndexRoute: EarlyAccessIndexRoute,
+  PartnersIndexRoute: PartnersIndexRoute,
+  ApiPublicMembershipRoute: ApiPublicMembershipRoute,
+  ApiPublicBillingCheckoutRoute: ApiPublicBillingCheckoutRoute,
+  ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
+  ApiPublicBillingWebhookRoute: ApiPublicBillingWebhookRoute,
   ApiPublicHooksRunTasksRoute: ApiPublicHooksRunTasksRoute,
 }
 export const routeTree = rootRouteImport
