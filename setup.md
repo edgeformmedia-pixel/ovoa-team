@@ -8,8 +8,8 @@ This turns ovoa.ai into a place where people pay for OVOA while the iPhone app i
 | --- | --- | --- |
 | Free | $0 | Health tracking and notes, no AI |
 | Base | $9.95/month or $95.99/year | The OVOA assistant. 20 replies a day. |
-| Pro | $25.95/month or $195.99/year | Base plus the hands-free wake word and the background agent. 55 replies a day. |
-| OVOA Band | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base that the buyer starts when they choose, or sold on its own ("Band only") |
+| Pro | $25.95/month or $195.99/year | Base with three times the replies, nothing else. 60 replies a day. |
+| OVOA Band | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base that the buyer starts when they choose. Sold with Base (the card is saved and Base follows the free days) or on its own ("Band only": no card, so the 7 days end on their own) |
 
 There's no free trial without a Band: a plan bought on its own is paid from day one.
 
@@ -18,7 +18,8 @@ There's no free trial without a Band: a plan bought on its own is paid from day 
 ```
 ovoa.ai/early-access (plans)  →  Stripe Checkout, paid from day one
 ovoa.ai/checkout (the Band)   →  Stripe Checkout: the Band is charged and the card is saved for Base
-                                 (or "Band only": a one-time payment, nothing saved)
+                                 (or "Band only": a one-time payment, nothing saved; its 7 free days
+                                 start the same way but need no card, so they end on their own)
                               →  order email from no-reply@ovoa.ai: "start your 7 free days when your Band arrives"
                               →  they tap Start on their welcome page: Base monthly starts with 7 free days,
                                  and Stripe charges the saved card when those end
@@ -27,6 +28,8 @@ ovoa.ai/checkout (the Band)   →  Stripe Checkout: the Band is charged and the 
 ```
 
 **Why the Band's free days wait.** The Band can take weeks to arrive, and 7 free days that start at checkout would be over before it does. So checkout only charges the Band and saves the card. The order email (and the "shipped" email you send with **Mark shipped**) links to their welcome page, where **Start my 7 free days** creates the Base subscription right then, with Stripe's 7-day trial; the first $9.95 is charged 7 days after they tap it. Until they do, they're on the free app and nothing is billed. If they never tap it, Base never starts. The button is a form on the page, not the email link itself, because mail scanners open every link in an email and would otherwise start the free days on their own. Band orders from before Sept 23 were made the old way (the trial started at checkout) and carry on as they are.
+
+**Band only gets the 7 days too.** A Band bought on its own gets the same order email and the same **Start my 7 free days** form, once per order. With no card saved, its Base subscription has no payment method and Stripe cancels it when the 7 days end (`missing_payment_method: cancel`), so nothing is ever charged. To give the days to someone else, the buyer starts them and then uses **Use a different email in the app** with that person's app email. This applies to Band-only orders from before this change too.
 
 The app account has to use the email they paid with. When it doesn't (Apple Pay or Link filled in another address, or they already had an app account), the welcome page has **Use a different email in the app**: the plan moves to that app account, and the paying email goes back to the free app. You can do the same for someone on the admin page (**Set app email** under their email).
 
@@ -342,13 +345,13 @@ Authorization: Bearer <MEMBERSHIP_API_KEY>
     "trialEndsAt": "..." | null, "renewsAt": "..." | null, "source": "stripe" | "band_trial" | "comp" | "none" }
 ```
 
-It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the last answer for a day before treating the person as free. Free people get health and notes; anything else answers "part of a plan" in the app. Base gets the assistant (20 replies a day), Pro adds the wake word and the background agent (55 a day). The app shows no prices or buy buttons during TestFlight (Apple's rule); it says the plan is managed at ovoa.ai and has a Refresh button. Members sign up in the app with the same email they paid with; the welcome page tells them so, and lets them move the plan to a different app email if theirs doesn't match (the membership API answers for the app email, `members.app_email`, when one is set).
+It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the last answer for a day before treating the person as free. Free people get health and notes; anything else answers "part of a plan" in the app. Base gets the assistant with every AI feature, the wake word, Always listen and the background agent included (20 replies a day); Pro is Base with three times the replies (60 a day). The app shows no prices or buy buttons during TestFlight (Apple's rule); it says the plan is managed at ovoa.ai and has a Refresh button. Members sign up in the app with the same email they paid with; the welcome page tells them so, and lets them move the plan to a different app email if theirs doesn't match (the membership API answers for the app email, `members.app_email`, when one is set).
 
 **Until the key is set on the app's Worker, everyone is treated as Pro**, so nothing is locked yet. To turn it on, in this order:
 
 - [ ] Lovable has the migrations and is published (the "Already did the first setup?" steps 4 and 5). Check it: https://ovoa.ai/api/public/membership should answer `{"error":"unauthorized"}`, not a "Page not found" page. (Since Sept 23 the Worker keeps each person's last answer when the site answers 404 or nonsense, so an unpublished site can't turn paying members Free. Anyone it has never heard about is Free until it can ask.)
 - [ ] Give Apple's review login (Step 7) **Pro** free access on the admin page, or App Review sees only the free app.
-- [ ] Give yourself and your team free access too (Pro for anyone who tests the wake word or the agent).
+- [ ] Give yourself and your team free access too (Pro for anyone who needs the bigger daily allowance).
 - [ ] `MEMBERSHIP_API_KEY` is in Lovable's secrets (Step 4). Use **the same value** on the Worker, from the `ovoa-app\jarvis\api` folder in Git Bash, pasting it when asked:
 
   ```bash

@@ -71,6 +71,10 @@ export function tierOf(lookupKey: string | null | undefined): PaidTier | null {
 //     sync.server.ts), and Stripe charges Base when they end. Stripe emails a
 //     reminder before that (turn it on in Stripe → Settings → Billing →
 //     Subscriptions and emails).
+//   - Buying the Band on its own: the same BAND_TRIAL_DAYS of Base, started
+//     the same way, but no card is saved, so they end on their own and nothing
+//     is charged. The buyer can give them away by starting them and moving
+//     them to another app email on the welcome page.
 export const NO_BAND_TRIAL_DAYS = 0;
 export const BAND_TRIAL_DAYS = 7;
 

@@ -1,10 +1,13 @@
-// What each plan includes, in the words the pages use. One place, so the plans
-// page, the FAQ and the checkout never disagree. Prices are NOT here: they come
-// from Stripe through getPlans() (plans.ts has the fallbacks).
+// What each plan includes, in the words the pages use. Prices are NOT here:
+// they come from Stripe through getPlans() (plans.ts has the fallbacks).
 //
-// The Free / Base / Pro split is SPEC §1 in ovoa-app/docs/paywall. The Pro
-// extras are still a proposal the owner has to OK: change PLAN_FEATURES and
-// every page follows.
+// The Free / Base / Pro split is SPEC §1 in ovoa-app/docs/paywall, as decided
+// on 2026-09-23: Base has every AI feature (the wake word, Always listen and
+// the background agent included), and Pro is Base with three times the daily
+// AI replies, nothing else. The plans page reads PLAN_BLURBS and
+// PLAN_FEATURES; the FAQ answers (early-access/index.tsx, faq.tsx), llms.txt,
+// terms.tsx and the welcome page's offers say the same in their own words, so
+// change them together.
 
 import {
   FALLBACK_BAND,
@@ -25,7 +28,7 @@ export const PLAN_NAMES: Record<PlanColumn, string> = { free: "Free", base: "Bas
 export const PLAN_BLURBS: Record<PlanColumn, string> = {
   free: "Health tracking and notes, on your iPhone.",
   base: "Turns on the OVOA assistant.",
-  pro: "Everything in Base, hands-free, with more room.",
+  pro: "Everything in Base, with three times the daily AI replies.",
 };
 
 // true = included, false = not, a string = included with that detail.
@@ -55,18 +58,23 @@ export const PLAN_FEATURES: {
     pro: true,
   },
   { label: "Press the Band, ask, and hear OVOA answer", free: false, base: true, pro: true },
-  { label: "Hands-free wake word, no button needed", free: false, base: false, pro: true },
+  {
+    label: "Hands-free wake word and Always listen, no button needed",
+    free: false,
+    base: true,
+    pro: true,
+  },
   {
     label: "Background agent: jobs that run on their own and report back",
     free: false,
-    base: false,
+    base: true,
     pro: true,
   },
   {
     label: "Daily AI replies",
     free: false,
     base: "Everyday use",
-    pro: "Almost 3× Base",
+    pro: "3× Base",
   },
 ];
 

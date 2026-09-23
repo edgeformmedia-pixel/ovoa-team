@@ -29,7 +29,7 @@ function Terms() {
   return (
     <LegalPage
       title="Terms"
-      updated="September 22, 2026"
+      updated="September 23, 2026"
       intro={
         <p>
           These terms cover the OVOA app, the OVOA assistant, the OVOA Band and ovoa.ai. By using
@@ -61,13 +61,13 @@ function Terms() {
             <strong>Free</strong>: health tracking and notes. No payment.
           </li>
           <li>
-            <strong>Base</strong>: the OVOA assistant, {perLabel(planOf(data, "base", "monthly"))}{" "}
-            or {perLabel(planOf(data, "base", "annual"))}.
+            <strong>Base</strong>: the OVOA assistant, with every AI feature,{" "}
+            {perLabel(planOf(data, "base", "monthly"))} or{" "}
+            {perLabel(planOf(data, "base", "annual"))}.
           </li>
           <li>
-            <strong>Pro</strong>: Base plus the hands-free wake word, the background agent and a
-            larger daily allowance, {perLabel(planOf(data, "pro", "monthly"))} or{" "}
-            {perLabel(planOf(data, "pro", "annual"))}.
+            <strong>Pro</strong>: Base with three times the daily AI allowance,{" "}
+            {perLabel(planOf(data, "pro", "monthly"))} or {perLabel(planOf(data, "pro", "annual"))}.
           </li>
         </ul>
         <p>
@@ -98,7 +98,9 @@ function Terms() {
           link), not at checkout. Your card is saved for Base at checkout. After the {days} days,
           Base is {perLabel(planOf(data, "base", "monthly"))} until you cancel, and nothing more is
           charged if you cancel before they end. You can also buy the Band on its own, with no
-          subscription.
+          subscription and no card saved. It still comes with {days} days of Base, which you can
+          start from your order page, or give to someone by moving them to their app email. Those
+          days need no card: they end on their own, and nothing is charged.
         </p>
         <p>
           The Band is beta hardware made in small batches. We ship to US addresses and email you

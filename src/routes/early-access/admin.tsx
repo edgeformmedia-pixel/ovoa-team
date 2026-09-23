@@ -454,9 +454,12 @@ function Admin() {
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        {!b.withAi ? (
-                          "Band only"
-                        ) : b.baseStartedAt ? (
+                        {!b.withAi && (
+                          <span className="block text-xs text-landing-muted">
+                            Band only, free days with no card
+                          </span>
+                        )}
+                        {b.baseStartedAt ? (
                           <>
                             Started
                             <span className="block text-xs text-landing-muted">

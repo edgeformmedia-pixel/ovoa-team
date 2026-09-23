@@ -5,16 +5,25 @@
 //
 //   node scripts/fake-stripe.mjs [--port 12111] [--deliver http://127.0.0.1:8787]
 //
-// Besides the Stripe endpoints it has three test controls, which play the part
-// of the buyer and of you in the Stripe dashboard. Each one sends the webhooks
-// real Stripe would, signed with FAKE_WEBHOOK_SECRET, to --deliver:
+// Besides the Stripe endpoints it has four test controls, which play the part
+// of the buyer, of you in the Stripe dashboard, and of time passing. Each one
+// sends the webhooks real Stripe would, signed with FAKE_WEBHOOK_SECRET, to
+// --deliver:
 //
 //   POST /__complete/<checkout session id>   {"email","name","phone"}  buyer pays
 //   POST /__cancel/<subscription id>                                   cancel now
 //   POST /__refund/<payment intent id>                                 full refund
+//   POST /__end_trial/<subscription id>      the free days run out now: charged
+//                                            on its payment method, or cancelled
+//                                            without one (missing_payment_method)
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
 //   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
 //                                            click-throughs; it returns to success_url
+//
+// Like real Stripe, a subscription's default_payment_method must be attached
+// to its customer, and the card a checkout took is attached only when the
+// checkout saved it (setup_future_usage). Anything else is refused, so a test
+// catches the error live Stripe would give.
 //
 // It also stands in for Resend's POST /emails (point RESEND_API_BASE at the
 // server's root); GET /__emails lists what the site sent.
@@ -42,6 +51,7 @@ const db = {
   invoices: new Map(),
   charges: new Map(),
   paymentIntents: new Map(),
+  paymentMethods: new Map(),
   // Idempotency-Key → the first answer, as real Stripe keeps them.
   idempotent: new Map(),
   emails: [],
@@ -99,8 +109,8 @@ function sessionView(s, expand = []) {
   return out;
 }
 
-// The card the buyer paid with, saved when the site asked for it
-// (setup_future_usage): what a subscription made later charges.
+// The card the buyer paid with, attached to the customer only when the site
+// asked to save it (setup_future_usage): what a subscription made later charges.
 function newPaymentIntent(customer, saved) {
   const pi = {
     id: id("pi"),
@@ -113,6 +123,7 @@ function newPaymentIntent(customer, saved) {
     },
   };
   db.paymentIntents.set(pi.id, pi);
+  db.paymentMethods.set(pi.payment_method.id, pi.payment_method);
   return pi;
 }
 
@@ -276,6 +287,26 @@ async function handle(req, res) {
     };
     await deliver("charge.refunded", charge);
     return send(charge);
+  }
+  if ((hit = m(/^\/__end_trial\/(sub_\w+)$/)) && req.method === "POST") {
+    const sub = db.subscriptions.get(hit[1]);
+    if (!sub) return err(res, 404, "no such subscription");
+    if (sub.status !== "trialing") return err(res, 400, "not trialing");
+    const pm = sub.default_payment_method;
+    if (!pm && sub.trial_settings?.end_behavior?.missing_payment_method === "cancel") {
+      Object.assign(sub, { status: "canceled", canceled_at: nowS(), trial_end: nowS() });
+      await deliver("customer.subscription.deleted", sub);
+      return send(sub);
+    }
+    if (!pm) return err(res, 400, "fake-stripe only ends trials that cancel or have a card");
+    const price = sub.items.data[0].price;
+    const days = price.recurring.interval === "year" ? 365 : 30;
+    Object.assign(sub, { status: "active", trial_end: null });
+    sub.current_period_end = nowS() + days * 86400;
+    const inv = newInvoice(sub.customer, sub.id, [{ amount: price.unit_amount, price }]);
+    await deliver("invoice.paid", inv);
+    await deliver("customer.subscription.updated", sub);
+    return send(sub);
   }
   if ((hit = m(/^\/__sessions\/(cs_\w+)$/))) {
     const s = db.sessions.get(hit[1]);
@@ -450,6 +481,17 @@ async function handle(req, res) {
     if (!db.customers.has(q.customer)) return err(res, 400, "No such customer");
     const prices = [].concat(q.items ?? []).map((i) => db.prices.get(i.price));
     if (!prices.length || prices.some((p) => !p?.active)) return err(res, 400, "No such price");
+    if (q.default_payment_method) {
+      const pm = db.paymentMethods.get(q.default_payment_method);
+      if (!pm) return err(res, 400, `No such PaymentMethod: '${q.default_payment_method}'`);
+      // Live Stripe's answer for the card that paid for a Band it didn't save.
+      if (pm.customer !== q.customer)
+        return err(
+          res,
+          400,
+          `The customer does not have a payment method with the ID ${pm.id}. The payment method must be attached to the customer.`,
+        );
+    }
     const trialDays = Number(q.trial_period_days ?? 0);
     const intervalS = (prices[0].recurring.interval === "year" ? 365 : 30) * 86400;
     const end = trialDays > 0 ? nowS() + trialDays * 86400 : nowS() + intervalS;

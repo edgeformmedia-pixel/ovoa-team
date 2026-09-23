@@ -297,9 +297,10 @@ function BandCard({ band, email }: { band: WelcomeBand; email: string }) {
   );
 }
 
-// A Band bought with Base: its free days wait until the buyer starts them.
-// A form POST (see /api/public/billing/start-trial), so it works from the
-// email's link on any phone.
+// A Band's free days of Base wait until the buyer starts them: with Base, on
+// the card saved at checkout; Band only (trial.noCard), with no card, so they
+// end on their own. A form POST (see /api/public/billing/start-trial), never a
+// link, so a mail scanner opening the email's link can't start them.
 function TrialCard({
   trial,
   sessionId,
@@ -312,9 +313,11 @@ function TrialCard({
   const [busy, setBusy] = useState(false);
   const { days, planName, price } = trial;
   const ends = formatDate(new Date(Date.now() + days * 86_400_000).toISOString());
-  const then = price
-    ? `Then it's ${price}${trial.card ? ` on your ${trial.card}` : ""}, until you cancel.`
-    : "Then it's the monthly price, until you cancel.";
+  const then = trial.noCard
+    ? "Then they end on their own. Nothing is charged."
+    : price
+      ? `Then it's ${price}${trial.card ? ` on your ${trial.card}` : ""}, until you cancel.`
+      : "Then it's the monthly price, until you cancel.";
   return (
     <section
       id="start"
@@ -326,10 +329,18 @@ function TrialCard({
         them when it arrives, or now if you&rsquo;d like to try the assistant in the app first.
         {emailed ? " The link to this page is in your order email." : ""}
       </p>
-      <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
-        Nothing is charged for {planName} until your {days} days are up. {then} Cancel before they
-        end and you pay nothing more.
-      </p>
+      {trial.noCard ? (
+        <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
+          No card needed: your free days of {planName} end on their own after {days} days, and
+          nothing is charged. Giving them to someone? Start them, then choose &ldquo;Use a different
+          email in the app&rdquo; and enter theirs.
+        </p>
+      ) : (
+        <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
+          Nothing is charged for {planName} until your {days} days are up. {then} Cancel before they
+          end and you pay nothing more.
+        </p>
+      )}
       <form
         method="post"
         action="/api/public/billing/start-trial"
@@ -492,8 +503,9 @@ function Welcome() {
     </p>
   );
 
-  // A Band order and the free app: "Band only", or with Base's free days
-  // still waiting to be started.
+  // A Band order and the free app, with its free days of Base still waiting
+  // to be started (with Base, or Band only's with no card), or refunded with
+  // nothing to start. Once they're started it's the member view below.
   if (welcome.state === "band") {
     const b = welcome;
     const refunded = b.band.status === "refunded";
@@ -526,7 +538,7 @@ function Welcome() {
                 <h2 className="text-2xl font-semibold">Want the assistant too?</h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
                   Base turns on OVOA&rsquo;s assistant: press the Band, ask, and hear the answer.
-                  Pro adds hands-free and the background agent.
+                  Pro is Base with three times as many AI replies a day.
                 </p>
                 <Link
                   to="/early-access"
@@ -558,9 +570,11 @@ function Welcome() {
       : w.plan === "lifetime"
         ? `You're a Founder: OVOA ${planName}, paid once.`
         : w.status === "trialing" && trialEnd
-          ? w.cancelAtPeriodEnd
-            ? `Your free days of OVOA ${planName} run until ${trialEnd}, and your plan is set to end then.`
-            : `Your free days of OVOA ${planName} run until ${trialEnd}. After that it's ${priceText ?? "the plan price"} until you cancel, and nothing is charged before then.`
+          ? w.noCard
+            ? `Your free days of OVOA ${planName} run until ${trialEnd}. They end on their own then, and nothing is charged: there's no card for them.`
+            : w.cancelAtPeriodEnd
+              ? `Your free days of OVOA ${planName} run until ${trialEnd}, and your plan is set to end then.`
+              : `Your free days of OVOA ${planName} run until ${trialEnd}. After that it's ${priceText ?? "the plan price"} until you cancel, and nothing is charged before then.`
           : renews
             ? w.cancelAtPeriodEnd
               ? `You're on OVOA ${planName} until ${renews}.`
@@ -651,8 +665,8 @@ function Welcome() {
           )}
           {pro && (
             <OfferCard
-              title="Go hands-free with Pro."
-              body={`Pro adds the hands-free wake word, the background agent that runs jobs on its own, and almost three times the daily replies. ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
+              title="Get three times the daily replies with Pro."
+              body={`Pro is Base with three times as many AI replies a day. ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
               cta={`Switch to Pro, ${money(pro)}/${pro.interval}`}
               busy={switching === "pro"}
               onTake={() => void take("pro", pro)}

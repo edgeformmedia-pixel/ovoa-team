@@ -30,7 +30,7 @@ const PAGE_TITLE = "OVOA plans: free, Base and Pro";
 
 function describe(data: PlansResult | undefined) {
   const base = planOf(data, "base", "monthly");
-  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, and Pro adds hands-free and the background agent.`;
+  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, and Pro gives you three times as many AI replies a day.`;
 }
 
 export const Route = createFileRoute("/early-access/")({
@@ -231,11 +231,11 @@ function EarlyAccess() {
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. The background agent runs jobs on its own and reports back. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and almost three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
+      a: `Everything in Base, with three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
     },
     {
       q: "Is there a free trial?",
@@ -302,7 +302,7 @@ function EarlyAccess() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
               OVOA is in beta. Health tracking and notes are free. Base turns on the OVOA assistant
-              for {perLabel(baseMonthly)}, and Pro adds hands-free and the background agent.
+              for {perLabel(baseMonthly)}, and Pro gives you three times as many AI replies a day.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
               <a

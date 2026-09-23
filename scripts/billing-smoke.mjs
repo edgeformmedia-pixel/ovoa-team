@@ -11,9 +11,11 @@
 // checks what /api/public/membership answers after each step.
 
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { toJSONAsync } from "seroval";
 
 const ROOT = new URL("..", import.meta.url);
 const STRIPE_PORT = Number(process.env.SMOKE_STRIPE_PORT ?? 12111);
@@ -109,6 +111,31 @@ const post = (path) => fetch(`${STRIPE}${path}`, { method: "POST" }).then((r) =>
 // What the site sent through the fake Resend.
 const emailsTo = async (to) =>
   (await (await fetch(`${STRIPE}/__emails`)).json()).data.filter((e) => e.to.includes(to));
+
+// Calls a server function (createServerFn in src/lib) the way the page does.
+// Its id is a hash the build makes, so it's read from the built server.
+// seroval is what TanStack Start encodes the arguments with.
+async function serverFn(name, data) {
+  const dir = fileURLToPath(new URL(".output/server/_ssr/", ROOT));
+  const pattern = new RegExp(`id: "([\\w-]+)",\\s*name: "${name}"`);
+  let fnId;
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".mjs"))) {
+    fnId = pattern.exec(readFileSync(join(dir, file), "utf8"))?.[1];
+    if (fnId) break;
+  }
+  if (!fnId) throw new Error(`server function ${name} isn't in the build`);
+  const res = await fetch(`${SITE}/_serverFn/${fnId}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tsr-serverFn": "true",
+      // What a browser sends from the page itself (the CSRF check in src/start.ts).
+      "sec-fetch-site": "same-origin",
+    },
+    body: JSON.stringify(await toJSONAsync({ data })),
+  });
+  return { ok: res.ok, status: res.status, text: await res.text() };
+}
 
 // The welcome page's "Start my free days" button.
 async function startTrial(sessionId) {
@@ -373,16 +400,159 @@ async function main() {
       bandComm,
     );
     results.bandOnlyPi = order?.stripe_payment_intent_id;
-    const page = await (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
+    check("band only: no card saved", !params.payment_intent_data?.setup_future_usage, params);
+
+    // Its 7 free days of Base: no card, so they end on their own.
+    const [email, ...more] = await emailsTo("band-only@buyer.test");
     check(
-      "band only: welcome page renders the Band order",
-      page.includes("Your Band is on its way") && !page.includes("start-trial"),
+      "band only: one order email, linking to the order page, no price",
+      more.length === 0 &&
+        email?.from === "OVOA <no-reply@ovoa.ai>" &&
+        email.text.includes(`/early-access/welcome?session_id=${sessionId}`) &&
+        !email.text.includes("start-trial") &&
+        email.text.includes("end on their own") &&
+        email.text.includes("nothing is charged") &&
+        !email.text.includes("$9.95") &&
+        !email.text.includes("until you cancel"),
+      email && { subject: email.subject, text: email.text },
     );
+    const waitingPage = await (
+      await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)
+    ).text();
+    // A form POST, never a link (mail scanners open links).
+    const startForm = /<form[^>]*"\/api\/public\/billing\/start-trial"[^>]*>/.exec(
+      waitingPage,
+    )?.[0];
+    const waitingChecks = {
+      band: waitingPage.includes("Your Band is on its way"),
+      offer: waitingPage.includes("free days of Base are waiting"),
+      form: /method="post"/i.test(startForm ?? "") && !/<a [^>]*start-trial/.test(waitingPage),
+      button: /Start my (<!-- -->)?7(<!-- -->)? free days/.test(waitingPage),
+      endsOnItsOwn: waitingPage.includes("end on their own"),
+      noPrice: !waitingPage.includes("$9.95"),
+      noRenewal: !waitingPage.includes("until you cancel"),
+    };
     check(
-      "band only: no card saved, no order email, nothing to start",
-      !params.payment_intent_data?.setup_future_usage &&
-        (await emailsTo("band-only@buyer.test")).length === 0 &&
-        (await startTrial(sessionId)).includes("error=no-trial"),
+      "band only: welcome page has the start form, no card, no price",
+      Object.values(waitingChecks).every(Boolean),
+      { ...waitingChecks, startForm },
+    );
+
+    // What live Stripe says to the card that paid for the Band: it was never
+    // attached to the customer, so a subscription can't use it.
+    const paid = await (
+      await fetch(
+        `${STRIPE}/v1/checkout/sessions/${sessionId}?expand[]=payment_intent.payment_method`,
+      )
+    ).json();
+    const basePrice = prices.data.find((p) => p.lookup_key === "ovoa_base_monthly");
+    const refused = await fetch(`${STRIPE}/v1/subscriptions`, {
+      method: "POST",
+      body: new URLSearchParams({
+        customer: paid.customer,
+        "items[0][price]": basePrice.id,
+        default_payment_method: paid.payment_intent.payment_method.id,
+      }),
+    });
+    check(
+      "band only: fake Stripe refuses the unsaved card, as live Stripe does",
+      refused.status === 400 && /must be attached/.test(await refused.text()),
+      refused.status,
+    );
+
+    const started = Date.now();
+    const back = await startTrial(sessionId);
+    check(
+      "band only: start, then back to the welcome page",
+      back.includes(`/early-access/welcome?session_id=${sessionId}`) && !back.includes("error"),
+      back,
+    );
+    results.bandOnlyTrial = await membership("band-only@buyer.test");
+    const trialDays = (Date.parse(results.bandOnlyTrial.trialEndsAt) - started) / 86_400_000;
+    check(
+      "band only: Base trial, 7 days from the start",
+      results.bandOnlyTrial.tier === "base" &&
+        results.bandOnlyTrial.status === "trialing" &&
+        results.bandOnlyTrial.source === "band_trial" &&
+        trialDays > 6.9 &&
+        trialDays < 7.1,
+      { ...results.bandOnlyTrial, trialDays },
+    );
+    const again = await startTrial(sessionId);
+    const subs = (
+      await (
+        await fetch(`${STRIPE}/v1/subscriptions?customer=${order?.stripe_customer_id}&status=all`)
+      ).json()
+    ).data;
+    check(
+      "band only: pressed twice, one subscription, no card, cancels itself, tied to the order",
+      !again.includes("error") &&
+        subs.length === 1 &&
+        subs[0].default_payment_method === null &&
+        subs[0].trial_settings?.end_behavior?.missing_payment_method === "cancel" &&
+        subs[0].items.data[0]?.price.lookup_key === "ovoa_base_monthly" &&
+        subs[0].metadata?.checkout_session === sessionId &&
+        subs[0].metadata?.ref === "maria",
+      subs.map((x) => ({
+        pm: x.default_payment_method,
+        trial: x.trial_settings,
+        metadata: x.metadata,
+      })),
+    );
+    results.bandOnlySub = subs[0]?.id;
+    results.bandOnlySession = sessionId;
+    results.bandOnlyCustomer = order?.stripe_customer_id;
+    const member = sql(`SELECT * FROM members WHERE checkout_session_id = '${sessionId}'`);
+    results.bandOnlyMember = member[0]?.id;
+    check(
+      "band only: member row tied to the Band's checkout",
+      member.length === 1 && member[0].stripe_subscription_id === subs[0]?.id,
+      member,
+    );
+    const orderAfter = sql(
+      `SELECT with_ai FROM band_orders WHERE checkout_session_id = '${sessionId}'`,
+    );
+    check("band only: the order still says no AI", orderAfter[0]?.with_ai === 0, orderAfter);
+    check(
+      "band only: still one order email",
+      (await emailsTo("band-only@buyer.test")).length === 1,
+    );
+
+    // The member view: no card to charge, so no yearly or Pro switch, and the
+    // switch to another app email that gifting uses.
+    const page = await (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
+    const memberChecks = {
+      in: page.includes("You&#x27;re in") || page.includes("You're in"),
+      endsOnItsOwn: page.includes("end on their own"),
+      emailSwitch: page.includes("Use a different email in the app"),
+      noYearly: !page.includes("Switch to yearly"),
+      noPro: !page.includes("Switch to Pro"),
+      noStart: !page.includes("start-trial"),
+      noPrice: !page.includes("$9.95"),
+    };
+    check(
+      "band only: welcome page shows the free days, ending on their own, and the email switch",
+      Object.values(memberChecks).every(Boolean),
+      memberChecks,
+    );
+
+    // Gifting: move the free days to someone else's app account.
+    const moved = await serverFn("setAppEmail", { sessionId, appEmail: "band-gift@app.test" });
+    results.bandOnlyGift = await membership("band-gift@app.test");
+    results.bandOnlyPayer = await membership("band-only@buyer.test");
+    check(
+      "band only: gifted with 'Use a different email in the app'",
+      moved.ok &&
+        results.bandOnlyGift.tier === "base" &&
+        results.bandOnlyGift.status === "trialing" &&
+        results.bandOnlyPayer.tier === "free",
+      { status: moved.status, gift: results.bandOnlyGift, payer: results.bandOnlyPayer },
+    );
+    const switched = await serverFn("changePlan", { sessionId, to: "pro" });
+    check(
+      "band only: no switch to Pro on free days with no card",
+      !switched.ok || switched.text.includes("can't be changed here"),
+      switched.status,
     );
   }
 
@@ -476,11 +646,45 @@ async function main() {
       bandComms,
     );
     results.afterRefundBandAi = await membership("band-ai@buyer.test");
-    results.afterRefundBandOnly = await membership("band-only@buyer.test");
     check(
       "refund: Band+AI keeps its trial until cancelled",
       results.afterRefundBandAi.tier === "base" && results.afterRefundBandAi.status === "trialing",
       results.afterRefundBandAi,
+    );
+    // Band only's free days, started and given away in block 2, run on too.
+    results.afterRefundBandOnly = await membership("band-gift@app.test");
+    check(
+      "refund: Band only's started free days run on",
+      results.afterRefundBandOnly.tier === "base" &&
+        results.afterRefundBandOnly.status === "trialing",
+      results.afterRefundBandOnly,
+    );
+
+    // Then they end with no card on file: cancelled, nothing charged, and the
+    // order can't start them again.
+    const ended = await post(`/__end_trial/${results.bandOnlySub}`);
+    results.bandOnlyEnded = await membership("band-gift@app.test");
+    const charged = sql(
+      `SELECT * FROM affiliate_commissions WHERE member_id = '${results.bandOnlyMember}'`,
+    );
+    check(
+      "band only: the free days end on their own, nothing charged",
+      ended.status === "canceled" &&
+        results.bandOnlyEnded.tier === "free" &&
+        results.bandOnlyEnded.status === "canceled" &&
+        charged.length === 0,
+      { sub: ended.status, membership: results.bandOnlyEnded, charged },
+    );
+    await startTrial(results.bandOnlySession);
+    const subsAfter = (
+      await (
+        await fetch(`${STRIPE}/v1/subscriptions?customer=${results.bandOnlyCustomer}&status=all`)
+      ).json()
+    ).data;
+    check(
+      "band only: pressing start again after they end starts nothing",
+      subsAfter.length === 1 && (await membership("band-gift@app.test")).tier === "free",
+      subsAfter.map((x) => x.status),
     );
   }
 

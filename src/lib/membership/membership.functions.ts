@@ -63,8 +63,9 @@ export type WelcomeTestflight = {
 export type WelcomeData =
   | { state: "pending" }
   | { state: "error"; message: string }
-  // A Band order and no membership: "Band only", or a Band bought with Base
-  // whose free days haven't been started (`trial`).
+  // A Band order and no membership yet: free days that haven't been started
+  // (`trial`: Base's with a card, or Band only's with none), or a refunded
+  // order with nothing to start.
   | {
       state: "band";
       firstName: string | null;
@@ -88,6 +89,9 @@ export type WelcomeData =
       trialEndsAt: string | null;
       renewsAt: string | null;
       cancelAtPeriodEnd: boolean;
+      // Band only's free days: no card on file, so they end on their own and
+      // there's nothing to switch.
+      noCard: boolean;
       // Set when a Band came in the same checkout.
       band: WelcomeBand | null;
       testflight: WelcomeTestflight;
@@ -117,6 +121,14 @@ function bandSummary(order: import("./store.server").BandOrder): WelcomeBand {
 
 type MemberRow = import("./store.server").Member;
 type Prices = import("./sync.server").Prices;
+
+// The free days that came with a Band bought on its own (startBandTrial made
+// them with no card), while they run: a member row on a Band order that has no
+// AI of its own.
+const noCardTrial = (
+  member: MemberRow,
+  bandOrder: import("./store.server").BandOrder | null,
+): boolean => member.status === "trialing" && bandOrder !== null && !bandOrder.with_ai;
 
 // Which plan a switch button moves this member to, or null when it can't be
 // done from the welcome page (free access, the old Founder plan, a membership
@@ -176,7 +188,8 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
 
   let price: Extract<WelcomeData, { state: "ready" }>["price"] = null;
   let offers: WelcomeOffers = { annual: null, pro: null };
-  if (member.plan === "monthly" || member.plan === "annual") {
+  const noCard = noCardTrial(member, bandOrder);
+  if (!noCard && (member.plan === "monthly" || member.plan === "annual")) {
     try {
       const prices = await sync.loadPrices();
       const current = prices.plans.get(planId(member.tier, member.plan));
@@ -208,6 +221,7 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
     trialEndsAt: member.trial_ends_at,
     renewsAt: member.current_period_end,
     cancelAtPeriodEnd: member.cancel_at_period_end,
+    noCard,
     band: bandOrder ? bandSummary(bandOrder) : null,
     testflight: {
       mode: testflightInvitesConfigured() ? "invite" : publicUrl ? "link" : "manual",
@@ -255,8 +269,13 @@ export const changePlan = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<WelcomeData> => {
     const sync = await import("./sync.server");
     const { stripe } = await import("./stripe.server");
-    const member = (await sync.syncCheckoutSession(data.sessionId))?.member;
-    const target = member ? switchTarget(member, data.to) : null;
+    const result = await sync.syncCheckoutSession(data.sessionId);
+    const member = result?.member;
+    // Band only's free days have no card to charge a switch to.
+    const target =
+      member && !noCardTrial(member, result?.bandOrder ?? null)
+        ? switchTarget(member, data.to)
+        : null;
     if (!member?.stripe_subscription_id || !target) {
       throw new Error("This membership can't be changed here. Use Manage billing instead.");
     }
@@ -504,8 +523,9 @@ export type AdminBandOrder = {
   name: string | null;
   phone: string | null;
   withAi: boolean;
-  // With Base: when its free days were started (at checkout, for orders from
-  // before Sept 23), or null while they wait for the buyer.
+  // When its free days of Base were started (at checkout, for orders with
+  // Base from before Sept 23; Band only's have no card), or null while they
+  // wait for the buyer.
   baseStartedAt: string | null;
   checkoutSessionId: string;
   amountCents: number;

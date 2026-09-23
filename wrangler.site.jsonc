@@ -10,6 +10,9 @@
 // (scripts/stripe-setup.mjs --cloudflare sets the Stripe ones for you).
 {
   "name": "ovoa-site",
+  // Admin@ovoa.ai's Account, pinned so no cached wrangler login can send a
+  // deploy or migration anywhere else.
+  "account_id": "e58b0ec5305410f9d3cd70f461f39cb6",
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],

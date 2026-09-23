@@ -28,11 +28,11 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer. ${baseMonthly}, or ${baseAnnual}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. The background agent runs jobs on its own and reports back. ${baseMonthly}, or ${baseAnnual}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and almost three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
+      a: `Everything in Base, with three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
     },
     {
       q: "Is this finished?",
@@ -44,7 +44,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "How much is the Band?",
-      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base, which start when you choose (we email you a link), so they don't run out while the Band is on its way. After that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. The Band is beta hardware, made in small batches, and ships to US addresses.`,
+      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base, which start when you choose (we email you a link), so they don't run out while the Band is on its way. After that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. Bought on its own, the Band still comes with the ${days} days, with no card needed: they end on their own and nothing is charged. The Band is beta hardware, made in small batches, and ships to US addresses.`,
     },
     {
       q: "How do I ask OVOA to do something?",
@@ -68,7 +68,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "When does the microphone listen?",
-      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. Pro's hands-free wake word is the one exception, and it's off until you turn it on. OVOA never records your day in the background.",
+      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. The hands-free wake word and Always listen are the exception: they're off until you turn them on, and your iPhone itself listens for the name. Nothing leaves the phone until it hears \"OVOA\", and then only the words, never the audio. OVOA never records your day in the background.",
     },
     {
       q: "What happens to my data?",

@@ -323,8 +323,9 @@ function Checkout() {
                     title="Band only"
                     price={band}
                   >
-                    No subscription. The free app covers health tracking and notes, and you can add
-                    the assistant any time.
+                    No subscription and no card saved. It still comes with {days} free days of OVOA
+                    Base to start from your order page, or give away. They end on their own, and
+                    nothing is charged.
                   </Choice>
                 </div>
 

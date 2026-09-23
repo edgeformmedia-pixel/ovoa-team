@@ -249,11 +249,13 @@ export async function syncSubscription(
 }
 
 // Free days that came with a Band and haven't been started yet. `card` is the
-// saved card Base will be charged to when they end.
+// saved card Base will be charged to when they end. `noCard`: a Band bought on
+// its own, so no card was saved and the free days end on their own.
 export type WaitingTrial = {
   plan: PlanId;
   days: number;
   card: { brand: string; last4: string } | null;
+  noCard: boolean;
 };
 
 export type CheckoutResult = {
@@ -269,12 +271,23 @@ const isBandCheckout = (session: StripeCheckoutSession) =>
 // A Band bought with Base (since Sept 23): one payment for the Band, the card
 // saved, and the plan and free days in the metadata for startBandTrial. Band
 // checkouts from before then are subscription mode with the trial already
-// running; "Band only" has no plan.
+// running; "Band only" has no plan (see bandOnlyTrial).
 function laterTrial(session: StripeCheckoutSession): { plan: PlanId; days: number } | null {
   const plan = session.metadata?.["plan"];
   if (session.mode !== "payment" || !isPlanId(plan)) return null;
   const days = Number(session.metadata?.["trial_days"]);
   return { plan, days: Number.isInteger(days) && days >= 0 ? days : BAND_TRIAL_DAYS };
+}
+
+// "Band only" comes with the same free days of Base, but no card was saved
+// for it: started from the welcome page, they end on their own and nothing is
+// ever charged. It isn't a Band bought with AI, so band_orders.with_ai stays
+// false (recordBand reads laterTrial only).
+function bandOnlyTrial(session: StripeCheckoutSession): { plan: PlanId; days: number } | null {
+  if (session.mode !== "payment" || !isBandCheckout(session)) return null;
+  // With no free days, Stripe would bill at once, with no card to bill.
+  if (isPlanId(session.metadata?.["plan"]) || BAND_TRIAL_DAYS <= 0) return null;
+  return { plan: "base_monthly", days: BAND_TRIAL_DAYS };
 }
 
 function savedCard(session: StripeCheckoutSession) {
@@ -382,17 +395,21 @@ async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutRes
 
   if (session.mode !== "payment") return null;
   // A Band, with Base to start later or on its own: no membership until the
-  // free days are started (then it's the member row made for this checkout).
+  // free days are started (then it's the member row made for this checkout,
+  // Band only included, so the welcome page can move it to another app email).
   if (band) {
     if (!bandOrder) return null;
     await recordBandCommission(bandOrder, null);
-    const trial = laterTrial(session);
-    const member = trial ? await store().findMember("checkout_session_id", session.id) : null;
+    const withBase = laterTrial(session);
+    const trial = withBase ?? bandOnlyTrial(session);
+    const member = await store().findMember("checkout_session_id", session.id);
     const waiting = trial && !member && bandOrder.status !== "refunded";
     return {
       member,
       bandOrder,
-      waitingTrial: waiting ? { ...trial, card: savedCard(session).card } : null,
+      waitingTrial: waiting
+        ? { ...trial, card: withBase ? savedCard(session).card : null, noCard: !withBase }
+        : null,
     };
   }
 
@@ -442,8 +459,12 @@ type StripeList<T> = { data: T[] };
 // Starts the free days bought with a Band, when the buyer chooses (the button
 // on their welcome page, which the order email links to). Makes the Base
 // subscription on the card saved at checkout, with the free days as Stripe's
-// trial, so the first charge is when they end. Safe to repeat: a second call
-// (a double click, a retry) finds the subscription the first one made.
+// trial, so the first charge is when they end. "Band only" has no card saved:
+// its subscription has no payment method at all (the one that paid for the
+// Band was never attached to the customer, and Stripe refuses one that isn't),
+// so it cancels itself when the free days end. Safe to repeat, and once per
+// Band order: a second call (a double click, a retry, a press after the days
+// ended) finds the member row or the subscription the first one made.
 export async function startBandTrial(sessionId: string): Promise<Member> {
   const session = await retrieveCheckout(sessionId);
   const result = await syncCheckout(session);
@@ -475,13 +496,14 @@ export async function startBandTrial(sessionId: string): Promise<Member> {
         customer: customerId,
         items: [{ price: price.id }],
         ...(trial.days > 0 ? { trial_period_days: trial.days } : {}),
-        default_payment_method: savedCard(session).id ?? undefined,
+        default_payment_method: trial.noCard ? undefined : (savedCard(session).id ?? undefined),
         // Without a card on file when the free days end, stop rather than
-        // leave an unpaid invoice.
+        // leave an unpaid invoice. That's always the case for Band only.
         trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
         metadata: {
           plan: trial.plan,
           band: "1",
+          ...(trial.noCard ? { band_only: "1" } : {}),
           checkout_session: session.id,
           ...(ref ? { ref } : {}),
         },
@@ -509,17 +531,20 @@ const CARD_BRANDS: Record<string, string> = {
   visa: "Visa",
 };
 
-// Waiting free days in words, for the emails and the welcome page.
+// Waiting free days in words, for the emails and the welcome page. Band only's
+// have no price: nothing is ever charged for them.
 export async function trialOffer(trial: WaitingTrial): Promise<TrialOffer> {
   let price: string | null = null;
-  try {
-    const p = (await loadPrices()).plans.get(trial.plan);
-    if (p?.unit_amount) {
-      const per = p.recurring?.interval === "year" ? "year" : "month";
-      price = `${formatMoney(p.unit_amount, p.currency)} a ${per}`;
+  if (!trial.noCard) {
+    try {
+      const p = (await loadPrices()).plans.get(trial.plan);
+      if (p?.unit_amount) {
+        const per = p.recurring?.interval === "year" ? "year" : "month";
+        price = `${formatMoney(p.unit_amount, p.currency)} a ${per}`;
+      }
+    } catch (error) {
+      console.error("[membership] trial price", error);
     }
-  } catch (error) {
-    console.error("[membership] trial price", error);
   }
   return {
     days: trial.days,
@@ -528,6 +553,7 @@ export async function trialOffer(trial: WaitingTrial): Promise<TrialOffer> {
     card: trial.card
       ? `${CARD_BRANDS[trial.card.brand] ?? "card"} ending in ${trial.card.last4}`
       : null,
+    noCard: trial.noCard,
   };
 }
 
@@ -537,9 +563,10 @@ export const firstNameOf = (order: BandOrder) =>
 export const shipPlaceOf = (order: BandOrder) =>
   [order.ship_city, order.ship_state].filter(Boolean).join(", ") || null;
 
-// The order email for a Band bought with Base, sent by the webhook once the
-// Band is paid for: start the free days when it arrives. Best effort, like
-// every email here.
+// The order email for a Band, sent by the webhook once the Band is paid for:
+// start the free days when it arrives. Band only gets it too, since its free
+// days (no card) wait on the same page. The email links to that page, never to
+// the start itself. Best effort, like every email here.
 export async function emailWaitingTrial(result: CheckoutResult | null, url: string) {
   if (!result?.bandOrder || !result.waitingTrial) return false;
   const order = result.bandOrder;
@@ -739,7 +766,9 @@ export async function handleChargeRefunded(charge: StripeCharge) {
   if (!charge.refunded) return;
 
   // A fully refunded Band: don't ship it (or expect it back). Any AI
-  // subscription bought with it carries on until it's cancelled in Stripe.
+  // subscription bought with it carries on until it's cancelled in Stripe;
+  // Band only's free days, if started, still end on their own. Free days not
+  // started yet can't be started any more (syncCheckout).
   for (const order of await store().bandOrdersByPayment(paymentIntentId, invoiceId)) {
     if (order.status !== "refunded") await store().setBandOrderStatus(order.id, "refunded");
   }

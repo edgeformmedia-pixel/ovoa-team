@@ -79,8 +79,9 @@ function OrderComplete() {
               Thanks for ordering the OVOA Band.
               {status.email ? ` A receipt is on its way to ${status.email}.` : ""} We&rsquo;ll email
               you when your Band ships.
-              {status.withAi &&
-                " Your free days of OVOA Base start when you choose: the next page has the button, and so does your order email."}
+              {status.withAi
+                ? " Your free days of OVOA Base start when you choose: the next page has the button, and so does your order email."
+                : " Your Band comes with free days of OVOA Base too, with no card: start them from the next page whenever you like, and they end on their own."}
             </p>
             <Button
               asChild

@@ -62,14 +62,18 @@ export async function sendEmail(email: Email, idempotencyKey?: string): Promise<
 
 // ---------- The emails ----------
 
-// Free days that came with a Band and haven't been started, in words.
+// Free days that came with a Band and haven't been started, in words (from
+// trialOffer in sync.server.ts).
 export type TrialOffer = {
   days: number;
   planName: string;
-  // "$9.95 a month", or null if the price couldn't be loaded.
+  // "$9.95 a month", or null if the price couldn't be loaded (always null
+  // with noCard: nothing is charged).
   price: string | null;
   // "Visa ending in 4242", or null.
   card: string | null;
+  // A Band bought on its own: no card, so the days end on their own.
+  noCard: boolean;
 };
 
 // A paragraph, or the email's one button.
@@ -109,13 +113,16 @@ const SIGN_OFF = "Questions? Reply to this email, or write to support@ovoa.ai.";
 const startLabel = (t: TrialOffer) => `Start my ${t.days} free days`;
 
 function afterTrial(t: TrialOffer): string {
+  if (t.noCard)
+    return `No card is needed: your ${t.days} days of ${t.planName} end on their own, and nothing is charged. You can also give them to someone: start them, then move them to their app email from your order page.`;
   const then = t.price
     ? `Then it's ${t.price}${t.card ? ` on your ${t.card}` : ""}, until you cancel.`
     : "Then it's the monthly price, until you cancel.";
   return `Nothing is charged for ${t.planName} until your ${t.days} days are up. ${then} Cancel before they end and you pay nothing more.`;
 }
 
-// Right after a Band is bought with Base: the free days wait for them.
+// Right after a Band is bought, with Base or on its own: the free days wait
+// for them. The button opens the order page, which has the start form.
 export function trialWaitingEmail(input: {
   to: string;
   firstName: string | null;
