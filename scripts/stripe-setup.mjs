@@ -17,6 +17,9 @@
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
 //          --no-upload     only print the secrets; don't put them on the Worker
 //
+// With STRIPE_API_BASE set (the fake Stripe in the smoke tests) it never
+// uploads, so a test run can't put a fake key on the live site.
+//
 // Safe to run again: it reuses what exists and only creates what's missing.
 // A changed price creates a new Stripe price and moves the lookup key to it
 // (transfer_lookup_key); the old price is left alone, so people already
@@ -41,8 +44,7 @@ const PRODUCTS = [
   {
     id: "ovoa_pro",
     name: "OVOA Pro AI",
-    description:
-      "Everything in Base, plus the hands-free wake word, the background agent and a bigger daily allowance. Beta.",
+    description: "Everything in Base, with three times the daily AI replies. Beta.",
   },
   {
     id: "ovoa_band",
@@ -295,7 +297,9 @@ async function main() {
   }
 
   // ---- The site's Worker ----
-  if (!opts["no-upload"]) {
+  if (process.env.STRIPE_API_BASE && !opts["no-upload"])
+    say("\nNot uploading: STRIPE_API_BASE points at a fake Stripe.");
+  else if (!opts["no-upload"]) {
     const secrets = {
       STRIPE_SECRET_KEY: SECRET,
       ...(webhookSecret ? { STRIPE_WEBHOOK_SECRET: webhookSecret } : {}),
