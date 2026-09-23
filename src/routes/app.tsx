@@ -27,13 +27,13 @@ export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Ovoa — ask, and it's done" },
+      { title: "Ovoa: ask, and it's done" },
       {
         name: "description",
         content:
           "Ovoa is the app for your agent. Say what you want done, leave it to work, and come back to the real result.",
       },
-      { property: "og:title", content: "Ovoa — ask, and it's done" },
+      { property: "og:title", content: "Ovoa: ask, and it's done" },
       {
         property: "og:description",
         content: "Everything you asked Ovoa for, and what actually came of it.",
@@ -106,7 +106,7 @@ function BandRoute() {
     if (session) setAuthSkipped(false);
   }, [session]);
 
-  // AUTH GATE DISABLED FOR TESTING — uncomment to require sign-in again.
+  // AUTH GATE DISABLED FOR TESTING. Uncomment to require sign-in again.
   // useEffect(() => {
   //   if (!loading && !session && !isAuthSkipped()) void navigate({ to: "/auth" });
   // }, [loading, session, navigate]);
@@ -134,7 +134,7 @@ function TaskRow({ task, onOpen }: { task: TaskRecord; onOpen: (id: string) => v
     task.result ??
     task.question?.text ??
     task.error ??
-    (task.status === "working" ? "Ovoa is working on it" : "Received — waiting to start");
+    (task.status === "working" ? "Ovoa is working on it" : "Received, waiting to start");
 
   return (
     <li>
@@ -217,12 +217,12 @@ function BandHome({ userId, skipped = false }: { userId: string; skipped?: boole
 
   const submit = useMutation({
     mutationFn: async (request: string) => {
-      if (skipped) throw new Error("Sign in to send requests — skipping is just for looking around.");
+      if (skipped) throw new Error("Sign in to send requests. Skipping is just for looking around.");
       return submitTask({ data: { request, idempotencyKey: keyForRequest(request) } });
     },
     onSuccess: () => {
       // Show the saved request straight away, then nudge the runner in the
-      // background — waiting on the runner would hide the task while it works.
+      // background; waiting on the runner would hide the task while it works.
       submissionKey.current = null;
       setDraft("");
       setComposerOpen(false);
@@ -278,7 +278,7 @@ function BandHome({ userId, skipped = false }: { userId: string; skipped?: boole
 
             {skipped && (
               <p className="band-card mb-4 px-4 py-3 text-[12px] text-band-dim">
-                You're looking around without an account — nothing is saved.{" "}
+                You're looking around without an account, so nothing is saved.{" "}
                 <Link to="/auth" className="underline">
                   Sign in
                 </Link>{" "}
@@ -342,7 +342,7 @@ function BandHome({ userId, skipped = false }: { userId: string; skipped?: boole
                 <p className="mt-2 text-[12px] text-band-dim">
                   {submit.error instanceof Error && submit.error.message
                     ? submit.error.message
-                    : "That didn’t save. Your words are still here — try sending again."}{" "}
+                    : "That didn’t save. Your words are still here. Try sending again."}{" "}
                   Your words are still here.
                 </p>
               )}
