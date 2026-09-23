@@ -65,7 +65,8 @@ export type WelcomeData =
   | { state: "error"; message: string }
   // A Band order and no membership yet: free days that haven't been started
   // (`trial`: Base's with a card, or Band only's with none), or a refunded
-  // order with nothing to start.
+  // order with nothing to start. Also a Band order whose plan has ended
+  // (`ended`: its tier): the Band still works with the free app.
   | {
       state: "band";
       firstName: string | null;
@@ -73,6 +74,7 @@ export type WelcomeData =
       band: WelcomeBand;
       testflight: WelcomeTestflight;
       trial: TrialOffer | null;
+      ended: PaidTier | null;
       // Order emails are on, so the buyer has this page's link by email.
       emailed: boolean;
     }
@@ -124,11 +126,34 @@ type Prices = import("./sync.server").Prices;
 
 // The free days that came with a Band bought on its own (startBandTrial made
 // them with no card), while they run: a member row on a Band order that has no
-// AI of its own.
-const noCardTrial = (
+// AI of its own. Unless a card was added since (Manage billing lets them): it
+// becomes the customer's default, Stripe charges it when the days end, and
+// then these are ordinary free days with a price and the switches.
+async function noCardTrial(
   member: MemberRow,
   bandOrder: import("./store.server").BandOrder | null,
-): boolean => member.status === "trialing" && bandOrder !== null && !bandOrder.with_ai;
+): Promise<boolean> {
+  if (member.status !== "trialing" || !bandOrder || bandOrder.with_ai) return false;
+  if (!member.stripe_subscription_id) return true;
+  const { stripe } = await import("./stripe.server");
+  const sub = await stripe<{
+    default_payment_method: string | null;
+    default_source?: string | null;
+    customer:
+      | string
+      | {
+          default_source?: string | null;
+          invoice_settings?: { default_payment_method?: string | null } | null;
+        };
+  }>("GET", `/subscriptions/${member.stripe_subscription_id}`, { expand: ["customer"] });
+  const customer = typeof sub.customer === "object" ? sub.customer : null;
+  return !(
+    sub.default_payment_method ||
+    sub.default_source ||
+    customer?.invoice_settings?.default_payment_method ||
+    customer?.default_source
+  );
+}
 
 // Which plan a switch button moves this member to, or null when it can't be
 // done from the welcome page (free access, the old Founder plan, a membership
@@ -173,22 +198,29 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
   const { member, bandOrder, waitingTrial } = result;
   const publicUrl = testflightPublicUrl();
 
-  if (!member) {
+  // No plan yet, or the plan from a Band order has ended: the Band's view,
+  // with the free app's steps. A Band owner still in the beta group
+  // (syncTestflight keeps them there) is shown as joined.
+  if (!member || (bandOrder && !isEntitled(member.status))) {
     if (!bandOrder) return { state: "pending" };
+    const kept = testflightInvitesConfigured() && member?.testflight_state === "invited";
     return {
       state: "band",
       firstName: sync.firstNameOf(bandOrder),
       email: bandOrder.email,
       band: bandSummary(bandOrder),
-      testflight: { mode: publicUrl ? "link" : "manual", state: "off", publicUrl },
+      testflight: kept
+        ? { mode: "invite", state: "invited", publicUrl }
+        : { mode: publicUrl ? "link" : "manual", state: "off", publicUrl },
       trial: waitingTrial ? await sync.trialOffer(waitingTrial) : null,
+      ended: member ? member.tier : null,
       emailed: emailConfigured(),
     };
   }
 
   let price: Extract<WelcomeData, { state: "ready" }>["price"] = null;
   let offers: WelcomeOffers = { annual: null, pro: null };
-  const noCard = noCardTrial(member, bandOrder);
+  const noCard = await noCardTrial(member, bandOrder);
   if (!noCard && (member.plan === "monthly" || member.plan === "annual")) {
     try {
       const prices = await sync.loadPrices();
@@ -273,7 +305,7 @@ export const changePlan = createServerFn({ method: "POST" })
     const member = result?.member;
     // Band only's free days have no card to charge a switch to.
     const target =
-      member && !noCardTrial(member, result?.bandOrder ?? null)
+      member && !(await noCardTrial(member, result?.bandOrder ?? null))
         ? switchTarget(member, data.to)
         : null;
     if (!member?.stripe_subscription_id || !target) {

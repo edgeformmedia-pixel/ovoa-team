@@ -114,7 +114,9 @@ const emailsTo = async (to) =>
 
 // Calls a server function (createServerFn in src/lib) the way the page does.
 // Its id is a hash the build makes, so it's read from the built server.
-// seroval is what TanStack Start encodes the arguments with.
+// seroval is what TanStack Start encodes the arguments with: it's a
+// devDependency on the same range as TanStack's, so npm keeps one copy and
+// this encodes exactly what the Worker decodes.
 async function serverFn(name, data) {
   const dir = fileURLToPath(new URL(".output/server/_ssr/", ROOT));
   const pattern = new RegExp(`id: "([\\w-]+)",\\s*name: "${name}"`);
@@ -556,6 +558,74 @@ async function main() {
     );
   }
 
+  // ---- 2b. Band only, then a card added in Manage billing ----
+  // Stripe charges a card the customer adds when the free days end, so the
+  // page stops saying nothing is charged and offers the switches again.
+  {
+    const { sessionId } = await checkout("band=1&ai=0");
+    await pay(sessionId, "band-card@buyer.test");
+    await startTrial(sessionId);
+    const welcomePage = async () =>
+      (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
+    const before = await welcomePage();
+    const customer = sql(
+      `SELECT stripe_customer_id FROM band_orders WHERE checkout_session_id = '${sessionId}'`,
+    )[0]?.stripe_customer_id;
+    await post(`/__add_card/${customer}`);
+    const page = await welcomePage();
+    const cardChecks = {
+      noCardBefore: before.includes("end on their own") && !before.includes("Switch to yearly"),
+      price: page.includes("$9.95 a month until you cancel"),
+      notOnItsOwn: !page.includes("end on their own"),
+      yearly: page.includes("Switch to yearly"),
+      pro: page.includes("Switch to Pro"),
+    };
+    check(
+      "band only + card: the page says what the card is charged, and offers the switches",
+      Object.values(cardChecks).every(Boolean),
+      cardChecks,
+    );
+    const switched = await serverFn("changePlan", { sessionId, to: "annual" });
+    const member = sql(
+      `SELECT plan, status FROM members WHERE checkout_session_id = '${sessionId}'`,
+    )[0];
+    check(
+      "band only + card: the yearly switch goes through, still on the free days",
+      switched.ok && member?.plan === "annual" && member.status === "trialing",
+      { status: switched.status, member },
+    );
+  }
+
+  // ---- 2c. Band only: the free days end, the Band is kept ----
+  // The order page goes back to the Band's view: the free app's steps, the
+  // order link, and plans, not a dead "this plan has ended".
+  {
+    const { sessionId } = await checkout("band=1&ai=0");
+    await pay(sessionId, "band-kept@buyer.test");
+    await startTrial(sessionId);
+    const sub = sql(
+      `SELECT stripe_subscription_id FROM members WHERE checkout_session_id = '${sessionId}'`,
+    )[0]?.stripe_subscription_id;
+    const ended = await post(`/__end_trial/${sub}`);
+    const page = await (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
+    const keptChecks = {
+      ended: ended.status === "canceled",
+      heading: page.includes("Welcome back"),
+      bandKeepsWorking: page.includes("Your Band keeps working with the free OVOA app"),
+      notDeadEnd: !page.includes("You can start a new one anytime"),
+      appSteps: page.includes("Install TestFlight") && page.includes("Join the OVOA beta"),
+      orderLink: page.includes("Copy link"),
+      plans: page.includes("Want the assistant too?"),
+      billing: page.includes("Manage billing"),
+      noStart: !page.includes("start-trial"),
+    };
+    check(
+      "band only: after the free days end, the order page keeps the free app's steps",
+      Object.values(keptChecks).every(Boolean),
+      keptChecks,
+    );
+  }
+
   // ---- 3. Base monthly ----
   {
     const { sessionId, params } = await checkout("plan=base_monthly");
@@ -631,10 +701,12 @@ async function main() {
   {
     await post(`/__refund/${results.bandOnlyPi}`);
     await post(`/__refund/${results.bandAiPi}`);
-    const orders = sql("SELECT email, status FROM band_orders ORDER BY email");
+    const orders = sql(
+      "SELECT email, status FROM band_orders WHERE email IN ('band-only@buyer.test', 'band-ai@buyer.test') ORDER BY email",
+    );
     check(
       "refund: both Band orders refunded",
-      orders.every((o) => o.status === "refunded"),
+      orders.length === 2 && orders.every((o) => o.status === "refunded"),
       orders,
     );
     const bandComms = sql(

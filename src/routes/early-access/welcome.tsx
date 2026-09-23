@@ -505,23 +505,28 @@ function Welcome() {
 
   // A Band order and the free app, with its free days of Base still waiting
   // to be started (with Base, or Band only's with no card), or refunded with
-  // nothing to start. Once they're started it's the member view below.
+  // nothing to start. Once they're started it's the member view below, and
+  // back here when that plan ends (b.ended): the Band keeps the free app.
   if (welcome.state === "band") {
     const b = welcome;
     const refunded = b.band.status === "refunded";
+    const name = b.firstName ? `, ${b.firstName}` : "";
     return (
       <Shell>
         <h1 className="text-[clamp(2.25rem,6vw,3.25rem)] font-semibold leading-[1.04]">
           {refunded
             ? "This Band order was refunded."
-            : `Thanks${b.firstName ? `, ${b.firstName}` : ""}. Your Band is ordered.`}
+            : b.ended
+              ? `Welcome back${name}.`
+              : `Thanks${name}. Your Band is ordered.`}
         </h1>
         {errorRow}
         {!refunded && (
           <>
             <p className="mt-4 text-lg leading-relaxed text-landing-muted">
-              Your Band works with the free OVOA app: health tracking and notes. Get the app ready
-              now.
+              {b.ended
+                ? `Your ${PLAN_NAMES[b.ended]} plan has ended. Your Band keeps working with the free OVOA app: health tracking and notes.`
+                : "Your Band works with the free OVOA app: health tracking and notes. Get the app ready now."}
             </p>
             {b.trial && sessionId && (
               <TrialCard trial={b.trial} sessionId={sessionId} emailed={b.emailed} />
@@ -550,6 +555,14 @@ function Welcome() {
               </section>
             )}
           </>
+        )}
+        {b.ended && sessionId && (
+          <form method="post" action="/api/public/billing/portal" className="mt-10">
+            <input type="hidden" name="session_id" value={sessionId} />
+            <button type="submit" className={`${secondaryButton} w-full sm:w-auto`}>
+              Manage billing
+            </button>
+          </form>
         )}
       </Shell>
     );

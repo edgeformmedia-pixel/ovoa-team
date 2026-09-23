@@ -278,7 +278,7 @@ XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --ke
 
 ## Part B: automatic, personal TestFlight invites (optional)
 
-With only the public link, anyone who gets the link can install the beta, paid or not, and cancelling doesn't take it away. Part B fixes that: each member is added to the `Members` group by email (Apple emails them their own invite), and removed when their membership ends or is refunded.
+With only the public link, anyone who gets the link can install the beta, paid or not, and cancelling doesn't take it away. Part B fixes that: each member is added to the `Members` group by email (Apple emails them their own invite), and removed when their membership ends or is refunded. A plan that came with a Band is the exception while the Band isn't refunded: the Band works with the free app, so its owner stays in the group.
 
 1. App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys** → **+**. Name it `OVOA website`, access **App Manager**. Click **Generate**.
 2. **Download API Key** (a `.p8` file; Apple only lets you download it once). Note the **Key ID** next to it and the **Issuer ID** at the top of the page.

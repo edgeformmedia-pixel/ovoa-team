@@ -3,8 +3,9 @@
 // Optional. With ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY and
 // TESTFLIGHT_GROUP_ID set, every new member is added to that external beta
 // group (Apple emails them the invite) and taken out again when their
-// membership ends. Without them, the welcome page shows TESTFLIGHT_PUBLIC_URL
-// instead.
+// membership ends, unless it came with a Band that wasn't refunded (the Band
+// works with the free app; see syncTestflight). Without them, the welcome page
+// shows TESTFLIGHT_PUBLIC_URL instead.
 
 import { envVar } from "./db.server";
 

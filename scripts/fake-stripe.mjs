@@ -5,17 +5,20 @@
 //
 //   node scripts/fake-stripe.mjs [--port 12111] [--deliver http://127.0.0.1:8787]
 //
-// Besides the Stripe endpoints it has four test controls, which play the part
-// of the buyer, of you in the Stripe dashboard, and of time passing. Each one
-// sends the webhooks real Stripe would, signed with FAKE_WEBHOOK_SECRET, to
-// --deliver:
+// Besides the Stripe endpoints it has test controls, which play the part of
+// the buyer, of you in the Stripe dashboard, and of time passing. Each one
+// sends the webhooks real Stripe would (the ones the site listens for), signed
+// with FAKE_WEBHOOK_SECRET, to --deliver:
 //
 //   POST /__complete/<checkout session id>   {"email","name","phone"}  buyer pays
 //   POST /__cancel/<subscription id>                                   cancel now
 //   POST /__refund/<payment intent id>                                 full refund
 //   POST /__end_trial/<subscription id>      the free days run out now: charged
-//                                            on its payment method, or cancelled
+//                                            on its payment method (or the
+//                                            customer's default), or cancelled
 //                                            without one (missing_payment_method)
+//   POST /__add_card/<customer id>           a card added in the billing portal:
+//                                            attached, and the customer's default
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
 //   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
 //                                            click-throughs; it returns to success_url
@@ -292,7 +295,10 @@ async function handle(req, res) {
     const sub = db.subscriptions.get(hit[1]);
     if (!sub) return err(res, 404, "no such subscription");
     if (sub.status !== "trialing") return err(res, 400, "not trialing");
-    const pm = sub.default_payment_method;
+    const pm =
+      sub.default_payment_method ??
+      db.customers.get(sub.customer)?.invoice_settings?.default_payment_method ??
+      null;
     if (!pm && sub.trial_settings?.end_behavior?.missing_payment_method === "cancel") {
       Object.assign(sub, { status: "canceled", canceled_at: nowS(), trial_end: nowS() });
       await deliver("customer.subscription.deleted", sub);
@@ -307,6 +313,19 @@ async function handle(req, res) {
     await deliver("invoice.paid", inv);
     await deliver("customer.subscription.updated", sub);
     return send(sub);
+  }
+  if ((hit = m(/^\/__add_card\/(cus_\w+)$/)) && req.method === "POST") {
+    const customer = db.customers.get(hit[1]);
+    if (!customer) return err(res, 404, "no such customer");
+    const pm = {
+      id: id("pm"),
+      object: "payment_method",
+      card: { brand: "mastercard", last4: "4444" },
+      customer: customer.id,
+    };
+    db.paymentMethods.set(pm.id, pm);
+    customer.invoice_settings = { default_payment_method: pm.id };
+    return send(customer);
   }
   if ((hit = m(/^\/__sessions\/(cs_\w+)$/))) {
     const s = db.sessions.get(hit[1]);
@@ -553,7 +572,11 @@ async function handle(req, res) {
   }
   if ((hit = m(/^\/subscriptions\/(sub_\w+)$/))) {
     const sub = db.subscriptions.get(hit[1]);
-    return sub ? send(sub) : err(res, 404, "No such subscription");
+    if (!sub) return err(res, 404, "No such subscription");
+    const expand = [].concat(q.expand ?? []);
+    return send(
+      expand.includes("customer") ? { ...sub, customer: db.customers.get(sub.customer) } : sub,
+    );
   }
   if ((hit = m(/^\/customers\/(cus_\w+)$/))) {
     const c = db.customers.get(hit[1]);

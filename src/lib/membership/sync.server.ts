@@ -605,6 +605,16 @@ async function otherEntitledRow(member: Member): Promise<boolean> {
   return rows.some((row) => row.id !== member.id && isEntitled(row.status));
 }
 
+// A plan that came with a Band (Band only's free days, or Band + Base) whose
+// Band wasn't refunded: the Band works with the free app, so its owner stays
+// in the beta when the plan ends. Keyed on the order, not the subscription's
+// band metadata, which stays set after a refund.
+async function ownsBand(member: Member): Promise<boolean> {
+  if (!member.checkout_session_id) return false;
+  const order = await store().bandOrderByCheckout(member.checkout_session_id);
+  return order !== null && order.status !== "refunded";
+}
+
 export async function syncTestflight(member: Member, { force = false } = {}): Promise<Member> {
   if (!testflightInvitesConfigured()) {
     if (member.testflight_state === "pending")
@@ -624,6 +634,9 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
       });
     }
     if (!entitled && invited) {
+      // A Band owner keeps the free app: left 'invited', which the welcome
+      // page shows as joined and the admin page can still retry.
+      if (await ownsBand(member)) return member;
       // Someone with another live membership on the same email keeps their access.
       if (await otherEntitledRow(member))
         return patchTestflight(member, { testflight_state: "removed" });
@@ -768,9 +781,13 @@ export async function handleChargeRefunded(charge: StripeCharge) {
   // A fully refunded Band: don't ship it (or expect it back). Any AI
   // subscription bought with it carries on until it's cancelled in Stripe;
   // Band only's free days, if started, still end on their own. Free days not
-  // started yet can't be started any more (syncCheckout).
+  // started yet can't be started any more (syncCheckout). A plan from the
+  // order that has already ended kept its owner in the beta for the Band's
+  // sake (syncTestflight); without the Band, that access ends too.
   for (const order of await store().bandOrdersByPayment(paymentIntentId, invoiceId)) {
     if (order.status !== "refunded") await store().setBandOrderStatus(order.id, "refunded");
+    const member = await store().findMember("checkout_session_id", order.checkout_session_id);
+    if (member && !isEntitled(member.status)) await syncTestflight(member);
   }
 
   // A fully refunded old lifetime purchase ends that membership. (Subscriptions
