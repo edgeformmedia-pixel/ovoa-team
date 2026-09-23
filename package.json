@@ -13,7 +13,8 @@
     "cf:deploy": "vite build && npx wrangler deploy -c wrangler.site.jsonc",
     "cf:migrate": "npx wrangler d1 migrations apply ovoa-site-db --remote -c wrangler.site.jsonc",
     "cf:dev": "vite build && npx wrangler dev -c wrangler.site.jsonc --local",
-    "test:billing": "vite build && node scripts/billing-smoke.mjs"
+    "test:billing": "vite build && node scripts/billing-smoke.mjs",
+    "test:account": "vite build && node scripts/account-smoke.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.43",

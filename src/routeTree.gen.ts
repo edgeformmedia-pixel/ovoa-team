@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
@@ -26,6 +27,10 @@ import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/we
 import { Route as PartnersIndexRouteImport } from './routes/partners/index'
 import { Route as PartnersDashboardRouteImport } from './routes/partners/dashboard'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
+import { Route as ApiPublicAccountBillingRouteImport } from './routes/api/public/account/billing'
+import { Route as ApiPublicAccountGoogleRouteImport } from './routes/api/public/account/google'
+import { Route as ApiPublicAccountGoogleCallbackRouteImport } from './routes/api/public/account/google-callback'
+import { Route as ApiPublicAccountSessionRouteImport } from './routes/api/public/account/session'
 import { Route as ApiPublicBillingCheckoutRouteImport } from './routes/api/public/billing/checkout'
 import { Route as ApiPublicBillingCreateCheckoutSessionRouteImport } from './routes/api/public/billing/create-checkout-session'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
@@ -42,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -120,6 +130,27 @@ const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
   path: '/api/public/membership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAccountBillingRoute = ApiPublicAccountBillingRouteImport.update({
+  id: '/api/public/account/billing',
+  path: '/api/public/account/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAccountGoogleRoute = ApiPublicAccountGoogleRouteImport.update({
+  id: '/api/public/account/google',
+  path: '/api/public/account/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAccountGoogleCallbackRoute =
+  ApiPublicAccountGoogleCallbackRouteImport.update({
+    id: '/api/public/account/google-callback',
+    path: '/api/public/account/google-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAccountSessionRoute = ApiPublicAccountSessionRouteImport.update({
+  id: '/api/public/account/session',
+  path: '/api/public/account/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBillingCheckoutRoute =
   ApiPublicBillingCheckoutRouteImport.update({
     id: '/api/public/billing/checkout',
@@ -163,6 +194,7 @@ const ApiPublicHooksRunTasksRoute = ApiPublicHooksRunTasksRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -178,6 +210,10 @@ export interface FileRoutesByFullPath {
   '/early-access/': typeof EarlyAccessIndexRoute
   '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
+  '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
+  '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
+  '/api/public/account/session': typeof ApiPublicAccountSessionRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
   '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
@@ -189,6 +225,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -204,6 +241,10 @@ export interface FileRoutesByTo {
   '/early-access': typeof EarlyAccessIndexRoute
   '/partners': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
+  '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
+  '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
+  '/api/public/account/session': typeof ApiPublicAccountSessionRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
   '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
@@ -216,6 +257,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -231,6 +273,10 @@ export interface FileRoutesById {
   '/early-access/': typeof EarlyAccessIndexRoute
   '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
+  '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
+  '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
+  '/api/public/account/session': typeof ApiPublicAccountSessionRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
   '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
@@ -244,6 +290,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/account'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -259,6 +306,10 @@ export interface FileRouteTypes {
     | '/early-access/'
     | '/partners/'
     | '/api/public/membership'
+    | '/api/public/account/billing'
+    | '/api/public/account/google'
+    | '/api/public/account/google-callback'
+    | '/api/public/account/session'
     | '/api/public/billing/checkout'
     | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
@@ -270,6 +321,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/account'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -285,6 +337,10 @@ export interface FileRouteTypes {
     | '/early-access'
     | '/partners'
     | '/api/public/membership'
+    | '/api/public/account/billing'
+    | '/api/public/account/google'
+    | '/api/public/account/google-callback'
+    | '/api/public/account/session'
     | '/api/public/billing/checkout'
     | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
@@ -296,6 +352,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/account'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -311,6 +368,10 @@ export interface FileRouteTypes {
     | '/early-access/'
     | '/partners/'
     | '/api/public/membership'
+    | '/api/public/account/billing'
+    | '/api/public/account/google'
+    | '/api/public/account/google-callback'
+    | '/api/public/account/session'
     | '/api/public/billing/checkout'
     | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
@@ -323,6 +384,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AccountRoute: typeof AccountRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
@@ -338,6 +400,10 @@ export interface RootRouteChildren {
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   PartnersIndexRoute: typeof PartnersIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
+  ApiPublicAccountBillingRoute: typeof ApiPublicAccountBillingRoute
+  ApiPublicAccountGoogleRoute: typeof ApiPublicAccountGoogleRoute
+  ApiPublicAccountGoogleCallbackRoute: typeof ApiPublicAccountGoogleCallbackRoute
+  ApiPublicAccountSessionRoute: typeof ApiPublicAccountSessionRoute
   ApiPublicBillingCheckoutRoute: typeof ApiPublicBillingCheckoutRoute
   ApiPublicBillingCreateCheckoutSessionRoute: typeof ApiPublicBillingCreateCheckoutSessionRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
@@ -361,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -468,6 +541,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMembershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/account/billing': {
+      id: '/api/public/account/billing'
+      path: '/api/public/account/billing'
+      fullPath: '/api/public/account/billing'
+      preLoaderRoute: typeof ApiPublicAccountBillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/account/google': {
+      id: '/api/public/account/google'
+      path: '/api/public/account/google'
+      fullPath: '/api/public/account/google'
+      preLoaderRoute: typeof ApiPublicAccountGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/account/google-callback': {
+      id: '/api/public/account/google-callback'
+      path: '/api/public/account/google-callback'
+      fullPath: '/api/public/account/google-callback'
+      preLoaderRoute: typeof ApiPublicAccountGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/account/session': {
+      id: '/api/public/account/session'
+      path: '/api/public/account/session'
+      fullPath: '/api/public/account/session'
+      preLoaderRoute: typeof ApiPublicAccountSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/billing/checkout': {
       id: '/api/public/billing/checkout'
       path: '/api/public/billing/checkout'
@@ -523,6 +624,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AccountRoute: AccountRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
@@ -539,6 +641,10 @@ const rootRouteChildren: RootRouteChildren = {
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   PartnersIndexRoute: PartnersIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
+  ApiPublicAccountBillingRoute: ApiPublicAccountBillingRoute,
+  ApiPublicAccountGoogleRoute: ApiPublicAccountGoogleRoute,
+  ApiPublicAccountGoogleCallbackRoute: ApiPublicAccountGoogleCallbackRoute,
+  ApiPublicAccountSessionRoute: ApiPublicAccountSessionRoute,
   ApiPublicBillingCheckoutRoute: ApiPublicBillingCheckoutRoute,
   ApiPublicBillingCreateCheckoutSessionRoute:
     ApiPublicBillingCreateCheckoutSessionRoute,

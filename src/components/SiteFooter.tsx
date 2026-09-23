@@ -4,6 +4,7 @@ const links = [
   { to: "/", label: "Home" },
   { to: "/early-access", label: "Plans" },
   { to: "/checkout", label: "Band" },
+  { to: "/account", label: "Account" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
   { to: "/partners", label: "Partners" },

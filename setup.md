@@ -37,6 +37,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | `/early-access` | Plans page: Free, Base and Pro columns, a Monthly / Yearly switch, FAQ |
 | `/checkout` | The Band, with 7 days of Base or "Band only" |
 | `/early-access/welcome` | After checkout: TestFlight steps, Band status, "pay yearly" and "switch to Pro" offers, Manage billing |
+| `/account` | Sign in or create an OVOA account, the same one the app uses: an emailed code or Google. Shows the plan, Manage billing and the TestFlight steps (Part F) |
 | `/early-access/admin` | Your dashboard: revenue, trials, every member, Band orders (Mark shipped), partner payouts, give free Base or Pro |
 | `/privacy`, `/terms` | Drafts written from what the app server actually stores. Read them before going live. |
 | `/partners` + `/partners/dashboard` | Affiliate program: apply, then each partner gets a private stats page |
@@ -397,6 +398,65 @@ Without the key nothing is emailed, and nothing else breaks: buyers still see **
 
 ---
 
+## Part F: OVOA accounts on ovoa.ai (sign in, create an account)
+
+https://ovoa.ai/account is where people sign in or create their OVOA account. It's **the same account as the app**: the accounts live on the app's server (`jarvis-api`, in `ovoa-app/jarvis/api`), and the site uses them rather than keeping its own. So:
+
+- Made the account in the app first? They sign in on the site with the same email.
+- Made it on the site first? They sign in to the app with that email and the password they picked.
+
+**How it works:**
+
+```
+ovoa.ai/account → email → a 6-digit code from no-reply@ovoa.ai (10 minutes, 5 tries, 5 codes an hour)
+                → Continue with Google (once it's set up, below)
+   the email has an account (app or site) → signed in
+   it hasn't                              → "Create your OVOA account": name + password (the app's password)
+```
+
+Signed in, the page shows their name, email and plan, **See plans** or **Manage billing**, and the TestFlight steps. A plan bought while signed in is locked to the account's email in Stripe Checkout, so it always unlocks the right app account (no more "paid with one email, signed up in the app with another").
+
+The site keeps the session in a cookie for 30 days; the app's "sign out everywhere" and a password change sign the site out too. The code emails come from the app's server, not the site, so they need `RESEND_API_KEY` there (step 2).
+
+**Turn it on**, in this order (the app's server first, or the page's email step answers "That didn't work"):
+
+1. **The app's server gets the new tables.** From `ovoa-app\jarvis\api` in Git Bash:
+
+   ```bash
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run db:migrate
+   ```
+
+   It applies `migrations/0039_email_codes.sql` (codes, sign-up tickets, and when each account's email was proven). The app's own sign-up works with or without it.
+2. **The Resend key on the app's server** (the same `re_` key as Part E, pasted when asked):
+
+   ```bash
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put RESEND_API_KEY
+   ```
+
+3. **Deploy the app's server:** `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run deploy`, same folder.
+4. **Publish the site** (Lovable → Publish → Update). No new secret is needed: the site finds the app's server at `https://jarvis-api.edgeformmedia.workers.dev` (set `OVOA_API_URL` to use another). For the test Worker: `npm run cf:deploy`.
+5. Open https://ovoa.ai/account, type your email, and check the code arrives from no-reply@ovoa.ai. It signs you in to your app account.
+
+**Continue with Google (later).** Until it's set up, the button shows switched off with "Google sign-in opens soon".
+
+1. https://console.cloud.google.com → **APIs & Services → Credentials**. Either open the Web client the app already uses for Gmail and Calendar (`736336639952-r4qk…`), or **Create credentials → OAuth client ID → Web application** for the site.
+2. Under **Authorized redirect URIs**, add `https://ovoa.ai/api/public/account/google-callback` (and `https://ovoa-site.ovoa.workers.dev/api/public/account/google-callback` for the test Worker). Save.
+3. **OAuth consent screen:** app name `OVOA`, support email, and `https://ovoa.ai/privacy` as the privacy policy. Sign-in only asks for name and email (`openid email profile`), which Google doesn't need to review. While it's in *Testing*, only the test users you list can sign in: **Publish app** to open it to everyone.
+4. In Lovable → **Cloud → Secrets**, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from that client. Publish → Update.
+5. **Only if you made a new client in step 1:** the app's server has to accept its sign-ins. From `ovoa-app\jarvis\api`, paste the new client ID when asked:
+
+   ```bash
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put GOOGLE_SIGNIN_CLIENT_IDS
+   ```
+
+   (Reusing the app's client needs nothing here: its ID is already accepted.)
+
+Google sign-ins are checked by the app's server with Google itself, and matched to accounts by email, exactly like a code. Someone new picks a name (Google's is filled in) and a password for the app.
+
+**Check it on your PC:** `npm run test:account` builds the site, runs the app's server and the site locally with a fake Resend and Stripe, and walks through both orders (app first, site first), wrong codes, sign-out and checkout. It needs `ovoa-app` next to this folder.
+
+---
+
 ## Day to day
 
 | You want to… | Do this |
@@ -454,3 +514,7 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 | `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** Lovable and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C) |
 | `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends the Band emails from no-reply@ovoa.ai |
 | `EMAIL_FROM` | No | A different sender than `OVOA <no-reply@ovoa.ai>` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | For "Continue with Google" | Google Cloud → Credentials (Part F) |
+| `OVOA_API_URL` | No | The app's server for accounts, if not `https://jarvis-api.edgeformmedia.workers.dev` |
+
+On the app's server (`ovoa-app/jarvis/api`, not Lovable): `RESEND_API_KEY` sends the sign-in codes, and `GOOGLE_SIGNIN_CLIENT_IDS` accepts a separate Google client for the site (Part F).
