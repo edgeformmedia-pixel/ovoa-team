@@ -47,7 +47,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | `/api/public/billing/checkout` | Starts a Stripe Checkout. Plain links work: `?plan=base_monthly` (or `base_annual`, `pro_monthly`, `pro_annual`), `?band=1`, `?band=1&ai=0` |
 | `/api/public/billing/webhook` | Stripe tells the site about payments, renewals, cancellations, refunds |
 | `/api/public/billing/portal` | Stripe's billing page (cancel, change card, invoices) |
-| `/api/public/billing/start-trial` | The welcome page's **Start my 7 free days**: makes the Base subscription for a Band bought with Base |
+| `/api/public/billing/start-trial` | The welcome page's **Start my 7 free days**: makes the Base subscription for a Band bought with Base or on its own (Band only: no card, so the days end on their own) |
 | Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
@@ -111,7 +111,7 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 2. **Archive the old prices.** Stripe → **Product catalog** → the old OVOA membership product → archive the three `ovoa_member_*` prices (monthly, annual, lifetime). Anyone already on them keeps working and counts as Base.
 3. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
 4. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 5.
-5. **Turn on the app's plan check** (Part C): the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
+5. **The app's plan check** (Part C) stays off for v1. When you switch plans on, it's the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
 
 The database tables are already there (all four migrations, as of Sept 23).
 
@@ -310,7 +310,7 @@ Authorization: Bearer <MEMBERSHIP_API_KEY>
 
 It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the last answer for a day before treating the person as free. Free people get health and notes; anything else answers "part of a plan" in the app. Base gets the assistant with every AI feature, the wake word, Always listen and the background agent included (20 replies a day); Pro is Base with three times the replies (60 a day). The app shows no prices or buy buttons during TestFlight (Apple's rule); it says the plan is managed at ovoa.ai and has a Refresh button. Members sign up in the app with the same email they paid with; the welcome page tells them so, and lets them move the plan to a different app email if theirs doesn't match (the membership API answers for the app email, `members.app_email`, when one is set).
 
-**Until the key is set on the app's Worker, everyone is treated as Pro**, so nothing is locked yet. To turn it on, in this order:
+**Until the key is set on the app's Worker, everyone is treated as Pro**, so nothing is locked yet. **For v1 it stays off:** don't put `MEMBERSHIP_API_KEY` on the app's Worker until you decide to switch plans on. When you do, in this order:
 
 - [ ] The site answers: https://ovoa.ai/api/public/membership should say `{"error":"unauthorized"}`, not a "Page not found" page. (Since Sept 23 the app's Worker keeps each person's last answer when the site answers 404 or nonsense, so a site that's down can't turn paying members Free. Anyone it has never heard about is Free until it can ask.)
 - [ ] Give Apple's review login (Step 7) **Pro** free access on the admin page, or App Review sees only the free app.
@@ -318,7 +318,7 @@ It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the
 - [ ] `MEMBERSHIP_API_KEY` is on the site (Step 4). Use **the same value** on the app's Worker, from the `ovoa-app\jarvis\api` folder in Git Bash, pasting it when asked:
 
   ```bash
-  XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put MEMBERSHIP_API_KEY
+  XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret put MEMBERSHIP_API_KEY
   ```
 
   Never put it in the phone app itself.
@@ -388,18 +388,18 @@ The site keeps the session in a cookie for 30 days; the app's "sign out everywhe
 1. **The app's server gets the new tables.** From `ovoa-app\jarvis\api` in Git Bash:
 
    ```bash
-   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run db:migrate
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate
    ```
 
    It applies `migrations/0039_email_codes.sql` (codes, sign-up tickets, and when each account's email was proven). The app's own sign-up works with or without it.
 2. **The Resend key on the app's server** (the same `re_` key as Part E, pasted when asked):
 
    ```bash
-   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put RESEND_API_KEY
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret put RESEND_API_KEY
    ```
 
-3. **Deploy the app's server:** `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run deploy`, same folder.
-4. **Deploy the site** (`npm run deploy`, see [Where the site runs](#where-the-site-runs)). No new secret is needed: the site finds the app's server at `https://jarvis-api.edgeformmedia.workers.dev` (set `OVOA_API_URL` to use another).
+3. **Deploy the app's server:** `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy`, same folder.
+4. **Deploy the site** (`npm run deploy`, see [Where the site runs](#where-the-site-runs)). No new secret is needed: the site finds the app's server at `https://api.ovoa.ai` (set `OVOA_API_URL` to use another).
 5. Open https://ovoa.ai/account, type your email, and check the code arrives from no-reply@ovoa.ai. It signs you in to your app account.
 
 **Continue with Google** (set up Sept 23). Without the client secret, the button shows switched off with "Google sign-in opens soon".
@@ -421,7 +421,7 @@ Google sign-ins are checked by the app's server with Google itself, and matched 
 | You want to… | Do this |
 | --- | --- |
 | See money and members | `/early-access/admin`, or the Stripe dashboard |
-| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded Band shows `refunded` under *Band orders*, and its free days can no longer be started; if they were already started, Base carries on until you cancel that subscription too. |
+| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded Band shows `refunded` under *Band orders*, and its free days can no longer be started; if they were already started, Base carries on until you cancel that subscription too (Band only's free days end on their own; nothing is charged). |
 | Cancel someone | Stripe → **Customers** → them → the subscription → **Cancel**. They keep access until the end of what they paid for. |
 | Ship a Band | Admin page → *Band orders* → the address is there → **Mark shipped**. This emails the buyer that it's on its way, with the button to start their free days if they haven't. |
 | Someone lost the link to start their free days | Admin page → *Band orders* → **Copy start link** under *Not started*, then email it to them (only to their own address). |
@@ -473,10 +473,10 @@ All of them live on the site's Worker; [Where the site runs](#where-the-site-run
 | `OVOA_ADMIN_KEY` | Yes | Printed by the script; opens `/early-access/admin` |
 | `TESTFLIGHT_PUBLIC_URL` | Yes, unless you do Part B | TestFlight → Members group → Public Link |
 | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY`, `TESTFLIGHT_GROUP_ID` | Part B | App Store Connect → Integrations, and the admin page's group finder |
-| `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** the site and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C) |
+| `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** the site and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C), once plans are switched on (not for v1) |
 | `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends the Band emails from no-reply@ovoa.ai |
 | `EMAIL_FROM` | No | A different sender than `OVOA <no-reply@ovoa.ai>` |
 | `GOOGLE_CLIENT_SECRET` | For "Continue with Google" | `google/.env` (Part F). `GOOGLE_CLIENT_ID` is in `wrangler.site.jsonc` |
-| `OVOA_API_URL` | No | The app's server for accounts, if not `https://jarvis-api.edgeformmedia.workers.dev` |
+| `OVOA_API_URL` | No | The app's server for accounts, if not `https://api.ovoa.ai` |
 
 On the app's server (`ovoa-app/jarvis/api`, a different Worker): `RESEND_API_KEY` sends the sign-in codes, and `GOOGLE_SIGNIN_CLIENT_IDS` accepts a separate Google client for the site (Part F).

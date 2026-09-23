@@ -267,7 +267,8 @@ function Privacy() {
             can&rsquo;t do it themselves, by Apple&rsquo;s speech service. Also TestFlight (which
             shares crash reports, and any feedback you choose to send, with us), Apple Health, push
             notifications, and Siri if you set up &ldquo;Ask OVOA&rdquo; (Siri hears you and sends
-            OVOA the words).
+            OVOA the words). When you buy on ovoa.ai, we send your email and name to Apple to invite
+            you to the TestFlight beta.
           </li>
           <li>
             <strong>Expo</strong>: its push service carries the text of OVOA&rsquo;s notifications

@@ -9,14 +9,17 @@
 // the session that comes back in an HttpOnly cookie, and does the Google round
 // trip, which needs the client secret.
 //
-//   OVOA_API_URL          the app's server (default below)
+//   OVOA_API_URL          the app's server (default below). Never the old
+//                          workers.dev address: it only forwards to api.ovoa.ai
+//                          until it's deleted, and everyone coming through it
+//                          counts as one address for those sign-in limits.
 //   GOOGLE_CLIENT_ID      "Continue with Google": a Web client in Google Cloud,
 //   GOOGLE_CLIENT_SECRET   redirect URI <site>/api/public/account/google-callback.
 //                          Without both, the button is shown switched off.
 
 import { envVar } from "@/lib/membership/db.server";
 
-export const DEFAULT_API_URL = "https://jarvis-api.edgeformmedia.workers.dev";
+export const DEFAULT_API_URL = "https://api.ovoa.ai";
 
 export const accountApiUrl = () => (envVar("OVOA_API_URL") ?? DEFAULT_API_URL).replace(/\/+$/, "");
 
