@@ -55,10 +55,13 @@ export function encodeForm(params: Record<string, FormValue>): string {
   return out.toString();
 }
 
+// idempotencyKey: Stripe answers a repeat of the same POST (within 24 hours)
+// with the first result instead of doing it twice.
 export async function stripe<T = Record<string, unknown>>(
   method: "GET" | "POST" | "DELETE",
   path: string,
   params?: Record<string, FormValue>,
+  { idempotencyKey }: { idempotencyKey?: string } = {},
 ): Promise<T> {
   const form = params ? encodeForm(params) : "";
   const url =
@@ -69,6 +72,7 @@ export async function stripe<T = Record<string, unknown>>(
       Authorization: `Bearer ${secretKey()}`,
       "Stripe-Version": STRIPE_API_VERSION,
       ...(method === "POST" ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
     },
     ...(method === "POST" ? { body: form } : {}),
   });

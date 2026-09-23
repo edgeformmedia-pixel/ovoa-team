@@ -94,9 +94,11 @@ function Terms() {
         <h2>The OVOA Band</h2>
         <p>
           The Band is {bandPrice(data)}, paid once. A Band bought with OVOA Base includes {days}{" "}
-          days of Base; after that, Base is {perLabel(planOf(data, "base", "monthly"))} until you
-          cancel, and nothing more is charged if you cancel before the {days} days end. You can also
-          buy the Band on its own, with no subscription.
+          days of Base, which start when you start them from your order page (we email you the
+          link), not at checkout. Your card is saved for Base at checkout. After the {days} days,
+          Base is {perLabel(planOf(data, "base", "monthly"))} until you cancel, and nothing more is
+          charged if you cancel before they end. You can also buy the Band on its own, with no
+          subscription.
         </p>
         <p>
           The Band is beta hardware made in small batches. We ship to US addresses and email you

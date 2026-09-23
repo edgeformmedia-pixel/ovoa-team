@@ -63,18 +63,29 @@ export function tierOf(lookupKey: string | null | undefined): PaidTier | null {
 
 // Free days before the first charge.
 //   - Buying a plan on its own: none, you pay from day one.
-//   - Buying a Band with AI: Base monthly starts after BAND_TRIAL_DAYS. The
-//     card is taken up front, and Stripe emails a reminder before the trial
-//     ends (turn that on in Stripe → Settings → Billing → Subscriptions and emails).
+//   - Buying a Band with AI: BAND_TRIAL_DAYS of Base monthly, then Base until
+//     they cancel. The Band can take weeks to arrive, so the free days start
+//     when the buyer chooses, from the link in their order email (or their
+//     welcome page), not at checkout. Checkout charges the Band and saves the
+//     card; starting the free days makes the subscription (startBandTrial in
+//     sync.server.ts), and Stripe charges Base when they end. Stripe emails a
+//     reminder before that (turn it on in Stripe → Settings → Billing →
+//     Subscriptions and emails).
 export const NO_BAND_TRIAL_DAYS = 0;
 export const BAND_TRIAL_DAYS = 7;
 
-// Partner program. Partners earn AFFILIATE_PERCENT of every subscription
-// payment (Base or Pro) for COMMISSION_MONTHS. The Band is hardware and earns
-// no commission: its amount is left out, even when it's on the same invoice as
-// the first AI payment.
-export const AFFILIATE_PERCENT = 20;
-export const COMMISSION_MONTHS = 12;
+// Partner program. Partners earn three ways:
+//   - AFFILIATE_PERCENT of every subscription payment (Base or Pro, monthly or
+//     yearly) for COMMISSION_MONTHS after the member joins.
+//   - BAND_COMMISSION_PERCENT of each Band they sell: $10 of the $89.99 Band.
+//     The Band's amount is kept out of the subscription commission, even when
+//     it's on the same invoice as the first AI payment.
+//   - A CPM on views of their posts about OVOA, at a rate set per partner on
+//     the admin page (affiliates.cpm_cents, per 1,000 views). Views are
+//     logged by hand on the admin page once you've checked them.
+export const AFFILIATE_PERCENT = 15;
+export const COMMISSION_MONTHS = 6;
+export const BAND_COMMISSION_PERCENT = 11.11;
 export const REF_COOKIE_DAYS = 90;
 export const PAYOUT_MINIMUM_USD = 50;
 
@@ -146,6 +157,11 @@ export const FALLBACK_PLANS: PublicPlan[] = [
 ];
 
 export const FALLBACK_BAND: PublicBand = { amountCents: 8999, currency: "usd" };
+
+// What a partner earns on one Band at today's price.
+export function bandCommissionCents(band: PublicBand | null): number {
+  return Math.round(((band ?? FALLBACK_BAND).amountCents * BAND_COMMISSION_PERCENT) / 100);
+}
 
 export function formatMoney(cents: number, currency = "usd"): string {
   const whole = cents % 100 === 0;

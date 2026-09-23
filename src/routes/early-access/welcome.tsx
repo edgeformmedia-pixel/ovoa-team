@@ -12,6 +12,7 @@ import {
   type WelcomeOffer,
   type WelcomeTestflight,
 } from "@/lib/membership/membership.functions";
+import type { TrialOffer } from "@/lib/membership/email.server";
 import { PLAN_NAMES } from "@/lib/membership/copy";
 import { CHECKOUT_SESSION_PATTERN, TESTFLIGHT_APP_URL, formatMoney } from "@/lib/membership/plans";
 
@@ -296,6 +297,64 @@ function BandCard({ band, email }: { band: WelcomeBand; email: string }) {
   );
 }
 
+// A Band bought with Base: its free days wait until the buyer starts them.
+// A form POST (see /api/public/billing/start-trial), so it works from the
+// email's link on any phone.
+function TrialCard({
+  trial,
+  sessionId,
+  emailed,
+}: {
+  trial: TrialOffer;
+  sessionId: string;
+  emailed: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const { days, planName, price } = trial;
+  const ends = formatDate(new Date(Date.now() + days * 86_400_000).toISOString());
+  const then = price
+    ? `Then it's ${price}${trial.card ? ` on your ${trial.card}` : ""}, until you cancel.`
+    : "Then it's the monthly price, until you cancel.";
+  return (
+    <section
+      id="start"
+      className="mt-8 scroll-mt-20 rounded-[1.75rem] bg-landing-ink p-7 text-landing-action-foreground sm:p-8"
+    >
+      <h2 className="text-2xl font-semibold">{`Your ${days} free days of ${planName} are waiting.`}</h2>
+      <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
+        They haven&rsquo;t started, so they won&rsquo;t run out while your Band is on its way. Start
+        them when it arrives, or now if you&rsquo;d like to try the assistant in the app first.
+        {emailed ? " The link to this page is in your order email." : ""}
+      </p>
+      <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
+        Nothing is charged for {planName} until your {days} days are up. {then} Cancel before they
+        end and you pay nothing more.
+      </p>
+      <form
+        method="post"
+        action="/api/public/billing/start-trial"
+        onSubmit={(e) => {
+          const ok = window.confirm(
+            `Start your ${days} free days of ${planName} now? They run until ${ends}. ${then}`,
+          );
+          if (ok) setBusy(true);
+          else e.preventDefault();
+        }}
+      >
+        <input type="hidden" name="session_id" value={sessionId} />
+        <button
+          type="submit"
+          disabled={busy}
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-landing-action px-6 text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+        >
+          {busy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+          Start my {days} free days
+        </button>
+      </form>
+    </section>
+  );
+}
+
 function OfferCard({
   title,
   body,
@@ -419,7 +478,22 @@ function Welcome() {
     </div>
   );
 
-  // "Band only": a Band order and the free app.
+  const errorBanner =
+    error === "portal"
+      ? "Billing didn't open. Try again, or email support@ovoa.ai."
+      : error === "start"
+        ? "Your free days didn't start. Try again, or email support@ovoa.ai."
+        : error === "no-trial"
+          ? "There are no free days waiting on this order."
+          : null;
+  const errorRow = errorBanner && (
+    <p role="status" className="mt-6 rounded-2xl bg-landing-control px-5 py-4 text-sm font-medium">
+      {errorBanner}
+    </p>
+  );
+
+  // A Band order and the free app: "Band only", or with Base's free days
+  // still waiting to be started.
   if (welcome.state === "band") {
     const b = welcome;
     const refunded = b.band.status === "refunded";
@@ -430,12 +504,16 @@ function Welcome() {
             ? "This Band order was refunded."
             : `Thanks${b.firstName ? `, ${b.firstName}` : ""}. Your Band is ordered.`}
         </h1>
+        {errorRow}
         {!refunded && (
           <>
             <p className="mt-4 text-lg leading-relaxed text-landing-muted">
               Your Band works with the free OVOA app: health tracking and notes. Get the app ready
               now.
             </p>
+            {b.trial && sessionId && (
+              <TrialCard trial={b.trial} sessionId={sessionId} emailed={b.emailed} />
+            )}
             <BandCard band={b.band} email={b.email} />
             <AppSteps
               email={b.email}
@@ -443,20 +521,22 @@ function Welcome() {
               signUpNote="Then pair your Band from the app when it arrives."
             />
             {copyRow}
-            <section className="mt-10 rounded-[1.75rem] bg-landing-ink p-7 text-landing-action-foreground sm:p-8">
-              <h2 className="text-2xl font-semibold">Want the assistant too?</h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
-                Base turns on OVOA&rsquo;s assistant: press the Band, ask, and hear the answer. Pro
-                adds hands-free and the background agent.
-              </p>
-              <Link
-                to="/early-access"
-                hash="plans"
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-              >
-                See plans
-              </Link>
-            </section>
+            {!b.trial && (
+              <section className="mt-10 rounded-[1.75rem] bg-landing-ink p-7 text-landing-action-foreground sm:p-8">
+                <h2 className="text-2xl font-semibold">Want the assistant too?</h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
+                  Base turns on OVOA&rsquo;s assistant: press the Band, ask, and hear the answer.
+                  Pro adds hands-free and the background agent.
+                </p>
+                <Link
+                  to="/early-access"
+                  hash="plans"
+                  className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  See plans
+                </Link>
+              </section>
+            )}
           </>
         )}
       </Shell>
@@ -524,14 +604,7 @@ function Welcome() {
       </h1>
       <p className="mt-4 text-lg leading-relaxed text-landing-muted">{intro}</p>
 
-      {error === "portal" && (
-        <p
-          role="status"
-          className="mt-6 rounded-2xl bg-landing-control px-5 py-4 text-sm font-medium"
-        >
-          Billing didn&rsquo;t open. Try again, or email support@ovoa.ai.
-        </p>
-      )}
+      {errorRow}
 
       {w.band && <BandCard band={w.band} email={w.email} />}
 

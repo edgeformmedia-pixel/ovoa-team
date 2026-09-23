@@ -9,7 +9,7 @@ This turns ovoa.ai into a place where people pay for OVOA while the iPhone app i
 | Free | $0 | Health tracking and notes, no AI |
 | Base | $9.95/month or $95.99/year | The OVOA assistant. 20 replies a day. |
 | Pro | $25.95/month or $195.99/year | Base plus the hands-free wake word and the background agent. 55 replies a day. |
-| OVOA Band | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base, or sold on its own ("Band only") |
+| OVOA Band | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base that the buyer starts when they choose, or sold on its own ("Band only") |
 
 There's no free trial without a Band: a plan bought on its own is paid from day one.
 
@@ -17,11 +17,16 @@ There's no free trial without a Band: a plan bought on its own is paid from day 
 
 ```
 ovoa.ai/early-access (plans)  →  Stripe Checkout, paid from day one
-ovoa.ai/checkout (the Band)   →  Stripe Checkout: Band + Base monthly with 7 free days, card up front
-                                 (or "Band only": a one-time payment, no subscription)
+ovoa.ai/checkout (the Band)   →  Stripe Checkout: the Band is charged and the card is saved for Base
+                                 (or "Band only": a one-time payment, nothing saved)
+                              →  order email from no-reply@ovoa.ai: "start your 7 free days when your Band arrives"
+                              →  they tap Start on their welcome page: Base monthly starts with 7 free days,
+                                 and Stripe charges the saved card when those end
         →  ovoa.ai/early-access/welcome  (install TestFlight → join the beta → sign up in the app with the same email)
         →  the app's server asks ovoa.ai which plan that email is on, and unlocks that much
 ```
+
+**Why the Band's free days wait.** The Band can take weeks to arrive, and 7 free days that start at checkout would be over before it does. So checkout only charges the Band and saves the card. The order email (and the "shipped" email you send with **Mark shipped**) links to their welcome page, where **Start my 7 free days** creates the Base subscription right then, with Stripe's 7-day trial; the first $9.95 is charged 7 days after they tap it. Until they do, they're on the free app and nothing is billed. If they never tap it, Base never starts. The button is a form on the page, not the email link itself, because mail scanners open every link in an email and would otherwise start the free days on their own. Band orders from before Sept 23 were made the old way (the trial started at checkout) and carry on as they are.
 
 The app account has to use the email they paid with. When it doesn't (Apple Pay or Link filled in another address, or they already had an app account), the welcome page has **Use a different email in the app**: the plan moves to that app account, and the paying email goes back to the free app. You can do the same for someone on the admin page (**Set app email** under their email).
 
@@ -38,9 +43,11 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | `/api/public/billing/checkout` | Starts a Stripe Checkout. Plain links work: `?plan=base_monthly` (or `base_annual`, `pro_monthly`, `pro_annual`), `?band=1`, `?band=1&ai=0` |
 | `/api/public/billing/webhook` | Stripe tells the site about payments, renewals, cancellations, refunds |
 | `/api/public/billing/portal` | Stripe's billing page (cancel, change card, invoices) |
+| `/api/public/billing/start-trial` | The welcome page's **Start my 7 free days**: makes the Base subscription for a Band bought with Base |
+| Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `supabase/migrations/…` | `20260922150000_membership.sql` (members, partners, commissions), `20260922200000_tiers_and_band_orders.sql` (plan tiers, Band orders) and `20260923120000_member_app_email.sql` (the app email a plan was moved to) |
+| `supabase/migrations/…` | `20260922150000_membership.sql` (members, partners, commissions), `20260922200000_tiers_and_band_orders.sql` (plan tiers, Band orders), `20260923120000_member_app_email.sql` (the app email a plan was moved to) and `20260923180000_partner_cpm.sql` (partner CPM rates and logged views) |
 | `migrations/…` | The same three for the Cloudflare test Worker's D1 database |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
@@ -68,11 +75,11 @@ From Roll's live site and code:
 | Roll | OVOA (this setup) |
 | --- | --- |
 | Stripe web checkout, not Apple | Stripe Checkout |
-| 7-day free trial, card up front | Only with a Band: 7 days of Base, card up front. Plans alone are paid from day one; the free app is the way to try OVOA |
+| 7-day free trial, card up front | Only with a Band: 7 days of Base, card up front, started when the buyer chooses (the Band ships later). Plans alone are paid from day one; the free app is the way to try OVOA |
 | $49/mo or $229/yr, sold as "50% off early access" | Base $9.95/mo or $95.99/yr, Pro $25.95/mo or $195.99/yr, Band $89.99 (you pick the prices, see Step 3) |
 | After paying: "open this on your iPhone" handoff page | `/early-access/welcome` with the TestFlight steps |
 | Upsells right after checkout: monthly → annual ("nothing charged today") | Monthly → yearly and Base → Pro on the welcome page |
-| Affiliates: 10% for 12 months, 90-day cookie, paid monthly via PayPal from $50 | 20% for 12 months, 90-day cookie, PayPal monthly from $50 (change in `src/lib/membership/plans.ts`) |
+| Affiliates: 10% for 12 months, 90-day cookie, paid monthly via PayPal from $50 | 15% of plan payments for 6 months, $10 (11.11%) per Band, plus a CPM set per partner; 90-day cookie, PayPal monthly from $50 (change in `src/lib/membership/plans.ts`) |
 | Free access types (reviewer, beta tester, golden ticket) | "Give free access" on the admin page |
 
 One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $229). OVOA doesn't show a "was" price it never charged. Advertising a fake former price can get you in trouble with the FTC. The pitch is "founding price, kept while you stay a member", which is true: Stripe keeps charging each member the price they signed up at.
@@ -101,7 +108,7 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 2. **The same for the test Worker** (Git Bash):
 
    ```bash
-   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev --cloudflare
+   node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site.ovoa.workers.dev --cloudflare
    ```
 
    Its database already has the new tables.
@@ -114,7 +121,11 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 
    > Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
 
-   and approve that too.
+   and approve that too. Then the partner CPM one:
+
+   > Apply the database migration in supabase/migrations/20260923180000_partner_cpm.sql exactly as written. Don't change any code.
+
+   Until it's applied, everything works except **Set CPM** and **Log views** on the admin page.
 5. **Publish.** Lovable → **Publish** → **Update**.
 6. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
 7. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 8.
@@ -124,32 +135,34 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 
 ## Test it first on the Cloudflare Worker (optional, recommended)
 
-Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev**, in the Edgeformmedia Cloudflare account. It has its own small database (Cloudflare D1), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
+Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://ovoa-site.ovoa.workers.dev** (Worker `ovoa-site`), in the admin@ovoa.ai Cloudflare account. It has its own small database (Cloudflare D1, `ovoa-site-db`), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
 
-1. Wrangler needs the **Edgeformmedia** Cloudflare account. Your normal Wrangler login is edgeformmarketing, so the commands below use a separate login kept in `C:/Users/thoma/.wrangler-edgeformmedia` (already signed in as of Sept 22). If it ever expires, sign in again with this and pick **Edgeformmedia@gmail.com's Account**:
+1. Wrangler needs the **admin@ovoa.ai** Cloudflare account, which is your normal Wrangler login (as of Sept 23). Check with `npx wrangler whoami`; if it shows another account, sign in again and pick **Admin@ovoa.ai's Account**:
 
 ```bash
-XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler login
+npx wrangler login
 ```
 
 2. Do Part A's Steps 1 and 2 below (Stripe account and settings), in test mode.
 3. Load Stripe into the test Worker. From the `ovoa-team` folder, with your `sk_test_` key:
 
 ```bash
-XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev --cloudflare
+node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site.ovoa.workers.dev --cloudflare
 ```
 
 This does Step 3 for the test Worker and uploads the secrets to it; nothing to paste. Keep the printed lines anyway (the admin key opens the admin page).
 
-4. Give it the TestFlight link once you have one (Step 7), pasting the link when asked:
+4. Give it the TestFlight link once you have one (Step 7), pasting the link when asked. Until then its **Join the OVOA beta** button has nowhere to go:
 
 ```bash
-XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
+npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
 ```
 
-5. Run Step 8's checks at https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev/early-access and `/early-access/admin`.
+5. Run Step 8's checks at https://ovoa-site.ovoa.workers.dev/early-access and `/early-access/admin`.
 
-To ship code changes to the test Worker: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run cf:deploy`. If a new file shows up in `migrations/`, run `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run cf:migrate` first. (These commands work from Git Bash; in PowerShell, run `$env:XDG_CONFIG_HOME="C:/Users/thoma/.wrangler-edgeformmedia"` first.)
+To ship code changes to the test Worker: `npm run cf:deploy`. If a new file shows up in `migrations/`, run `npm run cf:migrate` first.
+
+(Until Sept 23 the test Worker was `edgeformmedia-pixel-ovoa-team` in the Edgeformmedia account, reached with the separate login in `C:/Users/thoma/.wrangler-edgeformmedia`. That login can't reach the new Worker or its database.)
 
 When it all works, do Part A for real on Lovable. The test Worker's Stripe webhook is separate from Lovable's (each site address gets its own), so they don't interfere.
 
@@ -223,9 +236,9 @@ and approve that too. Then the third:
 
 > Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
 
-(The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to. Nobody can read them from a browser; only the site's server can.)
+(The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it. Nobody can read them from a browser; only the site's server can.)
 
-The Cloudflare test Worker has its own copies in `migrations/`: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run cf:migrate` applies any that are missing (all three are applied as of Sept 23).
+The Cloudflare test Worker has its own copies in `migrations/`: `npm run cf:migrate` applies any that are missing (all four are applied as of Sept 23).
 
 ### Step 6. Publish
 
@@ -266,12 +279,13 @@ From now on the welcome page shows a **Join the OVOA beta** button that opens th
 1. Open https://ovoa.ai/checkout on your phone, keep "with 7 days of Base" picked, and tap **Continue to payment**.
 2. Pay with the Stripe test card: number `4242 4242 4242 4242`, any future date, any CVC, any ZIP, and a US address.
 3. You land on the welcome page. Check:
-   - [ ] It says your free days of Base run until next week's date, and shows the Band order.
+   - [ ] It says your 7 free days of Base are waiting, and shows the Band order. If emails are on (Part E), the order email from no-reply@ovoa.ai is in your inbox with a **Start my 7 free days** button.
+   - [ ] **Start my 7 free days** asks you to confirm, then the page says your free days run until next week's date. In Stripe, the customer now has a Base subscription, trialing, on the card you paid with.
    - [ ] **Join the OVOA beta** opens TestFlight.
    - [ ] The **Pay yearly** offer works (nothing is charged today; Stripe now shows the yearly price starting after the free days).
    - [ ] **Manage billing** opens Stripe's page, where you can cancel.
    - [ ] Under step 3, **Use a different email in the app** saves an address, and the step then names that address.
-4. Open https://ovoa.ai/early-access/admin, paste your `OVOA_ADMIN_KEY`. You should see yourself under *Everyone*, status `trialing`, the Band under *Band orders*, and green dots in *Setup* for Stripe key, webhook, database and public link.
+4. Open https://ovoa.ai/early-access/admin, paste your `OVOA_ADMIN_KEY`. You should see yourself under *Everyone*, status `trialing`, the Band under *Band orders* with Base *Started*, and green dots in *Setup* for Stripe key, webhook, database, public link and emails. Click **Mark shipped** on the Band: the "your Band has shipped" email arrives.
 5. In Stripe → **Developers → Webhooks**, open the `ovoa.ai` endpoint. Recent deliveries should all show `200`.
 6. Buy **Pro yearly** on https://ovoa.ai/early-access with a second email: no free days, charged today. Then refund the Band in Stripe (**Payments** → the payment → **Refund**). On the admin page the Band order changes to `refunded`.
 7. If the app's plan check is on (Part C): sign in to the app with each email and pull to refresh on Settings → Your plan. The Band email says Base (trial), the Pro one says Pro. Cancel one in Manage billing, refresh, and it says Free: health and notes still work, the assistant says it's part of a plan. On the Pro email's welcome page, move the plan to a third email you have an app account for: after Refresh, that account says Pro and the Pro email says Free.
@@ -355,7 +369,31 @@ To undo it quickly, delete the secret on the Worker (`npx wrangler secret delete
 3. In the *Partners* table, click **Copy dashboard link** and email it to them with their share link, `https://ovoa.ai/?ref=maria`. The dashboard shows their clicks, sign-ups, paying members and what they're owed.
 4. On the 1st of each month, for everyone owed $50 or more: send the amount through PayPal to their *Pay to* email, then click **Mark paid**.
 
-How it pays out: when someone arrives through `?ref=maria` and buys within 90 days, Maria earns 20% of each of their payments for 12 months. Nothing is earned during a free trial ($0), and refunded payments are voided automatically. Partners don't earn on their own purchases. The percentage, months, window and payout minimum are at the top of `src/lib/membership/plans.ts`; to give one partner a different rate, change their `percent` in the `affiliates` table.
+How it pays out: when someone arrives through `?ref=maria` and buys within 90 days, Maria earns:
+
+- 15% of each of their plan payments (monthly or yearly) for 6 months.
+- 11.11% of each Band they buy, which is $10 on an $89.99 Band.
+- Her CPM on views of her OVOA posts. Set her rate with **Set CPM** in the *Partners* table (dollars per 1,000 views). When she sends you her view counts, check them and click **Log views**: the payout is added to what she's owed. Each click adds a new line, so log each batch of views once.
+
+Nothing is earned during a free trial ($0), and refunded payments (Bands included) are voided automatically. Partners don't earn on their own purchases. The percentages, months, window and payout minimum are at the top of `src/lib/membership/plans.ts`; to give one partner a different plan rate, change their `percent` in the `affiliates` table.
+
+---
+
+## Part E: emails from no-reply@ovoa.ai (Resend)
+
+Band buyers get two emails from `no-reply@ovoa.ai`: the order email right after they pay, with the link to start their free days, and a "your Band has shipped" email when you click **Mark shipped** (with the start link again if they haven't used it). Replies go to support@ovoa.ai. They're sent through Resend (resend.com; free up to 3,000 emails a month).
+
+1. Sign up at https://resend.com.
+2. **Domains → Add Domain** → `ovoa.ai`. Resend shows a few DNS records (an MX and TXT records for SPF and DKIM). Add them where the DNS for ovoa.ai is managed, then click **Verify** in Resend. It usually takes minutes, sometimes a few hours. It must say *Verified*, or Resend can't send as no-reply@ovoa.ai.
+3. **API Keys → Create API Key**, permission *Sending access*, domain `ovoa.ai`. Copy it (starts with `re_`).
+4. In Lovable → **Cloud → Secrets**, add `RESEND_API_KEY` with it. Publish → Update. For the Cloudflare test Worker: `npx wrangler secret put RESEND_API_KEY -c wrangler.site.jsonc` (already set as of Sept 23).
+5. The admin page's *Setup* list shows **Emails from no-reply@ovoa.ai** in green.
+
+Want a different sender? Add the secret `EMAIL_FROM`, e.g. `OVOA <hello@ovoa.ai>`.
+
+Resend only sends. Replies go to support@ovoa.ai, which needs a real inbox: ovoa.ai's MX records go to Zoho Mail (being set up Sept 23), with support@ as an alias of admin@. Don't touch Resend's `send.ovoa.ai` and `resend._domainkey` records when changing mail settings.
+
+Without the key nothing is emailed, and nothing else breaks: buyers still see **Start my 7 free days** on their welcome page right after paying, and the admin page has **Copy start link** on each Band order that hasn't started, to send them yourself (only to that buyer's own address: it opens their order).
 
 ---
 
@@ -364,9 +402,10 @@ How it pays out: when someone arrives through `?ref=maria` and buys within 90 da
 | You want to… | Do this |
 | --- | --- |
 | See money and members | `/early-access/admin`, or the Stripe dashboard |
-| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded Band shows `refunded` under *Band orders*; the 7 days of Base stay until you cancel that subscription too. |
+| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded Band shows `refunded` under *Band orders*, and its free days can no longer be started; if they were already started, Base carries on until you cancel that subscription too. |
 | Cancel someone | Stripe → **Customers** → them → the subscription → **Cancel**. They keep access until the end of what they paid for. |
-| Ship a Band | Admin page → *Band orders* → the address is there → **Mark shipped** |
+| Ship a Band | Admin page → *Band orders* → the address is there → **Mark shipped**. This emails the buyer that it's on its way, with the button to start their free days if they haven't. |
+| Someone lost the link to start their free days | Admin page → *Band orders* → **Copy start link** under *Not started*, then email it to them (only to their own address). |
 | Give someone free access | Admin page → **Give free access**, and pick Base or Pro (reviewers, friends, creators) |
 | Someone paid but the app says Free | Usually the app account uses another email. Admin page → *Everyone* → **Set app email** under their email → the email they sign in to the app with. They tap Refresh on Settings → Your plan. |
 | Change prices | Re-run `node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys --base-monthly 10.95` (or `--base-annual`, `--pro-monthly`, `--pro-annual`, `--band`). The site shows new prices within 5 minutes; existing members keep theirs. |
@@ -381,9 +420,9 @@ How it pays out: when someone arrives through `?ref=maria` and buys within 90 da
 Roll's growth engine is short videos of the product doing its thing, pushed by creators on commission. For OVOA:
 
 1. **Record 5 short clips** of OVOA handling a real, relatable errand ("I'm running late, tell my 3pm", "remind me to call mom when I leave work"). Screen recording plus your voice. Post them on TikTok, Instagram Reels and YouTube Shorts with `ovoa.ai/early-access` in the bio.
-2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/partners`, and approve them. 20% for a year is a strong offer at that size.
+2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/partners`, and approve them. 15% for 6 months, $10 a Band and a CPM is a strong offer at that size.
 3. **Lead with Annual.** It's the highlighted card and the one-click upsell after checkout; each annual member is cash up front and far less churn.
-4. **Email your Band buyers** on day 2 ("did you get it installed?") and day 6 ("your free Base days end tomorrow, here's what people use it for"). Their emails are on the admin page. Trial-to-paid conversion is the number that matters most; the admin page shows *In free trial* next to *Paying* so you can watch it.
+4. **Email your Band buyers** a few days after their Band ships if their free days still say *Not started* on the admin page ("did it arrive? tap Start when you're ready"), and on day 6 of their free days ("they end tomorrow, here's what people use it for"). Their emails are on the admin page. Trial-to-paid conversion is the number that matters most; the admin page shows *In free trial* next to *Paying* so you can watch it.
 5. **Lean on the free app.** Health and notes are free with no time limit, so "try it free" is an honest pitch. The upgrade happens when someone wants to talk to it.
 
 ---
@@ -413,3 +452,5 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 | `TESTFLIGHT_PUBLIC_URL` | Yes, unless you do Part B | TestFlight → Members group → Public Link |
 | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY`, `TESTFLIGHT_GROUP_ID` | Part B | App Store Connect → Integrations, and the admin page's group finder |
 | `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** Lovable and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C) |
+| `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends the Band emails from no-reply@ovoa.ai |
+| `EMAIL_FROM` | No | A different sender than `OVOA <no-reply@ovoa.ai>` |

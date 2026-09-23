@@ -15,6 +15,8 @@ import {
   type PlanId,
   type PlansResult,
 } from "./plans";
+import type { TrialOffer } from "./email.server";
+import type { CommissionKind } from "./store.server";
 
 // Server-only modules are imported inside each handler: this file also ships
 // to the browser, where the handlers are swapped for RPC calls.
@@ -61,13 +63,17 @@ export type WelcomeTestflight = {
 export type WelcomeData =
   | { state: "pending" }
   | { state: "error"; message: string }
-  // "Band only, no AI": a Band order and no membership.
+  // A Band order and no membership: "Band only", or a Band bought with Base
+  // whose free days haven't been started (`trial`).
   | {
       state: "band";
       firstName: string | null;
       email: string;
       band: WelcomeBand;
       testflight: WelcomeTestflight;
+      trial: TrialOffer | null;
+      // Order emails are on, so the buyer has this page's link by email.
+      emailed: boolean;
     }
   | {
       state: "ready";
@@ -149,19 +155,22 @@ function offerFor(member: MemberRow, prices: Prices, to: "annual" | "pro"): Welc
 async function welcomeFor(sessionId: string): Promise<WelcomeData> {
   const sync = await import("./sync.server");
   const { testflightInvitesConfigured, testflightPublicUrl } = await import("./testflight.server");
+  const { emailConfigured } = await import("./email.server");
   const result = await sync.syncCheckoutSession(sessionId);
   if (!result) return { state: "pending" };
-  const { member, bandOrder } = result;
+  const { member, bandOrder, waitingTrial } = result;
   const publicUrl = testflightPublicUrl();
 
   if (!member) {
     if (!bandOrder) return { state: "pending" };
     return {
       state: "band",
-      firstName: (bandOrder.ship_name ?? bandOrder.name)?.split(/\s+/)[0] ?? null,
+      firstName: sync.firstNameOf(bandOrder),
       email: bandOrder.email,
       band: bandSummary(bandOrder),
       testflight: { mode: publicUrl ? "link" : "manual", state: "off", publicUrl },
+      trial: waitingTrial ? await sync.trialOffer(waitingTrial) : null,
+      emailed: emailConfigured(),
     };
   }
 
@@ -377,12 +386,20 @@ export type PartnerStats = {
   name: string;
   status: string;
   percent: number;
+  cpmCents: number;
   clicks: number;
   signups: number;
   paying: number;
   owedCents: number;
   paidCents: number;
-  recent: { date: string; amountCents: number; commissionCents: number; status: string }[];
+  recent: {
+    date: string;
+    kind: CommissionKind;
+    amountCents: number;
+    views: number | null;
+    commissionCents: number;
+    status: string;
+  }[];
 };
 
 export const getPartnerStats = createServerFn({ method: "POST" })
@@ -393,7 +410,7 @@ export const getPartnerStats = createServerFn({ method: "POST" })
     return { code, key };
   })
   .handler(async ({ data }): Promise<PartnerStats | null> => {
-    const { store } = await import("./store.server");
+    const { store, commissionKind } = await import("./store.server");
     const { safeEqual } = await import("./keys.server");
     const affiliate = await store().getAffiliate(data.code);
     if (!affiliate || !safeEqual(affiliate.dashboard_key, data.key)) return null;
@@ -410,6 +427,7 @@ export const getPartnerStats = createServerFn({ method: "POST" })
       name: affiliate.name,
       status: affiliate.status,
       percent: Number(affiliate.percent),
+      cpmCents: affiliate.cpm_cents,
       clicks: affiliate.clicks,
       signups: statuses.length,
       paying: statuses.filter((s) => ["active", "past_due", "lifetime"].includes(s)).length,
@@ -417,7 +435,9 @@ export const getPartnerStats = createServerFn({ method: "POST" })
       paidCents: sum("paid"),
       recent: rows.slice(0, 20).map((r) => ({
         date: r.created_at,
+        kind: commissionKind(r.source_id),
         amountCents: r.amount_cents,
+        views: r.views ?? null,
         commissionCents: r.commission_cents,
         status: r.status,
       })),
@@ -469,6 +489,7 @@ export type AdminAffiliate = {
   audience: string | null;
   status: string;
   percent: number;
+  cpmCents: number;
   clicks: number;
   signups: number;
   owedCents: number;
@@ -483,6 +504,10 @@ export type AdminBandOrder = {
   name: string | null;
   phone: string | null;
   withAi: boolean;
+  // With Base: when its free days were started (at checkout, for orders from
+  // before Sept 23), or null while they wait for the buyer.
+  baseStartedAt: string | null;
+  checkoutSessionId: string;
   amountCents: number;
   currency: string;
   // One line per row of the address label.
@@ -500,6 +525,7 @@ export type AdminOverview = {
     publicLink: boolean;
     membershipApi: boolean;
     database: boolean;
+    email: boolean;
   };
   stats: {
     trialing: number;
@@ -541,6 +567,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
     const sync = await import("./sync.server");
     const tf = await import("./testflight.server");
     const { envVar } = await import("./db.server");
+    const { emailConfigured } = await import("./email.server");
     const { store, StoreNotReadyError } = await import("./store.server");
 
     const config = {
@@ -550,6 +577,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       publicLink: Boolean(tf.testflightPublicUrl()),
       membershipApi: (envVar("MEMBERSHIP_API_KEY") ?? "").length >= 16,
       database: true,
+      email: emailConfigured(),
     };
 
     let loaded;
@@ -571,6 +599,9 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       };
     }
     const [members, affiliateRows, commissions, bands] = loaded;
+    const memberOfCheckout = new Map(
+      members.filter((m) => m.checkout_session_id).map((m) => [m.checkout_session_id, m]),
+    );
 
     let prices = new Map<string, number>();
     if (config.stripe) {
@@ -622,6 +653,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         audience: a.audience,
         status: a.status,
         percent: a.percent,
+        cpmCents: a.cpm_cents,
         clicks: a.clicks,
         signups: members.filter((m) => m.ref_code === a.code).length,
         owedCents: total("owed"),
@@ -659,6 +691,8 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         name: b.name,
         phone: b.phone,
         withAi: b.with_ai,
+        baseStartedAt: memberOfCheckout.get(b.checkout_session_id)?.created_at ?? null,
+        checkoutSessionId: b.checkout_session_id,
         amountCents: b.amount_cents,
         currency: b.currency,
         shipTo: [
@@ -690,6 +724,56 @@ export const setAffiliateStatus = createServerFn({ method: "POST" })
     const { store } = await import("./store.server");
     await store().setAffiliateStatus(data.id, data.status);
     return { ok: true };
+  });
+
+// A partner's CPM: what 1,000 views of their posts earn them.
+export const setAffiliateCpm = createServerFn({ method: "POST" })
+  .inputValidator(
+    adminInput((input) => {
+      const cpmCents = Number(input["cpmCents"]);
+      if (!Number.isInteger(cpmCents) || cpmCents < 0 || cpmCents > 100_000) {
+        throw new Error("Enter a CPM between $0 and $1,000.");
+      }
+      return { id: String(input["id"] ?? ""), cpmCents };
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin(data.key);
+    const { store } = await import("./store.server");
+    await store().setAffiliateCpm(data.id, data.cpmCents);
+    return { ok: true };
+  });
+
+// Views you've checked on a partner's posts, paid at their CPM. Each call is a
+// new payout line, so log each batch of views once.
+export const logAffiliateViews = createServerFn({ method: "POST" })
+  .inputValidator(
+    adminInput((input) => {
+      const views = Number(input["views"]);
+      if (!Number.isInteger(views) || views <= 0 || views > 1_000_000_000) {
+        throw new Error("Enter the number of views.");
+      }
+      return { code: cleanRef(input["code"]) ?? "", views };
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin(data.key);
+    const { store } = await import("./store.server");
+    const affiliate = await store().getAffiliate(data.code);
+    if (!affiliate || affiliate.status !== "approved") throw new Error("No such partner.");
+    if (affiliate.cpm_cents <= 0) throw new Error("Set this partner's CPM first.");
+    const commissionCents = Math.round((data.views * affiliate.cpm_cents) / 1000);
+    await store().insertCommission({
+      affiliate_code: affiliate.code,
+      member_id: null,
+      source_id: `views:${crypto.randomUUID()}`,
+      payment_intent_id: null,
+      amount_cents: 0,
+      views: data.views,
+      commission_cents: commissionCents,
+      currency: "usd",
+    });
+    return { ok: true, commissionCents };
   });
 
 export const markAffiliatePaid = createServerFn({ method: "POST" })
@@ -726,7 +810,9 @@ export const listTestflightGroups = createServerFn({ method: "POST" })
   });
 
 // Band orders: mark one shipped once it's in the post (or back to paid if that
-// was a mistake). Refunds happen in Stripe and arrive through the webhook.
+// was a mistake). Marking it shipped emails the buyer, with the link to start
+// their free days if they're still waiting. Refunds happen in Stripe and
+// arrive through the webhook.
 export const setBandOrderStatus = createServerFn({ method: "POST" })
   .inputValidator(
     adminInput((input) => ({
@@ -737,8 +823,18 @@ export const setBandOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
     const { store } = await import("./store.server");
+    const order = await store().getBandOrder(data.id);
+    if (!order) throw new Error("No such Band order.");
     await store().setBandOrderStatus(data.id, data.status);
-    return { ok: true };
+    let emailed = false;
+    if (data.status === "shipped" && order.status === "paid") {
+      const sync = await import("./sync.server");
+      emailed = await sync.emailBandShipped(order).catch((error: unknown) => {
+        console.error("[membership] shipped email", error);
+        return false;
+      });
+    }
+    return { ok: true, emailed };
   });
 
 // Free access for reviewers, friends and creators, at the tier picked

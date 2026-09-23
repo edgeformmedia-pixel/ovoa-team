@@ -2,7 +2,8 @@
 //
 //   - Lovable (the real site): Lovable Cloud's Supabase, tables from
 //     supabase/migrations/20260922150000_membership.sql,
-//     20260922200000_tiers_and_band_orders.sql and 20260923120000_member_app_email.sql
+//     20260922200000_tiers_and_band_orders.sql, 20260923120000_member_app_email.sql
+//     and 20260923180000_partner_cpm.sql
 //   - The Cloudflare test Worker: D1 bound as SITE_DB, tables from
 //     migrations/ (Lovable's Supabase service key can't be used outside Lovable)
 //
@@ -59,6 +60,8 @@ export type Affiliate = {
   payout_email: string | null;
   status: string;
   percent: number;
+  // CPM: what 1,000 views of their posts earn, in cents. 0 until it's set.
+  cpm_cents: number;
   dashboard_key: string;
   clicks: number;
   created_at: string;
@@ -77,11 +80,24 @@ export type Commission = {
   amount_cents: number;
   commission_cents: number;
   currency: string;
+  // Views logged for a CPM payout; null for payments.
+  views?: number | null;
   status: string;
   created_at: string;
 };
 
 export type NewCommission = Omit<Commission, "status" | "created_at">;
+
+// What a commission was earned on, from its source_id: a subscription
+// payment (a Stripe invoice or old lifetime checkout), a Band (band:<checkout
+// session>) or views logged on the admin page (views:<random id>).
+export type CommissionKind = "plan" | "band" | "views";
+
+export function commissionKind(sourceId: string): CommissionKind {
+  if (sourceId.startsWith("band:")) return "band";
+  if (sourceId.startsWith("views:")) return "views";
+  return "plan";
+}
 
 export type BandOrderStatus = "paid" | "shipped" | "refunded";
 
@@ -134,6 +150,7 @@ export interface Store {
   getAffiliate(code: string): Promise<Affiliate | null>;
   insertAffiliate(row: NewAffiliate): Promise<void>;
   setAffiliateStatus(id: string, status: "approved" | "rejected"): Promise<void>;
+  setAffiliateCpm(id: string, cpmCents: number): Promise<void>;
   listAffiliates(): Promise<Affiliate[]>;
   recordClick(code: string): Promise<void>;
   insertCommission(row: NewCommission): Promise<void>;
@@ -148,6 +165,7 @@ export interface Store {
     paymentIntentId: string | null,
     invoiceId: string | null,
   ): Promise<BandOrder[]>;
+  getBandOrder(id: string): Promise<BandOrder | null>;
   setBandOrderStatus(id: string, status: BandOrderStatus): Promise<void>;
   listBandOrders(limit: number): Promise<BandOrder[]>;
 }
@@ -217,7 +235,11 @@ const BAND_COLUMNS = [
 ] as const satisfies readonly (keyof NewBandOrder)[];
 
 const toAffiliate = (row: Record<string, unknown>): Affiliate =>
-  ({ ...row, percent: Number(row["percent"]) }) as Affiliate;
+  ({
+    ...row,
+    percent: Number(row["percent"]),
+    cpm_cents: Number(row["cpm_cents"] ?? 0),
+  }) as Affiliate;
 
 // ---------- Cloudflare D1 ----------
 
@@ -331,6 +353,10 @@ const d1Store: Store = {
     d1(async () => {
       await run("UPDATE affiliates SET status = ? WHERE id = ?", status, id);
     }),
+  setAffiliateCpm: (id, cpmCents) =>
+    d1(async () => {
+      await run("UPDATE affiliates SET cpm_cents = ? WHERE id = ?", cpmCents, id);
+    }),
   listAffiliates: () =>
     d1(async () =>
       (await all<Record<string, unknown>>("SELECT * FROM affiliates ORDER BY created_at DESC")).map(
@@ -346,10 +372,13 @@ const d1Store: Store = {
     }),
   insertCommission: (c) =>
     d1(async () => {
+      // `views` only goes in when there are some, so payment commissions don't
+      // need the 0004 migration to have run.
+      const views = c.views == null ? [] : [c.views];
       await run(
         `INSERT INTO affiliate_commissions
-           (affiliate_code, member_id, source_id, payment_intent_id, amount_cents, commission_cents, currency)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
+           (affiliate_code, member_id, source_id, payment_intent_id, amount_cents, commission_cents, currency${views.length ? ", views" : ""})
+         VALUES (?, ?, ?, ?, ?, ?, ?${views.length ? ", ?" : ""})
          ON CONFLICT (source_id) DO NOTHING`,
         c.affiliate_code,
         c.member_id,
@@ -358,6 +387,7 @@ const d1Store: Store = {
         c.amount_cents,
         c.commission_cents,
         c.currency,
+        ...views,
       );
     }),
   voidCommissions: (pi, source) =>
@@ -411,6 +441,11 @@ const d1Store: Store = {
         )
       ).map(toBandOrder),
     ),
+  getBandOrder: (id) =>
+    d1(async () => {
+      const row = await one<Record<string, unknown>>("SELECT * FROM band_orders WHERE id = ?", id);
+      return row ? toBandOrder(row) : null;
+    }),
   setBandOrderStatus: (id, status) =>
     d1(async () => {
       await run(
@@ -551,6 +586,10 @@ const supabaseStore: Store = {
     const { error } = await sb().from("affiliates").update({ status }).eq("id", id);
     check(error);
   },
+  async setAffiliateCpm(id, cpmCents) {
+    const { error } = await sb().from("affiliates").update({ cpm_cents: cpmCents }).eq("id", id);
+    check(error);
+  },
   async listAffiliates() {
     return (
       await rows(sb().from("affiliates").select("*").order("created_at", { ascending: false }))
@@ -560,10 +599,13 @@ const supabaseStore: Store = {
     const { error } = await sb().rpc("record_affiliate_click", { p_code: code });
     check(error);
   },
-  async insertCommission(row) {
-    const { error } = await sb()
-      .from("affiliate_commissions")
-      .upsert(row, { onConflict: "source_id", ignoreDuplicates: true });
+  async insertCommission({ views, ...row }) {
+    // `views` only goes in when there are some (see the D1 version).
+    const values: Record<string, unknown> = views == null ? row : { ...row, views };
+    const { error } = await sb().from("affiliate_commissions").upsert(values, {
+      onConflict: "source_id",
+      ignoreDuplicates: true,
+    });
     check(error);
   },
   async voidCommissions(pi, source) {
@@ -639,6 +681,11 @@ const supabaseStore: Store = {
       .join(",");
     if (!filters) return [];
     return (await rows(sb().from("band_orders").select("*").or(filters))).map(toBandOrder);
+  },
+  async getBandOrder(id) {
+    const { data, error } = await sb().from("band_orders").select("*").eq("id", id).maybeSingle();
+    check(error);
+    return data ? toBandOrder(data) : null;
   },
   async setBandOrderStatus(id, status) {
     const { error } = await sb()

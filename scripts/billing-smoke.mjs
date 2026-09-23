@@ -59,7 +59,7 @@ const wranglerLocal = `npx wrangler d1 --config wrangler.site.jsonc`;
 const sql = (command) =>
   JSON.parse(
     sh(
-      `${wranglerLocal} execute ovoa-site-test-db --local --persist-to "${persist}" --json --command "${command.replace(/"/g, '\\"')}"`,
+      `${wranglerLocal} execute SITE_DB --local --persist-to "${persist}" --json --command "${command.replace(/"/g, '\\"')}"`,
     ),
   )[0].results;
 
@@ -105,6 +105,21 @@ async function pay(sessionId, email, name = "Test Buyer") {
 }
 
 const post = (path) => fetch(`${STRIPE}${path}`, { method: "POST" }).then((r) => r.json());
+
+// What the site sent through the fake Resend.
+const emailsTo = async (to) =>
+  (await (await fetch(`${STRIPE}/__emails`)).json()).data.filter((e) => e.to.includes(to));
+
+// The welcome page's "Start my free days" button.
+async function startTrial(sessionId) {
+  const res = await fetch(`${SITE}/api/public/billing/start-trial`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: `session_id=${sessionId}`,
+    redirect: "manual",
+  });
+  return res.headers.get("location") ?? "";
+}
 
 async function portFree(port) {
   try {
@@ -156,9 +171,9 @@ async function main() {
   );
 
   // ---- local D1 ----
-  sh(`${wranglerLocal} migrations apply ovoa-site-test-db --local --persist-to "${persist}"`);
+  sh(`${wranglerLocal} migrations apply SITE_DB --local --persist-to "${persist}"`);
   sql(
-    "INSERT INTO affiliates (code, name, email, status) VALUES ('maria', 'Maria', 'maria@partner.test', 'approved')",
+    "INSERT INTO affiliates (code, name, email, status, percent, cpm_cents) VALUES ('maria', 'Maria', 'maria@partner.test', 'approved', 15, 500)",
   );
   // A row from before tiers existed: no tier given, so it takes the default.
   sql(
@@ -173,6 +188,7 @@ async function main() {
       `npx wrangler dev -c wrangler.site.jsonc --local --port ${SITE_PORT} --persist-to "${persist}"`,
       `--var STRIPE_API_BASE:${STRIPE}/v1 --var STRIPE_SECRET_KEY:sk_test_fake`,
       `--var STRIPE_WEBHOOK_SECRET:${WHSEC} --var MEMBERSHIP_API_KEY:${API_KEY} --var OVOA_ADMIN_KEY:${ADMIN_KEY}`,
+      `--var RESEND_API_KEY:re_fake --var RESEND_API_BASE:${STRIPE}`,
     ].join(" "),
     "Ready on",
   );
@@ -205,29 +221,33 @@ async function main() {
     });
   }
 
-  // ---- 1. Band + AI ----
+  // ---- 1. Band + AI: the free days wait until the buyer starts them ----
   {
     const { sessionId, params } = await checkout("band=1&ref=maria");
     check(
-      "band+ai: subscription mode, Band + ovoa_base_monthly",
-      params.mode === "subscription" && params._items.length === 2,
-      params._items,
+      "band+ai: one payment for the Band, card saved for Base",
+      params.mode === "payment" &&
+        params._items.length === 1 &&
+        params.payment_intent_data?.setup_future_usage === "off_session" &&
+        !params.subscription_data,
+      params,
     );
-    check("band+ai: 7-day trial", params.subscription_data?.trial_period_days === "7");
+    check(
+      "band+ai: plan and 7 free days kept for later",
+      params.metadata?.plan === "base_monthly" && params.metadata?.trial_days === "7",
+      params.metadata,
+    );
     check(
       "band+ai: US shipping + phone",
       params.shipping_address_collection?.allowed_countries?.[0] === "US" &&
         params.phone_number_collection?.enabled === "true",
     );
-    const s = await pay(sessionId, "band-ai@buyer.test");
-    results.bandAi = await membership("band-ai@buyer.test");
+    await pay(sessionId, "band-ai@buyer.test");
+    results.bandAiWaiting = await membership("band-ai@buyer.test");
     check(
-      "band+ai: membership",
-      results.bandAi.tier === "base" &&
-        results.bandAi.status === "trialing" &&
-        results.bandAi.source === "band_trial" &&
-        Boolean(results.bandAi.trialEndsAt),
-      results.bandAi,
+      "band+ai: no plan until the free days are started",
+      results.bandAiWaiting.tier === "free" && results.bandAiWaiting.status === "none",
+      results.bandAiWaiting,
     );
     const order = sql(`SELECT * FROM band_orders WHERE checkout_session_id = '${sessionId}'`)[0];
     check(
@@ -239,11 +259,79 @@ async function main() {
         order.phone === "+15125550100",
       order,
     );
-    const comm = sql(
-      `SELECT * FROM affiliate_commissions WHERE source_id = '${s.invoice.id ?? s.invoice}'`,
+    const bandComm = sql(
+      `SELECT * FROM affiliate_commissions WHERE source_id = 'band:${sessionId}'`,
+    )[0];
+    check(
+      "band+ai: $10 Band commission",
+      bandComm?.amount_cents === 8999 &&
+        bandComm.commission_cents === 1000 &&
+        bandComm.payment_intent_id === order?.stripe_payment_intent_id,
+      bandComm,
     );
-    check("band+ai: no commission on the Band", comm.length === 0, comm);
     results.bandAiPi = order?.stripe_payment_intent_id;
+
+    const [email, ...more] = await emailsTo("band-ai@buyer.test");
+    check(
+      "band+ai: one order email from no-reply@ovoa.ai with the start link",
+      more.length === 0 &&
+        email?.from === "OVOA <no-reply@ovoa.ai>" &&
+        email.reply_to === "support@ovoa.ai" &&
+        email.text.includes(`/early-access/welcome?session_id=${sessionId}`) &&
+        email.text.includes("$9.95 a month on your Visa ending in 4242"),
+      email && { from: email.from, subject: email.subject, text: email.text },
+    );
+    const waitingPage = await (
+      await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)
+    ).text();
+    check(
+      "band+ai: welcome page offers the free days",
+      waitingPage.includes("free days of Base are waiting") &&
+        waitingPage.includes("/api/public/billing/start-trial"),
+    );
+
+    const started = Date.now();
+    const back = await startTrial(sessionId);
+    check(
+      "band+ai: start, then back to the welcome page",
+      back.includes(`/early-access/welcome?session_id=${sessionId}`) && !back.includes("error"),
+      back,
+    );
+    results.bandAi = await membership("band-ai@buyer.test");
+    const trialDays = (Date.parse(results.bandAi.trialEndsAt) - started) / 86_400_000;
+    check(
+      "band+ai: Base trial, 7 days from the start",
+      results.bandAi.tier === "base" &&
+        results.bandAi.status === "trialing" &&
+        results.bandAi.source === "band_trial" &&
+        trialDays > 6.9 &&
+        trialDays < 7.1,
+      { ...results.bandAi, trialDays },
+    );
+    await startTrial(sessionId);
+    const subs = (
+      await (
+        await fetch(`${STRIPE}/v1/subscriptions?customer=${order?.stripe_customer_id}&status=all`)
+      ).json()
+    ).data;
+    check(
+      "band+ai: pressed twice, one subscription, on the saved card, tied to the order",
+      subs.length === 1 &&
+        subs[0].default_payment_method?.startsWith("pm_") &&
+        subs[0].metadata?.checkout_session === sessionId &&
+        subs[0].metadata?.ref === "maria",
+      subs.map((x) => ({ pm: x.default_payment_method, metadata: x.metadata })),
+    );
+    const member = sql(`SELECT * FROM members WHERE checkout_session_id = '${sessionId}'`);
+    check(
+      "band+ai: member row tied to the Band's checkout",
+      member.length === 1 && member[0].stripe_subscription_id === subs[0]?.id,
+      member,
+    );
+    const comm = sql(
+      `SELECT * FROM affiliate_commissions WHERE member_id = '${member[0]?.id}' AND source_id NOT LIKE 'band:%'`,
+    );
+    check("band+ai: no plan commission during the trial", comm.length === 0, comm);
     const page = await (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
     check(
       "band+ai: welcome page renders the membership",
@@ -275,12 +363,26 @@ async function main() {
       order,
     );
     const comm = sql(`SELECT * FROM affiliate_commissions WHERE source_id = '${sessionId}'`);
-    check("band only: no commission", comm.length === 0, comm);
+    check("band only: no plan commission", comm.length === 0, comm);
+    const bandComm = sql(
+      `SELECT * FROM affiliate_commissions WHERE source_id = 'band:${sessionId}'`,
+    )[0];
+    check(
+      "band only: $10 Band commission",
+      bandComm?.amount_cents === 8999 && bandComm.commission_cents === 1000,
+      bandComm,
+    );
     results.bandOnlyPi = order?.stripe_payment_intent_id;
     const page = await (await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`)).text();
     check(
       "band only: welcome page renders the Band order",
-      page.includes("Your Band is on its way"),
+      page.includes("Your Band is on its way") && !page.includes("start-trial"),
+    );
+    check(
+      "band only: no card saved, no order email, nothing to start",
+      !params.payment_intent_data?.setup_future_usage &&
+        (await emailsTo("band-only@buyer.test")).length === 0 &&
+        (await startTrial(sessionId)).includes("error=no-trial"),
     );
   }
 
@@ -323,8 +425,8 @@ async function main() {
       `SELECT * FROM affiliate_commissions WHERE source_id = '${s.invoice.id ?? s.invoice}'`,
     )[0];
     check(
-      "pro annual: 20% commission",
-      comm?.amount_cents === 19599 && comm.commission_cents === 3920,
+      "pro annual: 15% commission",
+      comm?.amount_cents === 19599 && comm.commission_cents === 2940,
       comm,
     );
 
@@ -364,6 +466,14 @@ async function main() {
       "refund: both Band orders refunded",
       orders.every((o) => o.status === "refunded"),
       orders,
+    );
+    const bandComms = sql(
+      "SELECT source_id, status FROM affiliate_commissions WHERE source_id LIKE 'band:%'",
+    );
+    check(
+      "refund: both Band commissions voided",
+      bandComms.length === 2 && bandComms.every((c) => c.status === "void"),
+      bandComms,
     );
     results.afterRefundBandAi = await membership("band-ai@buyer.test");
     results.afterRefundBandOnly = await membership("band-only@buyer.test");

@@ -30,3 +30,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets you paste by hand (Stripe keys etc.)
+.env
+.env.*
+stripe/

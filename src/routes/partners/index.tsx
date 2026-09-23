@@ -4,27 +4,34 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { applyAffiliate } from "@/lib/membership/membership.functions";
+import { applyAffiliate, getPlans } from "@/lib/membership/membership.functions";
 import {
   AFFILIATE_PERCENT,
   COMMISSION_MONTHS,
   PAYOUT_MINIMUM_USD,
   REF_COOKIE_DAYS,
   REF_PATTERN,
+  bandCommissionCents,
+  formatMoney,
+  type PlansResult,
 } from "@/lib/membership/plans";
 
 const PAGE_TITLE = "OVOA Partners: earn from every member you send";
-const PAGE_DESCRIPTION = `Share OVOA and earn ${AFFILIATE_PERCENT}% of every payment your referrals make for ${COMMISSION_MONTHS} months.`;
+
+function describe(data: PlansResult | undefined) {
+  return `Share OVOA and earn ${AFFILIATE_PERCENT}% of every payment your referrals make for ${COMMISSION_MONTHS} months, ${formatMoney(bandCommissionCents(data?.band ?? null))} on every Band, plus a CPM on your posts.`;
+}
 
 export const Route = createFileRoute("/partners/")({
   component: Partners,
   staticData: { sitemap: true },
-  head: () => ({
+  loader: () => getPlans(),
+  head: ({ loaderData }) => ({
     meta: [
       { title: PAGE_TITLE },
-      { name: "description", content: PAGE_DESCRIPTION },
+      { name: "description", content: describe(loaderData) },
       { property: "og:title", content: PAGE_TITLE },
-      { property: "og:description", content: PAGE_DESCRIPTION },
+      { property: "og:description", content: describe(loaderData) },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/partners" },
       { name: "twitter:card", content: "summary" },
@@ -33,29 +40,41 @@ export const Route = createFileRoute("/partners/")({
   }),
 });
 
-const TERMS = [
-  {
-    title: `${AFFILIATE_PERCENT}% for ${COMMISSION_MONTHS} months`,
-    copy: `You earn ${AFFILIATE_PERCENT}% of every payment each person you refer makes, for their first ${COMMISSION_MONTHS} months.`,
-  },
-  {
-    title: `${REF_COOKIE_DAYS}-day window`,
-    copy: `If someone clicks your link and joins any time in the next ${REF_COOKIE_DAYS} days, they're yours.`,
-  },
-  {
-    title: "Paid monthly",
-    copy: `PayPal on the 1st of each month once you're owed $${PAYOUT_MINIMUM_USD}. Refunded payments don't count.`,
-  },
-  {
-    title: "Your own dashboard",
-    copy: "Clicks, sign-ups, paying members and what you're owed, live.",
-  },
-];
+function termsFor(bandCents: number) {
+  return [
+    {
+      title: `${AFFILIATE_PERCENT}% for ${COMMISSION_MONTHS} months`,
+      copy: `You earn ${AFFILIATE_PERCENT}% of every plan payment each person you refer makes, monthly or yearly, for their first ${COMMISSION_MONTHS} months.`,
+    },
+    {
+      title: `${formatMoney(bandCents)} per Band`,
+      copy: `Every Band bought through your link earns you ${formatMoney(bandCents)}, on top of the plan commission.`,
+    },
+    {
+      title: "Plus a CPM",
+      copy: "We also pay per 1,000 views of your posts about OVOA. Your rate is agreed when you're approved.",
+    },
+    {
+      title: `${REF_COOKIE_DAYS}-day window`,
+      copy: `If someone clicks your link and joins any time in the next ${REF_COOKIE_DAYS} days, they're yours.`,
+    },
+    {
+      title: "Paid monthly",
+      copy: `PayPal on the 1st of each month once you're owed $${PAYOUT_MINIMUM_USD}. Refunded payments don't count.`,
+    },
+    {
+      title: "Your own dashboard",
+      copy: "Clicks, sign-ups, paying members and what you're owed, live.",
+    },
+  ];
+}
 
 const field =
   "h-12 w-full rounded-xl border border-landing-line bg-landing-canvas px-4 text-[15px] text-landing-ink outline-none transition-colors placeholder:text-landing-muted focus:border-landing-action focus:ring-2 focus:ring-landing-action/15";
 
 function Partners() {
+  const data = Route.useLoaderData();
+  const bandCents = bandCommissionCents(data.band);
   const apply = useServerFn(applyAffiliate);
   const [form, setForm] = useState({
     name: "",
@@ -108,15 +127,15 @@ function Partners() {
         <div className="mx-auto max-w-[1200px]">
           <p className="text-sm font-medium text-landing-action">OVOA Partners</p>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.6rem,6.5vw,5.25rem)] font-semibold leading-[0.98] tracking-normal">
-            Share OVOA. Earn {AFFILIATE_PERCENT}% for a year.
+            Share OVOA. Earn {AFFILIATE_PERCENT}%, {formatMoney(bandCents)} a Band, and a CPM.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-xl">
             For creators, coaches and newsletter writers whose people would love an assistant that
             actually does things. Apply below; we review every application within a day.
           </p>
 
-          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {TERMS.map((t) => (
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {termsFor(bandCents).map((t) => (
               <article key={t.title} className="rounded-[1.75rem] bg-landing-control/70 p-7">
                 <h2 className="text-xl font-semibold">{t.title}</h2>
                 <p className="mt-2 text-[15px] leading-relaxed text-landing-muted">{t.copy}</p>

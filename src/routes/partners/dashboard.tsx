@@ -2,8 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
 import { useState } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
-import { getPartnerStats } from "@/lib/membership/membership.functions";
-import { PAYOUT_MINIMUM_USD, formatMoney } from "@/lib/membership/plans";
+import {
+  getPartnerStats,
+  getPlans,
+  type PartnerStats,
+} from "@/lib/membership/membership.functions";
+import {
+  COMMISSION_MONTHS,
+  PAYOUT_MINIMUM_USD,
+  bandCommissionCents,
+  formatMoney,
+} from "@/lib/membership/plans";
 
 // Each partner's private page: /partners/dashboard?code=<code>&key=<dashboard_key>.
 // The admin page gives you this link to send them.
@@ -21,7 +30,11 @@ export const Route = createFileRoute("/partners/dashboard")({
   loader: async ({ deps }) => {
     if (!deps.code || !deps.key) return null;
     try {
-      return await getPartnerStats({ data: { code: deps.code, key: deps.key } });
+      const [stats, plans] = await Promise.all([
+        getPartnerStats({ data: { code: deps.code, key: deps.key } }),
+        getPlans(),
+      ]);
+      return stats && { stats, bandCents: bandCommissionCents(plans.band) };
     } catch {
       return null;
     }
@@ -46,11 +59,17 @@ function Tile({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+const KIND_LABELS: Record<PartnerStats["recent"][number]["kind"], string> = {
+  plan: "Plan payment",
+  band: "Band",
+  views: "Views",
+};
+
 function Dashboard() {
-  const stats = Route.useLoaderData();
+  const loaded = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
 
-  if (!stats) {
+  if (!loaded) {
     return (
       <main className="min-h-dvh bg-landing-canvas text-landing-ink">
         <MembershipHeader />
@@ -67,6 +86,7 @@ function Dashboard() {
     );
   }
 
+  const { stats, bandCents } = loaded;
   const link = `https://ovoa.ai/?ref=${stats.code}`;
 
   return (
@@ -86,7 +106,12 @@ function Dashboard() {
           </p>
         ) : (
           <p className="mt-3 text-landing-muted">
-            You earn {stats.percent}% of each payment your members make for their first year.
+            You earn {stats.percent}% of each payment your members make for their first{" "}
+            {COMMISSION_MONTHS} months, {formatMoney(bandCents)} on every Band
+            {stats.cpmCents > 0
+              ? `, and ${formatMoney(stats.cpmCents)} per 1,000 views of your OVOA posts`
+              : ""}
+            .
           </p>
         )}
 
@@ -131,11 +156,12 @@ function Dashboard() {
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto rounded-2xl border border-landing-line">
-            <table className="w-full min-w-[480px] text-left text-sm">
+            <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="bg-landing-control/60 text-landing-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Payment</th>
+                  <th className="px-4 py-3 font-medium">For</th>
+                  <th className="px-4 py-3 font-medium">Amount</th>
                   <th className="px-4 py-3 font-medium">Your share</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
@@ -144,7 +170,12 @@ function Dashboard() {
                 {stats.recent.map((r, i) => (
                   <tr key={i}>
                     <td className="px-4 py-3">{dateFormat.format(new Date(r.date))}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatMoney(r.amountCents)}</td>
+                    <td className="px-4 py-3">{KIND_LABELS[r.kind]}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                      {r.kind === "views"
+                        ? `${(r.views ?? 0).toLocaleString("en-US")} views`
+                        : formatMoney(r.amountCents)}
+                    </td>
                     <td className="px-4 py-3 font-semibold tabular-nums">
                       {formatMoney(r.commissionCents)}
                     </td>

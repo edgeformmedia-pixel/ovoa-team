@@ -398,8 +398,8 @@ function EarlyAccess() {
                 Getting the OVOA Band? {bandTrialDays} days of Base come with it.
               </h3>
               <p className="mt-1 text-sm text-landing-muted">
-                The Band is {bandPrice(data)}, one time. Base starts after the free days, and you
-                can cancel before then.
+                The Band is {bandPrice(data)}, one time. You start the free days when you choose,
+                Base starts after them, and you can cancel before then.
               </p>
             </div>
             <Link
@@ -472,11 +472,11 @@ function EarlyAccess() {
           <p className="mt-3 max-w-3xl">
             Base and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
             day you sign up until you cancel. A plan that comes with an OVOA Band starts after its{" "}
-            {bandTrialDays} free days unless you cancel first. Cancel anytime from Manage billing or
-            by emailing support@ovoa.ai; you keep your plan until the end of the period you paid
-            for. OVOA is beta software delivered through Apple TestFlight, and features can change.
-            Refunds: email support@ovoa.ai within 14 days of a charge. Prices are in US dollars;
-            taxes may apply. The full{" "}
+            {bandTrialDays} free days, which begin when you start them, unless you cancel first.
+            Cancel anytime from Manage billing or by emailing support@ovoa.ai; you keep your plan
+            until the end of the period you paid for. OVOA is beta software delivered through Apple
+            TestFlight, and features can change. Refunds: email support@ovoa.ai within 14 days of a
+            charge. Prices are in US dollars; taxes may apply. The full{" "}
             <Link to="/terms" className="underline underline-offset-2 hover:text-landing-ink">
               terms
             </Link>{" "}

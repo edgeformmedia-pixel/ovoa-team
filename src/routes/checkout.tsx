@@ -24,7 +24,7 @@ const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
 const PAGE_TITLE = "Buy the OVOA Band (beta)";
 
 function describe(data: PlansResult | undefined) {
-  return `The OVOA Band is ${bandPrice(data)}, one time, and comes with ${data?.bandTrialDays ?? 7} days of OVOA Base, then ${perLabel(planOf(data, "base", "monthly"))}. Beta hardware, shipped to US addresses.`;
+  return `The OVOA Band is ${bandPrice(data)}, one time, and comes with ${data?.bandTrialDays ?? 7} days of OVOA Base, started when you choose, then ${perLabel(planOf(data, "base", "monthly"))}. Beta hardware, shipped to US addresses.`;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -314,8 +314,8 @@ function Checkout() {
                     title={`Band + ${days} days of OVOA Base`}
                     price={band}
                   >
-                    Includes {days} days of OVOA Base, then {base}; cancel anytime. Base is the OVOA
-                    assistant: press the Band, ask, and hear the answer.
+                    Includes {days} days of OVOA Base, started when you choose, then {base}; cancel
+                    anytime. Base is the OVOA assistant: press the Band, ask, and hear the answer.
                   </Choice>
                   <Choice
                     selected={!withAi}
@@ -335,7 +335,7 @@ function Checkout() {
                   </div>
                   {withAi && (
                     <div className="mt-2 flex items-center justify-between text-sm">
-                      <span className="text-landing-muted">OVOA Base, first {days} days</span>
+                      <span className="text-landing-muted">OVOA Base, {days} days</span>
                       <span className="font-semibold">Free</span>
                     </div>
                   )}
@@ -345,7 +345,7 @@ function Checkout() {
                   </div>
                   <p className="mt-3 text-[11px] leading-5 text-landing-muted">
                     {withAi
-                      ? `Then ${base} for OVOA Base, starting ${days} days from today, until you cancel. Cancel before then and you pay nothing more. The Band is a one-time charge. Prices in US dollars.`
+                      ? `Your ${days} free days of OVOA Base start when you choose, not today: we email you a link to start them, so they don't run out while your Band is on its way. Your card is saved for Base, then ${base} once they end, until you cancel. Cancel before then and you pay nothing more. The Band is a one-time charge. Prices in US dollars.`
                       : "A one-time charge, no subscription. Prices in US dollars."}
                   </p>
                 </div>

@@ -21,12 +21,14 @@ export const Route = createFileRoute("/api/public/billing/session-status")({
             payment_status: string;
             mode: string;
             customer_details?: { email?: string | null } | null;
+            metadata?: Record<string, string> | null;
           }>("GET", `/checkout/sessions/${sessionId}`);
           return Response.json({
             status: session.status,
             paymentStatus: session.payment_status,
             email: session.customer_details?.email ?? null,
-            withAi: session.mode === "subscription",
+            // A Band bought with Base carries its plan (the free days start later).
+            withAi: session.mode === "subscription" || Boolean(session.metadata?.["plan"]),
           });
         } catch (error) {
           console.error("[membership] session status", error);

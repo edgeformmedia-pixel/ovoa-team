@@ -15,6 +15,9 @@
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
 //   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
 //                                            click-throughs; it returns to success_url
+//
+// It also stands in for Resend's POST /emails (point RESEND_API_BASE at the
+// server's root); GET /__emails lists what the site sent.
 
 import { createHmac, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -38,6 +41,10 @@ const db = {
   subscriptions: new Map(),
   invoices: new Map(),
   charges: new Map(),
+  paymentIntents: new Map(),
+  // Idempotency-Key → the first answer, as real Stripe keeps them.
+  idempotent: new Map(),
+  emails: [],
 };
 const id = (prefix) => `${prefix}_${randomBytes(12).toString("hex")}`;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -74,6 +81,12 @@ function sessionView(s, expand = []) {
   if (expand.includes("subscription") && s.subscription)
     out.subscription = db.subscriptions.get(s.subscription);
   if (expand.includes("invoice") && s.invoice) out.invoice = db.invoices.get(s.invoice);
+  if (s.payment_intent && expand.some((e) => e.startsWith("payment_intent"))) {
+    const pi = db.paymentIntents.get(s.payment_intent);
+    out.payment_intent = expand.includes("payment_intent.payment_method")
+      ? pi
+      : { ...pi, payment_method: pi.payment_method.id };
+  }
   if (expand.includes("line_items"))
     out.line_items = list(
       s._items.map((li) => {
@@ -84,6 +97,23 @@ function sessionView(s, expand = []) {
   delete out._items;
   delete out._params;
   return out;
+}
+
+// The card the buyer paid with, saved when the site asked for it
+// (setup_future_usage): what a subscription made later charges.
+function newPaymentIntent(customer, saved) {
+  const pi = {
+    id: id("pi"),
+    object: "payment_intent",
+    payment_method: {
+      id: id("pm"),
+      object: "payment_method",
+      card: { brand: "visa", last4: "4242" },
+      customer: saved ? customer : null,
+    },
+  };
+  db.paymentIntents.set(pi.id, pi);
+  return pi;
 }
 
 async function deliver(type, object) {
@@ -186,6 +216,14 @@ async function complete(s, buyer) {
       null,
       prices.map((pr) => ({ amount: pr.unit_amount, price: pr })),
     );
+    const pi = newPaymentIntent(
+      customer.id,
+      p.payment_intent_data?.setup_future_usage === "off_session",
+    );
+    // The invoice's payment is the session's payment.
+    db.charges.set(pi.id, db.charges.get(inv.payment_intent));
+    db.charges.delete(inv.payment_intent);
+    inv.payment_intent = pi.id;
     s.payment_intent = inv.payment_intent;
     s.invoice = inv.id;
     s.amount_total = inv.amount_paid;
@@ -242,6 +280,15 @@ async function handle(req, res) {
   if ((hit = m(/^\/__sessions\/(cs_\w+)$/))) {
     const s = db.sessions.get(hit[1]);
     return s ? send({ ...s._params, _items: s._items }) : err(res, 404, "no such session");
+  }
+  if (path === "/__emails") return send(list(db.emails));
+
+  // ---- Resend ----
+  if (path === "/emails" && req.method === "POST") {
+    const key = req.headers["idempotency-key"];
+    const email = { id: `em_${randomBytes(8).toString("hex")}`, ...JSON.parse(body) };
+    if (!key || !db.emails.some((e) => e._key === key)) db.emails.push({ ...email, _key: key });
+    return send({ id: email.id });
   }
 
   // ---- the buyer's side of Checkout, for clicking through in a browser ----
@@ -375,6 +422,8 @@ async function handle(req, res) {
       currency: "usd",
       metadata: q.metadata ?? {},
       client_reference_id: q.client_reference_id ?? null,
+      success_url: q.success_url ?? null,
+      return_url: q.return_url ?? null,
       shipping_details: null,
       _items: items,
       _params: q,
@@ -386,6 +435,48 @@ async function handle(req, res) {
   if ((hit = m(/^\/checkout\/sessions\/(cs_\w+)$/))) {
     const s = db.sessions.get(hit[1]);
     return s ? send(sessionView(s, [].concat(q.expand ?? []))) : err(res, 404, "No such session");
+  }
+  if (path === "/subscriptions" && req.method === "GET") {
+    const subs = [...db.subscriptions.values()].filter(
+      (s) =>
+        (!q.customer || s.customer === q.customer) &&
+        (q.status === "all" || s.status !== "canceled"),
+    );
+    return send(list(subs));
+  }
+  if (path === "/subscriptions" && req.method === "POST") {
+    const key = req.headers["idempotency-key"];
+    if (key && db.idempotent.has(key)) return send(db.idempotent.get(key));
+    if (!db.customers.has(q.customer)) return err(res, 400, "No such customer");
+    const prices = [].concat(q.items ?? []).map((i) => db.prices.get(i.price));
+    if (!prices.length || prices.some((p) => !p?.active)) return err(res, 400, "No such price");
+    const trialDays = Number(q.trial_period_days ?? 0);
+    const intervalS = (prices[0].recurring.interval === "year" ? 365 : 30) * 86400;
+    const end = trialDays > 0 ? nowS() + trialDays * 86400 : nowS() + intervalS;
+    const sub = {
+      id: id("sub"),
+      object: "subscription",
+      customer: q.customer,
+      status: trialDays > 0 ? "trialing" : "active",
+      trial_end: trialDays > 0 ? end : null,
+      current_period_end: end,
+      cancel_at_period_end: false,
+      canceled_at: null,
+      default_payment_method: q.default_payment_method ?? null,
+      trial_settings: q.trial_settings ?? null,
+      metadata: q.metadata ?? {},
+      items: list(prices.map((pr) => ({ id: id("si"), price: pr }))),
+    };
+    db.subscriptions.set(sub.id, sub);
+    if (key) db.idempotent.set(key, sub);
+    const inv = newInvoice(
+      q.customer,
+      sub.id,
+      prices.map((pr) => ({ amount: trialDays > 0 ? 0 : pr.unit_amount, price: pr })),
+    );
+    await deliver("customer.subscription.created", sub);
+    await deliver("invoice.paid", inv);
+    return send(sub);
   }
   if ((hit = m(/^\/subscriptions\/(sub_\w+)$/)) && req.method === "POST") {
     // Plan switches from the welcome page: a new price, and maybe the trial

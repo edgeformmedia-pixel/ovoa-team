@@ -5,7 +5,7 @@ const SUMMARY = [
   "Band, made by Ovoa AI, is a health band with a companion app.",
   "In the app you ask for something in plain language; a personal agent works on it in the background and reports back what it actually did.",
   "Personal data (requests, results, notes, health readings) is private to the signed-in account and is not available through this public endpoint.",
-  "Pages: / (buy), /app (companion app, sign-in required), /about, /faq.",
+  "Pages: / (home), /about, /faq, /early-access (plans), /checkout (buy Band).",
 ].join("\n");
 
 // The /mcp endpoint is public and unauthenticated, so it exposes NO user data:

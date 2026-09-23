@@ -8,10 +8,13 @@ import { createFileRoute } from "@tanstack/react-router";
 //   customer.subscription.deleted, invoice.paid, charge.refunded
 //
 // checkout.session.completed covers both kinds of checkout: subscription mode
-// (a plan, or the Band with Base AI) and payment mode ("Band only, no AI").
-// Either way a paid Band is written to band_orders for the admin page, and an
-// AI subscription to members with its tier. charge.refunded marks a Band
-// order refunded and voids partner commission on the refunded money.
+// (a plan) and payment mode (the Band, with Base to start later or on its
+// own). Either way a paid Band is written to band_orders for the admin page,
+// and an AI subscription to members with its tier. A Band bought with Base
+// also gets its order email here, with the link to start the free days (the
+// subscription itself arrives through customer.subscription.created when they
+// do). charge.refunded marks a Band order refunded and voids partner
+// commission on the refunded money.
 //
 // Every handler is idempotent, so Stripe's retries and duplicate deliveries are
 // harmless. A 500 makes Stripe retry for up to three days.
@@ -40,9 +43,12 @@ export const Route = createFileRoute("/api/public/billing/webhook")({
         try {
           switch (event.type) {
             case "checkout.session.completed":
-            case "checkout.session.async_payment_succeeded":
-              await sync.syncCheckoutSession(object.id);
+            case "checkout.session.async_payment_succeeded": {
+              const result = await sync.syncCheckoutSession(object.id);
+              // Never throws: a failed email mustn't make Stripe retry this.
+              await sync.emailWaitingTrial(result, sync.orderPageUrl(object));
               break;
+            }
             case "customer.subscription.created":
             case "customer.subscription.updated":
             case "customer.subscription.deleted":

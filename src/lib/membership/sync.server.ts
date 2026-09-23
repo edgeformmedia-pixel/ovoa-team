@@ -6,13 +6,17 @@
 
 import {
   AFFILIATE_PERCENT,
+  BAND_COMMISSION_PERCENT,
   BAND_LOOKUP_KEY,
+  BAND_TRIAL_DAYS,
   COMMISSION_MONTHS,
   LEGACY_LOOKUP_KEYS,
   PLAN_IDS,
   PLAN_LOOKUP_KEYS,
   cleanRef,
+  formatMoney,
   isEntitled,
+  isPlanId,
   periodOfPlan,
   tierOf,
   tierOfPlan,
@@ -22,7 +26,9 @@ import {
   type PublicBand,
   type PublicPlan,
 } from "./plans";
+import { PLAN_NAMES } from "./copy";
 import { now } from "./db.server";
+import { bandShippedEmail, sendEmail, trialWaitingEmail, type TrialOffer } from "./email.server";
 import { stripe, stripeConfigured } from "./stripe.server";
 import {
   DuplicateError,
@@ -70,6 +76,10 @@ type StripeShipping = { name: string | null; address: StripeAddress | null } | n
 
 type StripeInvoiceRef = { id: string; payment_intent?: string | { id: string } | null };
 
+type StripePaymentMethod = { id: string; card?: { brand: string; last4: string } | null };
+
+type StripePaymentIntent = { id: string; payment_method: string | StripePaymentMethod | null };
+
 type StripeCheckoutSession = {
   id: string;
   mode: "payment" | "subscription" | "setup";
@@ -79,8 +89,11 @@ type StripeCheckoutSession = {
   customer_email: string | null;
   customer_details: { email: string | null; name: string | null; phone?: string | null } | null;
   subscription: string | StripeSubscription | null;
-  payment_intent: string | { id: string } | null;
+  payment_intent: string | StripePaymentIntent | null;
   invoice?: string | StripeInvoiceRef | null;
+  // Where the buyer went after paying: hosted Checkout, then embedded.
+  success_url?: string | null;
+  return_url?: string | null;
   amount_total: number | null;
   currency: string | null;
   metadata: Record<string, string> | null;
@@ -211,6 +224,9 @@ export async function syncSubscription(
     email = customer.email;
     name = name ?? customer.name;
   }
+  // Free days started from a Band order carry that order's checkout, so the
+  // webhook's copy of this row is tied to it too.
+  const checkoutSessionId = hints.checkoutSessionId ?? sub.metadata?.["checkout_session"] ?? null;
 
   const member = await insertOrUpdate(
     "stripe_subscription_id",
@@ -220,23 +236,68 @@ export async function syncSubscription(
       email: (email ?? "unknown@ovoa.ai").toLowerCase(),
       name,
       stripe_subscription_id: sub.id,
-      checkout_session_id: hints.checkoutSessionId ?? null,
+      checkout_session_id: checkoutSessionId,
       ref_code: cleanRef(hints.ref ?? sub.metadata?.["ref"]),
       testflight_state: testflightInvitesConfigured() ? "pending" : "off",
     },
     {
       ...billing,
-      ...(hints.checkoutSessionId ? { checkout_session_id: hints.checkoutSessionId } : {}),
+      ...(checkoutSessionId ? { checkout_session_id: checkoutSessionId } : {}),
     },
   );
   return syncTestflight(member);
 }
 
-export type CheckoutResult = { member: Member | null; bandOrder: BandOrder | null };
+// Free days that came with a Band and haven't been started yet. `card` is the
+// saved card Base will be charged to when they end.
+export type WaitingTrial = {
+  plan: PlanId;
+  days: number;
+  card: { brand: string; last4: string } | null;
+};
+
+export type CheckoutResult = {
+  member: Member | null;
+  bandOrder: BandOrder | null;
+  waitingTrial: WaitingTrial | null;
+};
 
 const isBandCheckout = (session: StripeCheckoutSession) =>
   session.metadata?.["band"] === "1" ||
   Boolean(session.line_items?.data.some((li) => li.price?.lookup_key === BAND_LOOKUP_KEY));
+
+// A Band bought with Base (since Sept 23): one payment for the Band, the card
+// saved, and the plan and free days in the metadata for startBandTrial. Band
+// checkouts from before then are subscription mode with the trial already
+// running; "Band only" has no plan.
+function laterTrial(session: StripeCheckoutSession): { plan: PlanId; days: number } | null {
+  const plan = session.metadata?.["plan"];
+  if (session.mode !== "payment" || !isPlanId(plan)) return null;
+  const days = Number(session.metadata?.["trial_days"]);
+  return { plan, days: Number.isInteger(days) && days >= 0 ? days : BAND_TRIAL_DAYS };
+}
+
+function savedCard(session: StripeCheckoutSession) {
+  const intent = typeof session.payment_intent === "object" ? session.payment_intent : null;
+  const method = typeof intent?.payment_method === "object" ? intent.payment_method : null;
+  return {
+    id: idOf(intent?.payment_method ?? null),
+    card: method?.card ? { brand: method.card.brand, last4: method.card.last4 } : null,
+  };
+}
+
+// The buyer's order page, on the site they bought from (a checkout session, or
+// one straight from a webhook payload).
+export function orderPageUrl(session: { id: string; success_url?: unknown; return_url?: unknown }) {
+  const back = [session.success_url, session.return_url].find((u) => typeof u === "string");
+  let origin = "https://ovoa.ai";
+  try {
+    if (back) origin = new URL(back as string).origin;
+  } catch {
+    /* not a URL: the main site */
+  }
+  return `${origin}/early-access/welcome?session_id=${session.id}`;
+}
 
 // Writes down a paid Band so the admin page shows it to ship. Safe to repeat.
 async function recordBand(
@@ -267,7 +328,7 @@ async function recordBand(
     amount_cents:
       bandLine?.amount_total ?? (session.mode === "payment" ? (session.amount_total ?? 0) : 0),
     currency: session.currency ?? "usd",
-    with_ai: session.mode === "subscription",
+    with_ai: session.mode === "subscription" || laterTrial(session) !== null,
     ship_name: shipping?.name ?? null,
     ship_line1: address?.line1 ?? null,
     ship_line2: address?.line2 ?? null,
@@ -279,13 +340,20 @@ async function recordBand(
   });
 }
 
+function retrieveCheckout(sessionId: string) {
+  return stripe<StripeCheckoutSession>("GET", `/checkout/sessions/${sessionId}`, {
+    expand: ["subscription", "invoice", "line_items", "payment_intent.payment_method"],
+  });
+}
+
 // Everything a finished checkout implies: the AI membership (if any) and the
 // Band order (if any). Returns null while the checkout is still open (the
 // buyer hit back, or the payment is still processing).
 export async function syncCheckoutSession(sessionId: string): Promise<CheckoutResult | null> {
-  const session = await stripe<StripeCheckoutSession>("GET", `/checkout/sessions/${sessionId}`, {
-    expand: ["subscription", "invoice", "line_items"],
-  });
+  return syncCheckout(await retrieveCheckout(sessionId));
+}
+
+async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutResult | null> {
   if (session.status !== "complete") return null;
 
   const email = (
@@ -308,12 +376,25 @@ export async function syncCheckoutSession(sessionId: string): Promise<CheckoutRe
       ref,
       checkoutSessionId: session.id,
     });
-    return { member, bandOrder };
+    if (bandOrder) await recordBandCommission(bandOrder, member.id);
+    return { member, bandOrder, waitingTrial: null };
   }
 
   if (session.mode !== "payment") return null;
-  // "Band only, no AI": no membership, and no commission (hardware earns none).
-  if (band) return paid ? { member: null, bandOrder } : null;
+  // A Band, with Base to start later or on its own: no membership until the
+  // free days are started (then it's the member row made for this checkout).
+  if (band) {
+    if (!bandOrder) return null;
+    await recordBandCommission(bandOrder, null);
+    const trial = laterTrial(session);
+    const member = trial ? await store().findMember("checkout_session_id", session.id) : null;
+    const waiting = trial && !member && bandOrder.status !== "refunded";
+    return {
+      member,
+      bandOrder,
+      waitingTrial: waiting ? { ...trial, card: savedCard(session).card } : null,
+    };
+  }
 
   // An old Founder (lifetime) checkout. No longer sold; kept so old sessions
   // still resolve. It counts as Base with no end date.
@@ -348,7 +429,146 @@ export async function syncCheckoutSession(sessionId: string): Promise<CheckoutRe
       currency: session.currency ?? "usd",
     });
   }
-  return { member: await syncTestflight(member), bandOrder: null };
+  return { member: await syncTestflight(member), bandOrder: null, waitingTrial: null };
+}
+
+// ---------- Starting a Band's free days ----------
+
+// Something the buyer can fix or should hear as is.
+export class TrialError extends Error {}
+
+type StripeList<T> = { data: T[] };
+
+// Starts the free days bought with a Band, when the buyer chooses (the button
+// on their welcome page, which the order email links to). Makes the Base
+// subscription on the card saved at checkout, with the free days as Stripe's
+// trial, so the first charge is when they end. Safe to repeat: a second call
+// (a double click, a retry) finds the subscription the first one made.
+export async function startBandTrial(sessionId: string): Promise<Member> {
+  const session = await retrieveCheckout(sessionId);
+  const result = await syncCheckout(session);
+  if (result?.member) return result.member;
+  const trial = result?.waitingTrial;
+  if (!result?.bandOrder || !trial) {
+    throw new TrialError(
+      result?.bandOrder?.status === "refunded"
+        ? "This Band order was refunded, so its free days can't be started."
+        : "There are no free days waiting on this order.",
+    );
+  }
+  const customerId = idOf(session.customer);
+  const price = (await loadPrices()).plans.get(trial.plan);
+  if (!customerId || !price) throw new Error(`Can't start ${trial.plan} for ${session.id}`);
+  const ref = cleanRef(session.metadata?.["ref"] ?? session.client_reference_id);
+
+  const made = await stripe<StripeList<StripeSubscription>>("GET", "/subscriptions", {
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+  const sub =
+    made.data.find((s) => s.metadata?.["checkout_session"] === session.id) ??
+    (await stripe<StripeSubscription>(
+      "POST",
+      "/subscriptions",
+      {
+        customer: customerId,
+        items: [{ price: price.id }],
+        ...(trial.days > 0 ? { trial_period_days: trial.days } : {}),
+        default_payment_method: savedCard(session).id ?? undefined,
+        // Without a card on file when the free days end, stop rather than
+        // leave an unpaid invoice.
+        trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+        metadata: {
+          plan: trial.plan,
+          band: "1",
+          checkout_session: session.id,
+          ...(ref ? { ref } : {}),
+        },
+      },
+      { idempotencyKey: `band-trial-${session.id}` },
+    ));
+
+  return syncSubscription(sub, {
+    email: result.bandOrder.email,
+    name: session.customer_details?.name ?? null,
+    ref,
+    checkoutSessionId: session.id,
+  });
+}
+
+// ---------- Emails to Band buyers ----------
+
+const CARD_BRANDS: Record<string, string> = {
+  amex: "American Express",
+  diners: "Diners Club",
+  discover: "Discover",
+  jcb: "JCB",
+  mastercard: "Mastercard",
+  unionpay: "UnionPay",
+  visa: "Visa",
+};
+
+// Waiting free days in words, for the emails and the welcome page.
+export async function trialOffer(trial: WaitingTrial): Promise<TrialOffer> {
+  let price: string | null = null;
+  try {
+    const p = (await loadPrices()).plans.get(trial.plan);
+    if (p?.unit_amount) {
+      const per = p.recurring?.interval === "year" ? "year" : "month";
+      price = `${formatMoney(p.unit_amount, p.currency)} a ${per}`;
+    }
+  } catch (error) {
+    console.error("[membership] trial price", error);
+  }
+  return {
+    days: trial.days,
+    planName: PLAN_NAMES[tierOfPlan(trial.plan)],
+    price,
+    card: trial.card
+      ? `${CARD_BRANDS[trial.card.brand] ?? "card"} ending in ${trial.card.last4}`
+      : null,
+  };
+}
+
+export const firstNameOf = (order: BandOrder) =>
+  (order.ship_name ?? order.name)?.trim().split(/\s+/)[0] || null;
+
+export const shipPlaceOf = (order: BandOrder) =>
+  [order.ship_city, order.ship_state].filter(Boolean).join(", ") || null;
+
+// The order email for a Band bought with Base, sent by the webhook once the
+// Band is paid for: start the free days when it arrives. Best effort, like
+// every email here.
+export async function emailWaitingTrial(result: CheckoutResult | null, url: string) {
+  if (!result?.bandOrder || !result.waitingTrial) return false;
+  const order = result.bandOrder;
+  return sendEmail(
+    trialWaitingEmail({
+      to: order.email,
+      firstName: firstNameOf(order),
+      url,
+      trial: await trialOffer(result.waitingTrial),
+    }),
+    `band-order/${order.checkout_session_id}`,
+  );
+}
+
+// When a Band is marked shipped on the admin page. Repeats the free days'
+// link if they're still waiting.
+export async function emailBandShipped(order: BandOrder) {
+  const session = await retrieveCheckout(order.checkout_session_id);
+  const waiting = (await syncCheckout(session))?.waitingTrial;
+  return sendEmail(
+    bandShippedEmail({
+      to: order.email,
+      firstName: firstNameOf(order),
+      url: orderPageUrl(session),
+      shipTo: shipPlaceOf(order),
+      trial: waiting ? await trialOffer(waiting) : null,
+    }),
+    `band-shipped/${order.id}`,
+  );
 }
 
 // ---------- TestFlight ----------
@@ -400,6 +620,32 @@ function patchTestflight(member: Member, patch: MemberPatch): Promise<Member> {
 
 // ---------- Partner commissions ----------
 
+// A partner can earn on this purchase: they're approved, and it isn't their own.
+async function earningPartner(ref: string | null, buyerEmail: string) {
+  if (!ref) return null;
+  const affiliate = await store().getAffiliate(ref);
+  if (!affiliate || affiliate.status !== "approved") return null;
+  if (affiliate.email.toLowerCase() === buyerEmail.toLowerCase()) return null;
+  return affiliate;
+}
+
+// BAND_COMMISSION_PERCENT of a Band sold through a partner's link. Voided with
+// the rest if the Band's payment is refunded (matched by payment intent).
+async function recordBandCommission(order: BandOrder, memberId: string | null) {
+  if (order.amount_cents <= 0 || order.status === "refunded") return;
+  const affiliate = await earningPartner(order.ref_code, order.email);
+  if (!affiliate) return;
+  await store().insertCommission({
+    affiliate_code: affiliate.code,
+    member_id: memberId,
+    source_id: `band:${order.checkout_session_id}`,
+    payment_intent_id: order.stripe_payment_intent_id,
+    amount_cents: order.amount_cents,
+    commission_cents: Math.round((order.amount_cents * BAND_COMMISSION_PERCENT) / 100),
+    currency: order.currency,
+  });
+}
+
 async function recordCommission(
   member: Member,
   payment: {
@@ -414,10 +660,8 @@ async function recordCommission(
   cutoff.setMonth(cutoff.getMonth() + COMMISSION_MONTHS);
   if (Date.now() > cutoff.getTime()) return;
 
-  const affiliate = await store().getAffiliate(member.ref_code);
-  if (!affiliate || affiliate.status !== "approved") return;
-  // No commission on your own purchase.
-  if (affiliate.email.toLowerCase() === member.email.toLowerCase()) return;
+  const affiliate = await earningPartner(member.ref_code, member.email);
+  if (!affiliate) return;
 
   const percent = Number(affiliate.percent ?? AFFILIATE_PERCENT);
   await store().insertCommission({
@@ -448,7 +692,7 @@ type StripeInvoice = {
   lines?: { data: StripeInvoiceLine[] };
 };
 
-// The Band earns no commission, so its amount comes off the invoice total.
+// The Band has its own commission, so its amount comes off the invoice total.
 async function bandCentsOn(invoice: StripeInvoice): Promise<number> {
   let bandPriceId: string | null = null;
   let cents = 0;

@@ -9,8 +9,10 @@ import {
   getAdminOverview,
   grantAccess,
   listTestflightGroups,
+  logAffiliateViews,
   markAffiliatePaid,
   retryTestflight,
+  setAffiliateCpm,
   setAffiliateStatus,
   setBandOrderStatus,
   type AdminOverview,
@@ -109,6 +111,8 @@ function Admin() {
   const load = useServerFn(getAdminOverview);
   const approve = useServerFn(setAffiliateStatus);
   const markPaid = useServerFn(markAffiliatePaid);
+  const setCpm = useServerFn(setAffiliateCpm);
+  const logViews = useServerFn(logAffiliateViews);
   const retry = useServerFn(retryTestflight);
   const findGroups = useServerFn(listTestflightGroups);
   const giveAccess = useServerFn(grantAccess);
@@ -280,6 +284,11 @@ function Admin() {
               label="App membership check (optional)"
               hint="Add MEMBERSHIP_API_KEY"
             />
+            <ConfigRow
+              ok={config.email}
+              label="Emails from no-reply@ovoa.ai"
+              hint="Add RESEND_API_KEY (setup.md, Part E)"
+            />
           </ul>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
@@ -444,7 +453,37 @@ function Admin() {
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-2.5">{b.withAi ? "Yes" : "Band only"}</td>
+                      <td className="px-4 py-2.5">
+                        {!b.withAi ? (
+                          "Band only"
+                        ) : b.baseStartedAt ? (
+                          <>
+                            Started
+                            <span className="block text-xs text-landing-muted">
+                              {date(b.baseStartedAt)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            Not started
+                            {b.status !== "refunded" && (
+                              <button
+                                type="button"
+                                className="mt-1 block text-xs font-semibold text-landing-action"
+                                onClick={() =>
+                                  void navigator.clipboard
+                                    .writeText(
+                                      `${origin}/early-access/welcome?session_id=${b.checkoutSessionId}#start`,
+                                    )
+                                    .catch(() => undefined)
+                                }
+                              >
+                                Copy start link
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5 tabular-nums">
                         {formatMoney(b.amountCents, b.currency)}
                       </td>
@@ -466,7 +505,10 @@ function Admin() {
                               className={smallButton}
                               disabled={busy === b.id}
                               onClick={() => {
-                                if (window.confirm(`Mark ${b.email}'s Band as shipped?`)) {
+                                const note = config.email
+                                  ? " This emails them that it's on its way."
+                                  : "";
+                                if (window.confirm(`Mark ${b.email}'s Band as shipped?${note}`)) {
                                   void act(b.id, () =>
                                     setBandStatus({ data: { key, id: b.id, status: "shipped" } }),
                                   );
@@ -500,7 +542,9 @@ function Admin() {
           )}
           <p className="mt-2 text-xs text-landing-muted">
             Band-only buyers get the free app. Without a TestFlight public link set, email them an
-            invite.
+            invite. With Base, the free days start when the buyer taps Start on their order page
+            (the order email and the shipped email link to it). Without emails set up, send them the
+            start link, only to their own address.
           </p>
         </Section>
 
@@ -553,10 +597,11 @@ function Admin() {
             </p>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-landing-line">
-              <table className="w-full min-w-[860px] text-left text-sm">
+              <table className="w-full min-w-[1100px] text-left text-sm">
                 <thead className="bg-landing-control/60 text-landing-muted">
                   <tr>
                     <th className="px-4 py-2.5 font-medium">Partner</th>
+                    <th className="px-4 py-2.5 font-medium">CPM</th>
                     <th className="px-4 py-2.5 font-medium">Clicks</th>
                     <th className="px-4 py-2.5 font-medium">Sign-ups</th>
                     <th className="px-4 py-2.5 font-medium">Owed</th>
@@ -573,6 +618,9 @@ function Admin() {
                         <span className="block text-xs text-landing-muted">
                           ?ref={a.code} · {a.percent}%
                         </span>
+                      </td>
+                      <td className="px-4 py-2.5 tabular-nums">
+                        {a.cpmCents > 0 ? formatMoney(a.cpmCents) : "-"}
                       </td>
                       <td className="px-4 py-2.5 tabular-nums">{a.clicks}</td>
                       <td className="px-4 py-2.5 tabular-nums">{a.signups}</td>
@@ -595,6 +643,56 @@ function Admin() {
                             }
                           >
                             Copy dashboard link
+                          </button>
+                          <button
+                            type="button"
+                            className={smallButton}
+                            disabled={busy === a.id}
+                            onClick={() => {
+                              const answer = window.prompt(
+                                `${a.name}'s CPM, in dollars per 1,000 views:`,
+                                a.cpmCents > 0 ? (a.cpmCents / 100).toFixed(2) : "",
+                              );
+                              if (answer == null) return;
+                              const dollars = Number(answer.replace(/[$,\s]/g, ""));
+                              if (!answer.trim() || !Number.isFinite(dollars) || dollars < 0) {
+                                setError("Enter the CPM in dollars, like 5 or 7.50.");
+                                return;
+                              }
+                              const cpmCents = Math.round(dollars * 100);
+                              void act(a.id, () => setCpm({ data: { key, id: a.id, cpmCents } }));
+                            }}
+                          >
+                            Set CPM
+                          </button>
+                          <button
+                            type="button"
+                            className={smallButton}
+                            disabled={a.cpmCents === 0 || busy === a.id}
+                            title={a.cpmCents === 0 ? "Set a CPM first" : undefined}
+                            onClick={() => {
+                              const answer = window.prompt(
+                                `Views on ${a.name}'s OVOA posts since you last logged them:`,
+                              );
+                              if (answer == null) return;
+                              const views = Number(answer.replace(/[,\s]/g, ""));
+                              if (!Number.isInteger(views) || views <= 0) {
+                                setError("Enter the number of views, like 12500.");
+                                return;
+                              }
+                              const earned = Math.round((views * a.cpmCents) / 1000);
+                              if (
+                                window.confirm(
+                                  `Log ${views.toLocaleString("en-US")} views at a ${formatMoney(a.cpmCents)} CPM? ${a.name} will be owed ${formatMoney(earned)} more.`,
+                                )
+                              ) {
+                                void act(a.id, () =>
+                                  logViews({ data: { key, code: a.code, views } }),
+                                );
+                              }
+                            }}
+                          >
+                            Log views
                           </button>
                           <button
                             type="button"

@@ -44,7 +44,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "How much is the Band?",
-      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base; after that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. The Band is beta hardware, made in small batches, and ships to US addresses.`,
+      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base, which start when you choose (we email you a link), so they don't run out while the Band is on its way. After that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. The Band is beta hardware, made in small batches, and ships to US addresses.`,
     },
     {
       q: "How do I ask OVOA to do something?",

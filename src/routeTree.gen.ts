@@ -11,14 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as AppRouteImport } from './routes/app'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as OrderCompleteRouteImport } from './routes/order-complete'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -29,7 +27,10 @@ import { Route as PartnersIndexRouteImport } from './routes/partners/index'
 import { Route as PartnersDashboardRouteImport } from './routes/partners/dashboard'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
 import { Route as ApiPublicBillingCheckoutRouteImport } from './routes/api/public/billing/checkout'
+import { Route as ApiPublicBillingCreateCheckoutSessionRouteImport } from './routes/api/public/billing/create-checkout-session'
 import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/billing/portal'
+import { Route as ApiPublicBillingSessionStatusRouteImport } from './routes/api/public/billing/session-status'
+import { Route as ApiPublicBillingStartTrialRouteImport } from './routes/api/public/billing/start-trial'
 import { Route as ApiPublicBillingWebhookRouteImport } from './routes/api/public/billing/webhook'
 import { Route as ApiPublicHooksRunTasksRouteImport } from './routes/api/public/hooks/run-tasks'
 
@@ -41,16 +42,6 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -73,14 +64,14 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderCompleteRoute = OrderCompleteRouteImport.update({
+  id: '/order-complete',
+  path: '/order-complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -135,11 +126,29 @@ const ApiPublicBillingCheckoutRoute =
     path: '/api/public/billing/checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBillingCreateCheckoutSessionRoute =
+  ApiPublicBillingCreateCheckoutSessionRouteImport.update({
+    id: '/api/public/billing/create-checkout-session',
+    path: '/api/public/billing/create-checkout-session',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBillingPortalRoute = ApiPublicBillingPortalRouteImport.update({
   id: '/api/public/billing/portal',
   path: '/api/public/billing/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBillingSessionStatusRoute =
+  ApiPublicBillingSessionStatusRouteImport.update({
+    id: '/api/public/billing/session-status',
+    path: '/api/public/billing/session-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBillingStartTrialRoute =
+  ApiPublicBillingStartTrialRouteImport.update({
+    id: '/api/public/billing/start-trial',
+    path: '/api/public/billing/start-trial',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBillingWebhookRoute = ApiPublicBillingWebhookRouteImport.update({
   id: '/api/public/billing/webhook',
   path: '/api/public/billing/webhook',
@@ -154,14 +163,12 @@ const ApiPublicHooksRunTasksRoute = ApiPublicHooksRunTasksRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/app': typeof AppRoute
-  '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/order-complete': typeof OrderCompleteRoute
   '/privacy': typeof PrivacyRoute
-  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -172,21 +179,22 @@ export interface FileRoutesByFullPath {
   '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
+  '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/app': typeof AppRoute
-  '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/order-complete': typeof OrderCompleteRoute
   '/privacy': typeof PrivacyRoute
-  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -197,7 +205,10 @@ export interface FileRoutesByTo {
   '/partners': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
+  '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
@@ -205,14 +216,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/app': typeof AppRoute
-  '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/order-complete': typeof OrderCompleteRoute
   '/privacy': typeof PrivacyRoute
-  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -223,7 +232,10 @@ export interface FileRoutesById {
   '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/billing/checkout': typeof ApiPublicBillingCheckoutRoute
+  '/api/public/billing/create-checkout-session': typeof ApiPublicBillingCreateCheckoutSessionRoute
   '/api/public/billing/portal': typeof ApiPublicBillingPortalRoute
+  '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
+  '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
   '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
@@ -232,14 +244,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/app'
-    | '/auth'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
     | '/mcp'
+    | '/order-complete'
     | '/privacy'
-    | '/settings'
     | '/sitemap.xml'
     | '/terms'
     | '/.well-known/oauth-protected-resource'
@@ -250,21 +260,22 @@ export interface FileRouteTypes {
     | '/partners/'
     | '/api/public/membership'
     | '/api/public/billing/checkout'
+    | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
+    | '/api/public/billing/session-status'
+    | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/app'
-    | '/auth'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
     | '/mcp'
+    | '/order-complete'
     | '/privacy'
-    | '/settings'
     | '/sitemap.xml'
     | '/terms'
     | '/.well-known/oauth-protected-resource'
@@ -275,21 +286,22 @@ export interface FileRouteTypes {
     | '/partners'
     | '/api/public/membership'
     | '/api/public/billing/checkout'
+    | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
+    | '/api/public/billing/session-status'
+    | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   id:
     | '__root__'
     | '/'
     | '/about'
-    | '/app'
-    | '/auth'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
     | '/mcp'
+    | '/order-complete'
     | '/privacy'
-    | '/settings'
     | '/sitemap.xml'
     | '/terms'
     | '/.well-known/oauth-protected-resource'
@@ -300,7 +312,10 @@ export interface FileRouteTypes {
     | '/partners/'
     | '/api/public/membership'
     | '/api/public/billing/checkout'
+    | '/api/public/billing/create-checkout-session'
     | '/api/public/billing/portal'
+    | '/api/public/billing/session-status'
+    | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
     | '/api/public/hooks/run-tasks'
   fileRoutesById: FileRoutesById
@@ -308,14 +323,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AppRoute: typeof AppRoute
-  AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
+  OrderCompleteRoute: typeof OrderCompleteRoute
   PrivacyRoute: typeof PrivacyRoute
-  SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -326,7 +339,10 @@ export interface RootRouteChildren {
   PartnersIndexRoute: typeof PartnersIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
   ApiPublicBillingCheckoutRoute: typeof ApiPublicBillingCheckoutRoute
+  ApiPublicBillingCreateCheckoutSessionRoute: typeof ApiPublicBillingCreateCheckoutSessionRoute
   ApiPublicBillingPortalRoute: typeof ApiPublicBillingPortalRoute
+  ApiPublicBillingSessionStatusRoute: typeof ApiPublicBillingSessionStatusRoute
+  ApiPublicBillingStartTrialRoute: typeof ApiPublicBillingStartTrialRoute
   ApiPublicBillingWebhookRoute: typeof ApiPublicBillingWebhookRoute
   ApiPublicHooksRunTasksRoute: typeof ApiPublicHooksRunTasksRoute
 }
@@ -345,20 +361,6 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -389,18 +391,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-complete': {
+      id: '/order-complete'
+      path: '/order-complete'
+      fullPath: '/order-complete'
+      preLoaderRoute: typeof OrderCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -473,11 +475,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBillingCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/billing/create-checkout-session': {
+      id: '/api/public/billing/create-checkout-session'
+      path: '/api/public/billing/create-checkout-session'
+      fullPath: '/api/public/billing/create-checkout-session'
+      preLoaderRoute: typeof ApiPublicBillingCreateCheckoutSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/billing/portal': {
       id: '/api/public/billing/portal'
       path: '/api/public/billing/portal'
       fullPath: '/api/public/billing/portal'
       preLoaderRoute: typeof ApiPublicBillingPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/billing/session-status': {
+      id: '/api/public/billing/session-status'
+      path: '/api/public/billing/session-status'
+      fullPath: '/api/public/billing/session-status'
+      preLoaderRoute: typeof ApiPublicBillingSessionStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/billing/start-trial': {
+      id: '/api/public/billing/start-trial'
+      path: '/api/public/billing/start-trial'
+      fullPath: '/api/public/billing/start-trial'
+      preLoaderRoute: typeof ApiPublicBillingStartTrialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/billing/webhook': {
@@ -500,14 +523,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AppRoute: AppRoute,
-  AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
+  OrderCompleteRoute: OrderCompleteRoute,
   PrivacyRoute: PrivacyRoute,
-  SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
@@ -519,7 +540,11 @@ const rootRouteChildren: RootRouteChildren = {
   PartnersIndexRoute: PartnersIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
   ApiPublicBillingCheckoutRoute: ApiPublicBillingCheckoutRoute,
+  ApiPublicBillingCreateCheckoutSessionRoute:
+    ApiPublicBillingCreateCheckoutSessionRoute,
   ApiPublicBillingPortalRoute: ApiPublicBillingPortalRoute,
+  ApiPublicBillingSessionStatusRoute: ApiPublicBillingSessionStatusRoute,
+  ApiPublicBillingStartTrialRoute: ApiPublicBillingStartTrialRoute,
   ApiPublicBillingWebhookRoute: ApiPublicBillingWebhookRoute,
   ApiPublicHooksRunTasksRoute: ApiPublicHooksRunTasksRoute,
 }

@@ -77,8 +77,10 @@ function OrderComplete() {
             <h1 className="text-[30px] font-semibold leading-tight">Order confirmed</h1>
             <p className="mt-4 text-sm leading-6 text-landing-muted">
               Thanks for ordering the OVOA Band.
-              {status.email ? ` A receipt is on its way to ${status.email}.` : ""} We&rsquo;ll
-              email you when your Band ships.
+              {status.email ? ` A receipt is on its way to ${status.email}.` : ""} We&rsquo;ll email
+              you when your Band ships.
+              {status.withAi &&
+                " Your free days of OVOA Base start when you choose: the next page has the button, and so does your order email."}
             </p>
             <Button
               asChild
@@ -95,8 +97,8 @@ function OrderComplete() {
           <>
             <h1 className="text-[30px] font-semibold leading-tight">Payment not finished</h1>
             <p className="mt-4 text-sm leading-6 text-landing-muted">
-              We couldn&rsquo;t confirm this order, and nothing was charged unless you get a
-              receipt by email. You can try again, or write to support@ovoa.ai.
+              We couldn&rsquo;t confirm this order, and nothing was charged unless you get a receipt
+              by email. You can try again, or write to support@ovoa.ai.
             </p>
             <Button
               asChild

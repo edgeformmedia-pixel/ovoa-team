@@ -6,10 +6,12 @@ import { createFileRoute } from "@tanstack/react-router";
 //   ?plan=base_monthly|base_annual|pro_monthly|pro_annual
 //       Base or Pro AI on its own. Paid from day one (NO_BAND_TRIAL_DAYS = 0).
 //   ?band=1
-//       The Band (one-time) plus Base AI monthly, which starts after
-//       BAND_TRIAL_DAYS free days. Subscription mode; the Band is charged now.
+//       The Band (one-time) plus BAND_TRIAL_DAYS of Base AI monthly, which the
+//       buyer starts later (the link in their order email). One payment for
+//       the Band with the card saved; the subscription is made when the free
+//       days are started (startBandTrial in sync.server.ts).
 //   ?band=1&ai=0
-//       "Band only, no AI": payment mode, no subscription.
+//       "Band only, no AI": one payment, nothing saved.
 //
 // Band checkouts collect a US shipping address and a phone number.
 //
@@ -25,7 +27,7 @@ const OLD_PLAN_NAMES: Record<string, string> = {
 };
 
 async function startCheckout(request: Request): Promise<Response> {
-  const { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, REF_COOKIE, cleanRef, isPlanId } =
+  const { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, REF_COOKIE, cleanRef, formatMoney, isPlanId } =
     await import("@/lib/membership/plans");
   const { loadPrices } = await import("@/lib/membership/sync.server");
   const { stripe, stripeConfigured } = await import("@/lib/membership/stripe.server");
@@ -70,7 +72,8 @@ async function startCheckout(request: Request): Promise<Response> {
 
     const metadata = {
       ...(withAi ? { plan } : {}),
-      ...(band ? { band: "1" } : {}),
+      // A Band's free days, started later (read by startBandTrial).
+      ...(band ? { band: "1", ...(withAi ? { trial_days: String(BAND_TRIAL_DAYS) } : {}) } : {}),
       ...(ref ? { ref } : {}),
     };
     const common = {
@@ -96,27 +99,40 @@ async function startCheckout(request: Request): Promise<Response> {
     };
 
     let session: { url: string };
-    if (band && !withAi) {
+    if (band) {
+      const base = planPrice?.unit_amount
+        ? `${formatMoney(planPrice.unit_amount, planPrice.currency)} a month`
+        : "the monthly price";
       session = await stripe<{ url: string }>("POST", "/checkout/sessions", {
         ...common,
         mode: "payment",
         line_items: [{ price: prices.band!.id, quantity: 1 }],
         customer_creation: "always",
         invoice_creation: { enabled: true },
-        payment_intent_data: { metadata },
+        payment_intent_data: {
+          metadata,
+          // Keeps the card for Base, charged only once the free days are over.
+          ...(withAi ? { setup_future_usage: "off_session" } : {}),
+        },
+        ...(withAi
+          ? {
+              custom_text: {
+                ...common.custom_text,
+                submit: {
+                  message: `Today you pay for the Band. Your card is saved for OVOA Base: your ${BAND_TRIAL_DAYS} free days start when you choose, from the link we email you. Then ${base} until you cancel.`,
+                },
+              },
+            }
+          : {}),
       });
     } else {
-      const trialDays = band ? BAND_TRIAL_DAYS : NO_BAND_TRIAL_DAYS;
       session = await stripe<{ url: string }>("POST", "/checkout/sessions", {
         ...common,
         mode: "subscription",
-        line_items: [
-          ...(band ? [{ price: prices.band!.id, quantity: 1 }] : []),
-          { price: planPrice!.id, quantity: 1 },
-        ],
+        line_items: [{ price: planPrice!.id, quantity: 1 }],
         payment_method_collection: "always",
         subscription_data: {
-          ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+          ...(NO_BAND_TRIAL_DAYS > 0 ? { trial_period_days: NO_BAND_TRIAL_DAYS } : {}),
           metadata,
         },
       });
