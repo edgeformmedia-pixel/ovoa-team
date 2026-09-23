@@ -10,7 +10,7 @@ const SaveInput = z.object({
   token: z.string().min(10).max(2000),
 });
 
-/** A real Claude setup token looks like sk-ant-oat01-… — reject anything else (e.g. pasted error text). */
+/** A real Claude setup token looks like sk-ant-oat01-…; reject anything else (e.g. pasted error text). */
 const TOKEN_SHAPE = /^sk-ant-[A-Za-z0-9_-]{20,}$/;
 
 export type ClaudeTestResult = {
@@ -95,7 +95,7 @@ export const probeClaudeToken = createServerFn({ method: "POST" })
       return {
         ok: false,
         answer: "",
-        detail: "No Claude sign-in saved — paste a fresh setup token to connect.",
+        detail: "No Claude sign-in saved. Paste a fresh setup token to connect.",
         authInvalid: true,
       };
     }
