@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Loader2, LockKeyhole } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, LockKeyhole } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { StripeEmbeddedCheckout } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
@@ -185,6 +185,8 @@ function Checkout() {
   const [paying, setPaying] = useState(false);
 
   const activePhoto = productPhotos[selectedPhoto];
+  const showPhoto = (step: number) =>
+    setSelectedPhoto((i) => (i + step + productPhotos.length) % productPhotos.length);
   const band = bandPrice(data);
   const base = perLabel(planOf(data, "base", "monthly"));
   const days = data.bandTrialDays;
@@ -217,13 +219,35 @@ function Checkout() {
 
       <div className="mx-auto grid max-w-[1440px] lg:min-h-[calc(100dvh-3rem)] lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-10 lg:px-12 xl:grid-cols-[minmax(0,1fr)_430px] xl:gap-16">
         <section className="px-4 pb-8 pt-4 sm:px-8 sm:pt-8 lg:sticky lg:top-12 lg:flex lg:h-[calc(100dvh-3rem)] lg:flex-col lg:px-0 lg:pb-10">
-          <div className="relative flex min-h-[390px] flex-1 items-center justify-center overflow-hidden rounded-lg bg-landing-control sm:min-h-[560px] lg:min-h-0">
-            <img
-              key={activePhoto.src}
-              src={activePhoto.src}
-              alt={activePhoto.alt}
-              className={`h-full w-full transition-opacity duration-300 ${activePhoto.fit === "cover" ? "object-cover" : "object-contain p-8 sm:p-14 lg:p-20"}`}
-            />
+          <div className="relative min-h-[390px] flex-1 overflow-hidden rounded-lg bg-landing-control sm:min-h-[560px] lg:min-h-0">
+            {/* Every photo stays mounted and stacked so switching crossfades. */}
+            {productPhotos.map((photo, index) => (
+              <img
+                key={photo.src}
+                src={photo.src}
+                alt={photo.alt}
+                aria-hidden={index !== selectedPhoto}
+                className={`absolute inset-0 h-full w-full transition-opacity duration-500 ease-out motion-reduce:transition-none ${
+                  index === selectedPhoto ? "opacity-100" : "opacity-0"
+                } ${photo.fit === "cover" ? "object-cover" : "object-contain p-8 sm:p-14 lg:p-20"}`}
+              />
+            ))}
+            <button
+              type="button"
+              aria-label="Previous photo"
+              onClick={() => showPhoto(-1)}
+              className="absolute left-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-landing-action-foreground/30 text-landing-ink/40 transition-colors hover:bg-landing-action-foreground/70 hover:text-landing-ink/80 focus-visible:text-landing-ink/80 sm:left-4"
+            >
+              <ChevronLeft className="size-6" strokeWidth={1.5} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next photo"
+              onClick={() => showPhoto(1)}
+              className="absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-landing-action-foreground/30 text-landing-ink/40 transition-colors hover:bg-landing-action-foreground/70 hover:text-landing-ink/80 focus-visible:text-landing-ink/80 sm:right-4"
+            >
+              <ChevronRight className="size-6" strokeWidth={1.5} aria-hidden="true" />
+            </button>
           </div>
 
           <div
