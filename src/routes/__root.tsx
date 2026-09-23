@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "P0BPvNBVMzDqVoDBu0DGAyoYz-_8lyxQX9q7pl11aVY",
       },
 
-      { title: "Band — the programmable health band" },
+      { title: "Band: the programmable health band" },
       {
         name: "description",
         content:
@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "author", content: "Band" },
       { property: "og:site_name", content: "Band" },
-      { property: "og:title", content: "Band — the programmable health band" },
+      { property: "og:title", content: "Band: the programmable health band" },
       {
         property: "og:description",
         content:
@@ -114,7 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "alternate",
         type: "text/plain",
         href: "/llms.txt",
-        title: "llms.txt — plain-text summary for AI assistants",
+        title: "llms.txt: plain-text summary for AI assistants",
       },
     ],
     scripts: [
