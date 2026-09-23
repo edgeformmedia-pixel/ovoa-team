@@ -6,7 +6,7 @@ import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice } from "@/lib/membership/copy";
 
 const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
-const PAGE_TITLE = "About Band — the AI wristband you talk to";
+const PAGE_TITLE = "About Band: the AI wristband you talk to";
 const PAGE_DESCRIPTION =
   "The OVOA Band is a woven wristband you talk to. Ask it to do a task, double-tap to save a note word for word, or set a standing rule that keeps running. Heart rate and motion sensing, microphone, vibration motor. Beta hardware.";
 
@@ -60,7 +60,7 @@ function AboutPage() {
         <div className="neu-inset relative aspect-square w-full max-w-[260px] overflow-hidden rounded-[2rem]">
           <img
             src={bandFront}
-            alt="Band — a black woven AI wristband with sensor light and side button"
+            alt="Band, a black woven AI wristband with sensor light and side button"
             className="h-full w-full object-contain p-6"
           />
         </div>
@@ -69,14 +69,14 @@ function AboutPage() {
           What is Band?
         </h1>
         <p className="mt-3 max-w-sm text-base leading-relaxed text-muted-foreground">
-          Band is a woven wristband you talk to. Say or type what you want and it goes and does it —
+          Band is a woven wristband you talk to. Say or type what you want and it goes and does it:
           a task, a note kept word for word, or a standing rule that keeps running in the
           background.
         </p>
 
         <Section title="How it works">
           <p>
-            <strong className="text-foreground">Tasks.</strong> Ask once — out loud or in the app —
+            <strong className="text-foreground">Tasks.</strong> Ask once, out loud or in the app,
             and Band goes and does it. You get a buzz and a plain-English result when it's done, or
             when it needs you.
           </p>
@@ -86,7 +86,7 @@ function AboutPage() {
           </p>
           <p>
             <strong className="text-foreground">Standing rules.</strong> Some requests shouldn't
-            happen once — they should keep happening. Band turns them into rules that run in the
+            happen once. They should keep happening. Band turns them into rules that run in the
             background and reports every time they fire.
           </p>
         </Section>
@@ -120,7 +120,7 @@ function AboutPage() {
           <p>
             The companion app is where everything lands: your tasks and what happened with them,
             your notes word for word, your health history, and the connections Band can act on. The
-            band itself is always one tap away — battery, connection, and live sensor readings.
+            band itself is always one tap away: battery, connection, and live sensor readings.
           </p>
         </Section>
 
