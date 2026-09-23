@@ -27,6 +27,19 @@ const persist = mkdtempSync(join(tmpdir(), "ovoa-billing-smoke-"));
 const children = [];
 let failures = 0;
 
+// A kept-alive connection can be closed by wrangler while a slow `wrangler d1
+// execute` runs between requests; Node then reuses it and gets ECONNRESET.
+// Retry once on a fresh connection instead of failing the run.
+const rawFetch = globalThis.fetch;
+globalThis.fetch = async (url, init) => {
+  try {
+    return await rawFetch(url, init);
+  } catch (error) {
+    if (error?.cause?.code !== "ECONNRESET") throw error;
+    return rawFetch(url, { ...init, headers: { ...init?.headers, connection: "close" } });
+  }
+};
+
 const env = { ...process.env, STRIPE_API_BASE: `${STRIPE}/v1`, FAKE_WEBHOOK_SECRET: WHSEC };
 
 function check(label, ok, detail) {
@@ -170,6 +183,27 @@ async function main() {
     "/early-access renders",
     plansPage.status === 200 && (await plansPage.text()).includes("$9.95"),
   );
+  // Every price on the pages comes from Stripe (here, the fake one).
+  for (const [path, must] of [
+    ["/", ['"price":"89.99"', "LimitedAvailability", "$9.95/month"]],
+    ["/checkout", ["$89.99", '"price":"89.99"', "Band only"]],
+    ["/faq", ["$25.95/month", "What&#x27;s free?"]],
+    ["/privacy", ["14 days"]],
+    ["/terms", ["$195.99/year"]],
+    ["/llms.txt", ["$89.99", "$95.99/year"]],
+  ]) {
+    const res = await fetch(`${SITE}${path}`);
+    const text = await res.text();
+    const missing = must.filter(
+      (m) => !text.includes(m.replace("&#x27;", "'")) && !text.includes(m),
+    );
+    const stale = ["$99<", "$99,", "$9.99", "$19.99", '"99.00"'].filter((m) => text.includes(m));
+    check(`${path} shows live prices`, res.status === 200 && !missing.length && !stale.length, {
+      status: res.status,
+      missing,
+      stale,
+    });
+  }
 
   // ---- 1. Band + AI ----
   {

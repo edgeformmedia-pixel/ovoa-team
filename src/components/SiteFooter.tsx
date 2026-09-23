@@ -2,11 +2,13 @@ import { Link } from "@tanstack/react-router";
 
 const links = [
   { to: "/", label: "Home" },
-  { to: "/early-access", label: "Early access" },
-  { to: "/checkout", label: "Checkout" },
+  { to: "/early-access", label: "Plans" },
+  { to: "/checkout", label: "Band" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
   { to: "/partners", label: "Partners" },
+  { to: "/privacy", label: "Privacy" },
+  { to: "/terms", label: "Terms" },
 ] as const;
 
 export function SiteFooter() {
@@ -24,7 +26,7 @@ export function SiteFooter() {
         ))}
       </nav>
       <p className="mt-3 text-[11px] text-muted-foreground/70">
-        Band by Ovoa AI — a woven wristband you talk to.
+        OVOA is in beta: the iPhone app comes through TestFlight, and the Band is beta hardware.
       </p>
     </footer>
   );

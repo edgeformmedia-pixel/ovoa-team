@@ -7,7 +7,8 @@ const HEADLINE = "Hey OVOA!";
 // How long after the hero video starts playing the headline swaps.
 const HEADLINE_SWAP_MS = 3000;
 
-export function ScrollScrubVideo() {
+// `note` is the small line under the button (plans and prices, from the page).
+export function ScrollScrubVideo({ note }: { note?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [swapped, setSwapped] = useState(false);
 
@@ -64,7 +65,7 @@ export function ScrollScrubVideo() {
           href="#band"
           className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-landing-line px-3.5 py-1 text-xs font-medium text-landing-ink transition-colors hover:bg-landing-control sm:mb-4 sm:text-sm"
         >
-          <span className="text-landing-action">New</span>
+          <span className="text-landing-action">Beta</span>
           OVOA Band brings OVOA to your wrist
           <span aria-hidden="true">›</span>
         </a>
@@ -120,7 +121,9 @@ export function ScrollScrubVideo() {
         Get started
       </a>
 
-      <p className="mt-3 text-[11px] text-landing-muted/70">Shown with the new OVOA Band</p>
+      <p className="mt-3 px-4 text-[11px] text-landing-muted">
+        {note ?? "Shown with the new OVOA Band"}
+      </p>
     </section>
   );
 }

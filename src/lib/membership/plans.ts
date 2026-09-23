@@ -103,6 +103,9 @@ export type PlansResult = {
   // Free days when buying a plan on its own (0), and with a Band.
   trialDays: number;
   bandTrialDays: number;
+  // The public TestFlight link, when one is set. The free app is free, so the
+  // plans page can hand it to anyone (Apple 2.2: nobody pays for beta access).
+  betaUrl: string | null;
 };
 
 // Shown until Stripe is connected, so the page never renders empty. The

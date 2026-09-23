@@ -11,9 +11,11 @@ import {
   markAffiliatePaid,
   retryTestflight,
   setAffiliateStatus,
+  setBandOrderStatus,
   type AdminOverview,
 } from "@/lib/membership/membership.functions";
-import { formatMoney } from "@/lib/membership/plans";
+import { PLAN_NAMES } from "@/lib/membership/copy";
+import { formatMoney, type PaidTier } from "@/lib/membership/plans";
 
 // Owner-only. Unlocked with OVOA_ADMIN_KEY, which stays in this tab's
 // session storage and is sent with each request.
@@ -29,7 +31,16 @@ export const Route = createFileRoute("/early-access/admin")({
 
 const KEY_STORAGE = "ovoa.admin.key";
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const date = (v: string | null) => (v ? shortDate.format(new Date(v)) : "—");
+const withYear = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+const date = (v: string | null) => {
+  if (!v) return "—";
+  const d = new Date(v);
+  return (d.getFullYear() === new Date().getFullYear() ? shortDate : withYear).format(d);
+};
 
 function Tile({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -90,7 +101,9 @@ function Admin() {
   const [groups, setGroups] = useState<Awaited<ReturnType<typeof listTestflightGroups>> | null>(
     null,
   );
-  const [grant, setGrant] = useState({ email: "", name: "", note: "" });
+  const [grant, setGrant] = useState<{ email: string; name: string; note: string; tier: PaidTier }>(
+    { email: "", name: "", note: "", tier: "base" },
+  );
 
   const load = useServerFn(getAdminOverview);
   const approve = useServerFn(setAffiliateStatus);
@@ -99,6 +112,7 @@ function Admin() {
   const findGroups = useServerFn(listTestflightGroups);
   const giveAccess = useServerFn(grantAccess);
   const endAccess = useServerFn(endCompAccess);
+  const setBandStatus = useServerFn(setBandOrderStatus);
 
   const refresh = useCallback(
     async (k: string) => {
@@ -176,7 +190,7 @@ function Admin() {
     );
   }
 
-  const { config, stats, members, affiliates } = data;
+  const { config, stats, members, affiliates, bandOrders } = data;
   const pending = affiliates.filter((a) => a.status === "pending");
   const approved = affiliates.filter((a) => a.status === "approved");
   const origin = typeof window === "undefined" ? "https://ovoa.ai" : window.location.origin;
@@ -232,9 +246,9 @@ function Admin() {
             sub={`${formatMoney(stats.trialMrrCents)}/mo if they stay`}
           />
           <Tile
-            label="Founders"
-            value={stats.lifetime}
-            sub={`${formatMoney(stats.lifetimeCents)} one-time`}
+            label="Bands to ship"
+            value={stats.bandsToShip}
+            sub={`${formatMoney(stats.bandCents)} in Band sales`}
           />
           <Tile label="Free access" value={stats.comp} />
           <Tile label="Owed to partners" value={formatMoney(stats.owedCents)} />
@@ -313,7 +327,7 @@ function Admin() {
               e.preventDefault();
               void act("grant", async () => {
                 await giveAccess({ data: { key, ...grant } });
-                setGrant({ email: "", name: "", note: "" });
+                setGrant({ email: "", name: "", note: "", tier: "base" });
               });
             }}
           >
@@ -337,6 +351,28 @@ function Admin() {
               value={grant.note}
               onChange={(e) => setGrant((g) => ({ ...g, note: e.target.value }))}
             />
+            <div
+              role="radiogroup"
+              aria-label="Plan"
+              className="inline-flex h-10 shrink-0 self-start rounded-full bg-landing-control p-1"
+            >
+              {(["base", "pro"] as const).map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  role="radio"
+                  aria-checked={grant.tier === tier}
+                  onClick={() => setGrant((g) => ({ ...g, tier }))}
+                  className={`rounded-full px-4 text-sm font-semibold transition-colors ${
+                    grant.tier === tier
+                      ? "bg-landing-canvas text-landing-ink shadow-sm"
+                      : "text-landing-muted hover:text-landing-ink"
+                  }`}
+                >
+                  {PLAN_NAMES[tier]}
+                </button>
+              ))}
+            </div>
             <button
               type="submit"
               disabled={busy === "grant"}
@@ -345,6 +381,125 @@ function Admin() {
               Give access
             </button>
           </form>
+          <p className="mt-2 text-xs text-landing-muted">
+            App Review&rsquo;s login needs Pro, so the reviewers can see every feature.
+          </p>
+        </Section>
+
+        <Section
+          title={`Band orders (${bandOrders.length})`}
+          aside={
+            stats.bandsToShip > 0 ? (
+              <span className="text-sm text-landing-muted">{stats.bandsToShip} to ship</span>
+            ) : undefined
+          }
+        >
+          {bandOrders.length === 0 ? (
+            <p className="text-sm text-landing-muted">No Band orders yet.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-landing-line">
+              <table className="w-full min-w-[860px] text-left text-sm">
+                <thead className="bg-landing-control/60 text-landing-muted">
+                  <tr>
+                    <th className="px-4 py-2.5 font-medium">Buyer</th>
+                    <th className="px-4 py-2.5 font-medium">Ship to</th>
+                    <th className="px-4 py-2.5 font-medium">With Base</th>
+                    <th className="px-4 py-2.5 font-medium">Paid</th>
+                    <th className="px-4 py-2.5 font-medium">Status</th>
+                    <th className="px-4 py-2.5 font-medium" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-landing-line">
+                  {bandOrders.map((b) => (
+                    <tr key={b.id} className="align-top">
+                      <td className="px-4 py-2.5">
+                        <span className="font-medium">{b.email}</span>
+                        <span className="block text-xs text-landing-muted">
+                          {[b.name, b.phone, date(b.createdAt)].filter(Boolean).join(" · ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <address className="text-xs not-italic leading-5">
+                          {b.shipTo.length === 0
+                            ? "—"
+                            : b.shipTo.map((line) => (
+                                <span key={line} className="block">
+                                  {line}
+                                </span>
+                              ))}
+                        </address>
+                        {b.shipTo.length > 0 && (
+                          <button
+                            type="button"
+                            className="mt-1 text-xs font-semibold text-landing-action"
+                            onClick={() =>
+                              void navigator.clipboard
+                                .writeText(b.shipTo.join("\n"))
+                                .catch(() => undefined)
+                            }
+                          >
+                            Copy address
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">{b.withAi ? "Yes" : "Band only"}</td>
+                      <td className="px-4 py-2.5 tabular-nums">
+                        {formatMoney(b.amountCents, b.currency)}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={b.status === "paid" ? "font-semibold" : ""}>
+                          {b.status === "paid" ? "To ship" : b.status}
+                        </span>
+                        {b.shippedAt && (
+                          <span className="block text-xs text-landing-muted">
+                            {date(b.shippedAt)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex justify-end">
+                          {b.status === "paid" && (
+                            <button
+                              type="button"
+                              className={smallButton}
+                              disabled={busy === b.id}
+                              onClick={() => {
+                                if (window.confirm(`Mark ${b.email}'s Band as shipped?`)) {
+                                  void act(b.id, () =>
+                                    setBandStatus({ data: { key, id: b.id, status: "shipped" } }),
+                                  );
+                                }
+                              }}
+                            >
+                              Mark shipped
+                            </button>
+                          )}
+                          {b.status === "shipped" && (
+                            <button
+                              type="button"
+                              className={smallButton}
+                              disabled={busy === b.id}
+                              onClick={() =>
+                                void act(b.id, () =>
+                                  setBandStatus({ data: { key, id: b.id, status: "paid" } }),
+                                )
+                              }
+                            >
+                              Undo
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-landing-muted">
+            Band-only buyers get the free app. Without a TestFlight public link set, email them an
+            invite.
+          </p>
         </Section>
 
         {pending.length > 0 && (
@@ -509,8 +664,17 @@ function Admin() {
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 capitalize">
-                        {m.plan === "comp" ? "Free" : m.plan}
+                      <td className="px-4 py-2.5">
+                        {PLAN_NAMES[m.tier]}
+                        <span className="block text-xs text-landing-muted">
+                          {m.plan === "comp"
+                            ? "Free access"
+                            : m.plan === "annual"
+                              ? "Yearly"
+                              : m.plan === "monthly"
+                                ? "Monthly"
+                                : "Founder (old)"}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5">
                         {m.status}

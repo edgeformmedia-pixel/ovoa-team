@@ -12,6 +12,7 @@ import {
   planId,
   type MemberPlan,
   type PaidTier,
+  type PlanId,
   type PlansResult,
 } from "./plans";
 
@@ -22,7 +23,12 @@ import {
 // the pages keep their buy buttons off in that state.
 export const getPlans = createServerFn({ method: "GET" }).handler(
   async (): Promise<PlansResult> => {
-    const trial = { trialDays: NO_BAND_TRIAL_DAYS, bandTrialDays: BAND_TRIAL_DAYS };
+    const { testflightPublicUrl } = await import("./testflight.server");
+    const trial = {
+      trialDays: NO_BAND_TRIAL_DAYS,
+      bandTrialDays: BAND_TRIAL_DAYS,
+      betaUrl: testflightPublicUrl(),
+    };
     const fallback: PlansResult = {
       configured: false,
       plans: FALLBACK_PLANS,
@@ -77,12 +83,65 @@ export type WelcomeData =
       // Set when a Band came in the same checkout.
       band: WelcomeBand | null;
       testflight: WelcomeTestflight;
-      upgrade: { annualCents: number; saveCents: number; currency: string } | null;
+      // What their plan costs now (null for free access), and what they can
+      // move to from here.
+      price: { cents: number; currency: string; interval: "month" | "year" } | null;
+      offers: WelcomeOffers;
     };
+
+// The two moves offered on the welcome page: Base monthly → yearly, and
+// Base → Pro. `chargedToday` says whether taking it charges the card now.
+export type WelcomeOffer = {
+  to: PlanId;
+  cents: number;
+  currency: string;
+  interval: "month" | "year";
+  // Yearly only: what it saves over twelve monthly payments.
+  saveCents: number | null;
+  chargedToday: boolean;
+};
+export type WelcomeOffers = { annual: WelcomeOffer | null; pro: WelcomeOffer | null };
 
 function bandSummary(order: import("./store.server").BandOrder): WelcomeBand {
   const place = [order.ship_city, order.ship_state].filter(Boolean).join(", ");
   return { status: order.status, withAi: order.with_ai, shipTo: place || null };
+}
+
+type MemberRow = import("./store.server").Member;
+type Prices = import("./sync.server").Prices;
+
+// Which plan a switch button moves this member to, or null when it can't be
+// done from the welcome page (free access, the old Founder plan, a membership
+// that's ending or ended, or already there).
+function switchTarget(member: MemberRow, to: "annual" | "pro"): PlanId | null {
+  if (!member.stripe_subscription_id) return null;
+  if (member.plan !== "monthly" && member.plan !== "annual") return null;
+  if (member.status !== "trialing" && member.status !== "active") return null;
+  if (member.cancel_at_period_end) return null;
+  if (to === "annual") return member.plan === "monthly" ? planId(member.tier, "annual") : null;
+  return member.tier === "base" ? planId("pro", member.plan) : null;
+}
+
+function offerFor(member: MemberRow, prices: Prices, to: "annual" | "pro"): WelcomeOffer | null {
+  const target = switchTarget(member, to);
+  const price = target ? prices.plans.get(target) : undefined;
+  if (!target || !price?.unit_amount) return null;
+  let saveCents: number | null = null;
+  if (to === "annual") {
+    const monthly = prices.plans.get(planId(member.tier, "monthly"))?.unit_amount;
+    if (!monthly || monthly * 12 <= price.unit_amount) return null;
+    saveCents = monthly * 12 - price.unit_amount;
+  }
+  return {
+    to: target,
+    cents: price.unit_amount,
+    currency: price.currency,
+    interval: price.recurring?.interval === "year" ? "year" : "month",
+    saveCents,
+    // Yearly during the Band's free days starts when they end. Everything else
+    // (and Pro always) starts today.
+    chargedToday: !(to === "annual" && member.status === "trialing"),
+  };
 }
 
 async function welcomeFor(sessionId: string): Promise<WelcomeData> {
@@ -104,18 +163,25 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
     };
   }
 
-  // Monthly → annual (same tier) while the Band's free days are running.
-  let upgrade: Extract<WelcomeData, { state: "ready" }>["upgrade"] = null;
-  if (member.plan === "monthly" && member.status === "trialing") {
-    const prices = await sync.loadPrices();
-    const monthly = prices.plans.get(planId(member.tier, "monthly"))?.unit_amount;
-    const annual = prices.plans.get(planId(member.tier, "annual"));
-    if (monthly && annual?.unit_amount && monthly * 12 > annual.unit_amount) {
-      upgrade = {
-        annualCents: annual.unit_amount,
-        saveCents: monthly * 12 - annual.unit_amount,
-        currency: annual.currency,
+  let price: Extract<WelcomeData, { state: "ready" }>["price"] = null;
+  let offers: WelcomeOffers = { annual: null, pro: null };
+  if (member.plan === "monthly" || member.plan === "annual") {
+    try {
+      const prices = await sync.loadPrices();
+      const current = prices.plans.get(planId(member.tier, member.plan));
+      if (current?.unit_amount) {
+        price = {
+          cents: current.unit_amount,
+          currency: current.currency,
+          interval: member.plan === "annual" ? "year" : "month",
+        };
+      }
+      offers = {
+        annual: offerFor(member, prices, "annual"),
+        pro: offerFor(member, prices, "pro"),
       };
+    } catch (error) {
+      console.error("[membership] welcome prices", error);
     }
   }
 
@@ -136,7 +202,8 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
       state: member.testflight_state,
       publicUrl,
     },
-    upgrade,
+    price,
+    offers,
   };
 }
 
@@ -160,34 +227,53 @@ export const getWelcome = createServerFn({ method: "GET" })
     }
   });
 
-// Monthly → annual while still in the free trial. Nothing is charged today;
-// the annual price starts when the trial ends.
-export const switchToAnnual = createServerFn({ method: "POST" })
-  .inputValidator(sessionInput)
+// The welcome page's two switches:
+//   annual  monthly → yearly, same plan. During the Band's free days nothing is
+//           charged now; the yearly price starts when they end. Otherwise the
+//           year starts today, less what's left of the month already paid.
+//   pro     Base → Pro, same billing period. Starts today: the Band's free Base
+//           days end, and a paid Base period is credited for what's left of it.
+// A change that needs a payment only happens if that payment goes through
+// (payment_behavior: pending_if_incomplete).
+export const changePlan = createServerFn({ method: "POST" })
+  .inputValidator((input: { sessionId?: unknown; to?: unknown }) => ({
+    ...sessionInput(input),
+    to: (input?.to === "pro" ? "pro" : "annual") as "annual" | "pro",
+  }))
   .handler(async ({ data }): Promise<WelcomeData> => {
     const sync = await import("./sync.server");
     const { stripe } = await import("./stripe.server");
     const member = (await sync.syncCheckoutSession(data.sessionId))?.member;
-    if (
-      !member?.stripe_subscription_id ||
-      member.plan !== "monthly" ||
-      member.status !== "trialing"
-    ) {
-      throw new Error("This membership can't be switched here. Use Manage billing instead.");
+    const target = member ? switchTarget(member, data.to) : null;
+    if (!member?.stripe_subscription_id || !target) {
+      throw new Error("This membership can't be changed here. Use Manage billing instead.");
     }
-    const annual = (await sync.loadPrices()).plans.get(planId(member.tier, "annual"));
-    if (!annual) throw new Error("The annual plan isn't set up yet.");
+    const price = (await sync.loadPrices()).plans.get(target);
+    if (!price) throw new Error("That plan isn't set up yet.");
     const sub = await stripe<{ items: { data: { id: string }[] }; trial_end: number | null }>(
       "GET",
       `/subscriptions/${member.stripe_subscription_id}`,
     );
     const item = sub.items.data[0];
     if (!item) throw new Error("Subscription has no items.");
-    await stripe("POST", `/subscriptions/${member.stripe_subscription_id}`, {
-      items: [{ id: item.id, price: annual.id }],
-      proration_behavior: "none",
-      trial_end: sub.trial_end ?? undefined,
-    });
+    const items = [{ id: item.id, price: price.id }];
+    const trialing = member.status === "trialing";
+    const body =
+      data.to === "annual" && trialing
+        ? { items, proration_behavior: "none", trial_end: sub.trial_end ?? undefined }
+        : trialing
+          ? {
+              items,
+              proration_behavior: "none",
+              trial_end: "now",
+              payment_behavior: "pending_if_incomplete",
+            }
+          : {
+              items,
+              proration_behavior: "always_invoice",
+              payment_behavior: "pending_if_incomplete",
+            };
+    await stripe("POST", `/subscriptions/${member.stripe_subscription_id}`, body);
     await sync.syncSubscription(member.stripe_subscription_id);
     return welcomeFor(data.sessionId);
   });

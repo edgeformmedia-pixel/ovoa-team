@@ -21,21 +21,27 @@ import cyclingBand from "@/assets/sports/cycling-band.jpg.asset.json";
 import runningBand from "@/assets/sports/running-band.png.asset.json";
 import swimmingBand from "@/assets/sports/swimming-band.png.asset.json";
 import { HEALTH_SCRIPT, NOTES_SCRIPT, RULES_SCRIPT, TASKS_SCRIPT } from "@/lib/demo-scripts";
+import { getPlans } from "@/lib/membership/membership.functions";
+import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
+import type { PlansResult } from "@/lib/membership/plans";
 
 const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
 const PAGE_TITLE = "OVOA — the AI assistant that gets things done";
-const PAGE_DESCRIPTION =
-  "OVOA is a Jarvis in your phone: text or talk and it schedules, remembers and follows through. Add Band, the woven wristband with heart rate sensing, for $99.";
+
+function describe(data: PlansResult | undefined) {
+  return `OVOA is a Jarvis in your phone: text or talk and it schedules, remembers and follows through. In beta on iPhone: health and notes are free, the assistant is ${perLabel(planOf(data, "base", "monthly"))}, and the OVOA Band is ${bandPrice(data)}.`;
+}
 
 export const Route = createFileRoute("/")({
   component: Landing,
   staticData: { sitemap: true },
-  head: () => ({
+  loader: () => getPlans(),
+  head: ({ loaderData }) => ({
     meta: [
       { title: PAGE_TITLE },
-      { name: "description", content: PAGE_DESCRIPTION },
+      { name: "description", content: describe(loaderData) },
       { property: "og:title", content: PAGE_TITLE },
-      { property: "og:description", content: PAGE_DESCRIPTION },
+      { property: "og:description", content: describe(loaderData) },
       { property: "og:type", content: "product" },
       { property: "og:url", content: "https://ovoa.ai/" },
       { property: "og:image", content: OG_IMAGE },
@@ -46,21 +52,12 @@ export const Route = createFileRoute("/")({
     scripts: [
       {
         type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Product",
-          name: "Health Band",
-          description: PAGE_DESCRIPTION,
-          image: OG_IMAGE,
-          brand: { "@type": "Brand", name: "Band" },
-          offers: {
-            "@type": "Offer",
-            price: "99.00",
-            priceCurrency: "USD",
-            availability: "https://schema.org/InStock",
-            url: "https://ovoa.ai/checkout",
-          },
-        }),
+        children: JSON.stringify(
+          bandProductJsonLd(
+            loaderData,
+            "A woven wristband with one button and heart rate sensing: press it and talk to OVOA. Beta hardware.",
+          ),
+        ),
       },
     ],
   }),
@@ -126,7 +123,9 @@ function PhoneFeature({
   return (
     <section
       className={`overflow-hidden px-6 py-20 sm:px-10 sm:py-28 lg:px-14 ${
-        dark ? "bg-landing-ink text-landing-action-foreground" : "bg-landing-control/55 text-landing-ink"
+        dark
+          ? "bg-landing-ink text-landing-action-foreground"
+          : "bg-landing-control/55 text-landing-ink"
       }`}
     >
       <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2 lg:gap-20">
@@ -140,7 +139,9 @@ function PhoneFeature({
           </div>
         </div>
         <div className={`max-w-xl ${reverse ? "lg:order-1 lg:pl-10" : "lg:pr-10"}`}>
-          <p className={`text-sm font-medium ${dark ? "text-landing-action-foreground/60" : "text-landing-muted"}`}>
+          <p
+            className={`text-sm font-medium ${dark ? "text-landing-action-foreground/60" : "text-landing-muted"}`}
+          >
             {eyebrow}
           </p>
           <h2 className="mt-3 text-[clamp(2.25rem,4.5vw,4.5rem)] font-semibold leading-[1.04] tracking-normal">
@@ -156,7 +157,10 @@ function PhoneFeature({
           <ul className="mt-8 space-y-3">
             {points.map((point) => (
               <li key={point} className="flex items-center gap-3 text-base font-medium sm:text-lg">
-                <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-landing-action" />
+                <span
+                  aria-hidden="true"
+                  className="size-2 shrink-0 rounded-full bg-landing-action"
+                />
                 {point}
               </li>
             ))}
@@ -168,6 +172,9 @@ function PhoneFeature({
 }
 
 function Landing() {
+  const data = Route.useLoaderData();
+  const band = bandPrice(data);
+  const base = perLabel(planOf(data, "base", "monthly"));
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
       <header className="h-14 border-b border-landing-line sm:h-16">
@@ -179,13 +186,22 @@ function Landing() {
             >
               Collection
             </Link>
-            <Link to="/about" className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block">
+            <Link
+              to="/about"
+              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
+            >
               Bands
             </Link>
-            <Link to="/about" className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block">
+            <Link
+              to="/about"
+              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
+            >
               Materials
             </Link>
-            <Link to="/faq" className="text-xs text-landing-muted transition-colors hover:text-landing-ink">
+            <Link
+              to="/faq"
+              className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
+            >
               Support
             </Link>
           </nav>
@@ -217,7 +233,9 @@ function Landing() {
         </div>
       </header>
 
-      <ScrollScrubVideo />
+      <ScrollScrubVideo
+        note={`Beta · Free for health and notes · Assistant from ${base} · Band ${band}`}
+      />
 
       <HowItWorksDemo />
 
@@ -228,9 +246,8 @@ function Landing() {
             The assistant that actually does things.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-2xl">
-            Text it or talk to it like a person. OVOA plans, schedules, remembers
-            and follows through, then lets you know when it’s done, or when it
-            needs you.
+            Text it or talk to it like a person. OVOA plans, schedules, remembers and follows
+            through, then lets you know when it’s done, or when it needs you.
           </p>
         </div>
       </section>
@@ -239,7 +256,11 @@ function Landing() {
         eyebrow="Tasks"
         title="Say it once. Consider it handled."
         body="Skip the back-and-forth. Tell OVOA what you need and it finds the time, drafts the message and sends the invite. When the choice is yours, it asks first."
-        points={["Finds openings on your calendar", "Drafts and sends for you", "Checks with you before it acts"]}
+        points={[
+          "Finds openings on your calendar",
+          "Drafts and sends for you",
+          "Checks with you before it acts",
+        ]}
         script={TASKS_SCRIPT}
       />
 
@@ -247,7 +268,11 @@ function Landing() {
         eyebrow="Standing rules"
         title="Set it once. It keeps going."
         body="Turn anything into a routine. OVOA runs it in the background and reports back every time it fires, from a morning brief to a heads-up when you’re running late."
-        points={["Runs on a schedule or a trigger", "Reports back every time", "Pause or delete it anytime"]}
+        points={[
+          "Runs on a schedule or a trigger",
+          "Reports back every time",
+          "Pause or delete it anytime",
+        ]}
         script={RULES_SCRIPT}
         dark
         reverse
@@ -283,8 +308,12 @@ function Landing() {
             {CAPABILITIES.map(({ icon: Icon, title, copy }) => (
               <article key={title} className="rounded-[1.75rem] bg-landing-control/70 p-7 sm:p-8">
                 <Icon aria-hidden="true" className="size-7 stroke-[1.6] text-landing-action" />
-                <h3 className="mt-6 text-2xl font-semibold tracking-normal text-landing-ink">{title}</h3>
-                <p className="mt-2 text-base leading-relaxed text-landing-muted sm:text-lg">{copy}</p>
+                <h3 className="mt-6 text-2xl font-semibold tracking-normal text-landing-ink">
+                  {title}
+                </h3>
+                <p className="mt-2 text-base leading-relaxed text-landing-muted sm:text-lg">
+                  {copy}
+                </p>
               </article>
             ))}
           </div>
@@ -297,8 +326,8 @@ function Landing() {
       >
         <div className="mx-auto max-w-4xl">
           <p className="text-sm font-medium">
-            <span className="text-landing-action">New</span>
-            <span className="text-landing-action-foreground/60"> · $99</span>
+            <span className="text-landing-action">Beta</span>
+            <span className="text-landing-action-foreground/60"> · {band}</span>
           </p>
           <h2 className="mt-4 text-[clamp(2.75rem,8vw,7rem)] font-semibold leading-[0.96] tracking-normal">
             OVOA Band
@@ -307,9 +336,9 @@ function Landing() {
             Brings OVOA to your wrist.
           </p>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-2xl">
-            Your Jarvis, one press away. OVOA Band is a woven wristband with a
-            single button: press it and talk. No phone, no screen. It answers in
-            buzzes, reads your heart rate and keeps going all day.
+            Your Jarvis, one press away. OVOA Band is a woven wristband with a single button: press
+            it and talk. No phone, no screen. It answers in buzzes, reads your heart rate and keeps
+            going all day.
           </p>
           <div className="mx-auto mt-14 grid max-w-3xl gap-px overflow-hidden rounded-[1.75rem] bg-landing-action-foreground/12 text-left sm:grid-cols-2">
             {BUZZES.map((buzz) => (
@@ -323,7 +352,9 @@ function Landing() {
                   ))}
                 </span>
                 <span>
-                  <span className="block text-sm text-landing-action-foreground/55">{buzz.label}</span>
+                  <span className="block text-sm text-landing-action-foreground/55">
+                    {buzz.label}
+                  </span>
                   <span className="block text-lg font-medium">{buzz.meaning}</span>
                 </span>
               </div>
@@ -335,7 +366,9 @@ function Landing() {
       <section className="bg-landing-canvas px-4 py-24 sm:px-6 sm:py-36">
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-10 max-w-4xl sm:mb-14">
-            <p className="text-lg font-semibold text-landing-ink sm:text-xl">Band goes where you go</p>
+            <p className="text-lg font-semibold text-landing-ink sm:text-xl">
+              Band goes where you go
+            </p>
             <h2 className="mt-3 text-[clamp(3rem,7vw,6.5rem)] font-semibold leading-[0.96] tracking-normal text-landing-ink">
               Built for the moments you can’t reach for your phone.
             </h2>
@@ -382,7 +415,9 @@ function Landing() {
                 </div>
                 <div className="absolute inset-x-0 bottom-[25%] h-[24%] bg-gradient-to-t from-landing-ink/65 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 min-h-[29%] rounded-t-[1.75rem] border-t border-landing-action-foreground/15 bg-landing-ink/70 p-6 text-landing-action-foreground backdrop-blur-md sm:p-8">
-                  <h3 className="text-3xl font-semibold leading-tight tracking-normal sm:text-4xl">{sport.title}</h3>
+                  <h3 className="text-3xl font-semibold leading-tight tracking-normal sm:text-4xl">
+                    {sport.title}
+                  </h3>
                   <p className="mt-2 max-w-sm text-base leading-relaxed text-landing-action-foreground/88 sm:text-lg">
                     {sport.copy}
                   </p>
@@ -409,9 +444,8 @@ function Landing() {
               Press. Speak. Done.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Press the button and ask OVOA for anything. One buzz means it heard
-              you. One long buzz means it’s done. Your phone stays in your
-              pocket.
+              Press the button and ask OVOA for anything. One buzz means it heard you. One long buzz
+              means it’s done. Your phone stays in your pocket.
             </p>
           </div>
         </div>
@@ -425,8 +459,8 @@ function Landing() {
               Catch the thought before it’s gone.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Double-tap and speak. Band saves what you say word for word, and
-              OVOA finds it again whenever you ask.
+              Double-tap and speak. Band saves what you say word for word, and OVOA finds it again
+              whenever you ask.
             </p>
           </div>
           <div className="relative mx-auto aspect-square w-full max-w-[38rem] lg:order-2">
@@ -456,9 +490,8 @@ function Landing() {
               Sensing that stays with you.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Heart rate and motion sensing run in the background, so OVOA always
-              has the full picture. The woven, water-resistant strap is made to
-              be forgotten about.
+              Heart rate and motion sensing run in the background, so OVOA always has the full
+              picture. The woven, water-resistant strap is made to be forgotten about.
             </p>
           </div>
         </div>
@@ -467,39 +500,40 @@ function Landing() {
       <section className="bg-landing-ink px-6 py-24 text-center text-landing-action-foreground sm:py-32">
         <div className="mx-auto max-w-3xl">
           <p className="text-sm font-medium">
-            <span className="text-landing-action">Early access</span>
+            <span className="text-landing-action">Beta</span>
             <span className="text-landing-action-foreground/60"> · iPhone</span>
           </p>
           <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal">
             Use OVOA today.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-xl">
-            The app is in private beta. Founding members get it on their iPhone now and keep their
-            price. Try it free for 7 days.
+            The iPhone app is in beta through TestFlight. Health tracking and notes are free. The
+            assistant is {base}, and the price you join at is kept while you&rsquo;re a member.
           </p>
           <Link
             to="/early-access"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
           >
-            Get early access
+            See plans
           </Link>
         </div>
       </section>
 
       <section className="bg-landing-canvas px-6 py-24 text-center sm:py-36">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-landing-muted">OVOA + Band · $99</p>
+          <p className="text-sm font-medium text-landing-muted">OVOA Band · {band} · Beta</p>
           <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal text-landing-ink">
             Say hello to your Jarvis.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-            One price, one time. Band and the app, ready to get to work.
+            {band}, one time, with {data.bandTrialDays} days of the OVOA assistant included. Then{" "}
+            {base} if you keep it, or just the free app.
           </p>
           <Link
             to="/checkout"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
           >
-            Get started
+            Get the Band
           </Link>
         </div>
       </section>

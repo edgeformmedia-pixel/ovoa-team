@@ -13,6 +13,8 @@
 //   POST /__cancel/<subscription id>                                   cancel now
 //   POST /__refund/<payment intent id>                                 full refund
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
+//   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
+//                                            click-throughs; it returns to success_url
 
 import { createHmac, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -242,6 +244,43 @@ async function handle(req, res) {
     return s ? send({ ...s._params, _items: s._items }) : err(res, 404, "no such session");
   }
 
+  // ---- the buyer's side of Checkout, for clicking through in a browser ----
+  if ((hit = m(/^\/pay\/(cs_test_\w+)$/))) {
+    const s = db.sessions.get(hit[1]);
+    if (!s) return err(res, 404, "no such session");
+    if (req.method === "POST") {
+      const done =
+        s.status === "complete"
+          ? sessionView(s)
+          : await complete(s, {
+              email: q.email || "buyer@example.test",
+              name: q.name || "Test Buyer",
+              phone: "+15125550100",
+            });
+      const to = String(s._params.success_url ?? "").replace("{CHECKOUT_SESSION_ID}", done.id);
+      res.writeHead(303, { location: to });
+      return res.end();
+    }
+    const lines = s._items
+      .map((li) => db.prices.get(li.price))
+      .map(
+        (p) =>
+          `<li>${p.nickname ?? p.lookup_key}: $${(p.unit_amount / 100).toFixed(2)}${p.recurring ? `/${p.recurring.interval}` : ""}</li>`,
+      )
+      .join("");
+    const trial = s._params.subscription_data?.trial_period_days;
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    return res.end(`<!doctype html><meta name="viewport" content="width=device-width">
+<title>Fake Stripe Checkout</title>
+<body style="font:16px system-ui;max-width:420px;margin:40px auto;padding:0 16px">
+<p style="color:#b00;font-weight:600">FAKE STRIPE (local test, no real payment)</p>
+<p>mode: ${s.mode}${trial ? ` · trial ${trial} days` : ""}${s._params.shipping_address_collection ? " · ships to US" : ""}</p>
+<ul>${lines}</ul>
+<form method="post"><input name="email" value="buyer@example.test" style="width:100%;padding:8px">
+<button style="margin-top:12px;padding:10px 18px">Pay (fake)</button></form>
+<p><a href="${s._params.cancel_url}">Cancel</a></p></body>`);
+  }
+
   // ---- Stripe ----
   if (path === "/account")
     return send({ id: "acct_fake", settings: { dashboard: { display_name: "Fake Stripe" } } });
@@ -347,6 +386,37 @@ async function handle(req, res) {
   if ((hit = m(/^\/checkout\/sessions\/(cs_\w+)$/))) {
     const s = db.sessions.get(hit[1]);
     return s ? send(sessionView(s, [].concat(q.expand ?? []))) : err(res, 404, "No such session");
+  }
+  if ((hit = m(/^\/subscriptions\/(sub_\w+)$/)) && req.method === "POST") {
+    // Plan switches from the welcome page: a new price, and maybe the trial
+    // ended now. Charges what real Stripe would, roughly: nothing while the
+    // trial runs, the full new price when it ends now, the difference otherwise.
+    const sub = db.subscriptions.get(hit[1]);
+    if (!sub) return err(res, 404, "No such subscription");
+    const item = [].concat(q.items ?? [])[0];
+    const price = item?.price ? db.prices.get(item.price) : null;
+    if (item && !price?.active) return err(res, 400, `No such price: ${item?.price}`);
+    const old = sub.items.data[0]?.price;
+    let charge = 0;
+    if (price) {
+      sub.items = list([{ id: sub.items.data[0]?.id ?? id("si"), price }]);
+      const days = price.recurring.interval === "year" ? 365 : 30;
+      if (q.trial_end === "now") {
+        Object.assign(sub, { status: "active", trial_end: null });
+        sub.current_period_end = nowS() + days * 86400;
+        charge = price.unit_amount;
+      } else if (sub.status !== "trialing") {
+        if (price.recurring.interval !== old?.recurring?.interval)
+          sub.current_period_end = nowS() + days * 86400;
+        charge = Math.max(0, price.unit_amount - (old?.unit_amount ?? 0));
+      }
+    }
+    if (charge > 0) {
+      const inv = newInvoice(sub.customer, sub.id, [{ amount: charge, price }]);
+      await deliver("invoice.paid", inv);
+    }
+    await deliver("customer.subscription.updated", sub);
+    return send(sub);
   }
   if ((hit = m(/^\/subscriptions\/(sub_\w+)$/))) {
     const sub = db.subscriptions.get(hit[1]);

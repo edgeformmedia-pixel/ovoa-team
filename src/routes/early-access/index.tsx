@@ -1,16 +1,37 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChevronDown, LockKeyhole } from "lucide-react";
+import { Check, ChevronDown, LockKeyhole, Minus } from "lucide-react";
+import { useState } from "react";
 import OvoaIphoneDemo from "@/components/OvoaIphoneDemo";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TASKS_SCRIPT } from "@/lib/demo-scripts";
 import { getPlans } from "@/lib/membership/membership.functions";
-import { annualSavings, formatMoney, type PlanId, type PublicPlan } from "@/lib/membership/plans";
+import {
+  FOUNDING_PRICE_LINE,
+  PLAN_BLURBS,
+  PLAN_FEATURES,
+  PLAN_NAMES,
+  bandPrice,
+  perLabel,
+  planOf,
+  type FeatureCell,
+  type PlanColumn,
+} from "@/lib/membership/copy";
+import {
+  annualSavings,
+  formatMoney,
+  type BillingPeriod,
+  type PaidTier,
+  type PlansResult,
+} from "@/lib/membership/plans";
 
 const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
-const PAGE_TITLE = "OVOA early access — get the iPhone app today";
-const PAGE_DESCRIPTION =
-  "OVOA is in private beta on iPhone. Founding members get the full app today and keep their founding price. Start with a 7-day free trial.";
+const PAGE_TITLE = "OVOA plans: free, Base and Pro";
+
+function describe(data: PlansResult | undefined) {
+  const base = planOf(data, "base", "monthly");
+  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, and Pro adds hands-free and the background agent.`;
+}
 
 export const Route = createFileRoute("/early-access/")({
   component: EarlyAccess,
@@ -22,13 +43,13 @@ export const Route = createFileRoute("/early-access/")({
     canceled: search["canceled"] ? true : undefined,
   }),
   loader: () => getPlans(),
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { title: PAGE_TITLE },
-      { name: "description", content: PAGE_DESCRIPTION },
+      { name: "description", content: describe(loaderData) },
       { property: "og:title", content: PAGE_TITLE },
-      { property: "og:description", content: PAGE_DESCRIPTION },
-      { property: "og:type", content: "product" },
+      { property: "og:description", content: describe(loaderData) },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/early-access" },
       { property: "og:image", content: OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
@@ -38,180 +59,218 @@ export const Route = createFileRoute("/early-access/")({
   }),
 });
 
-const PLAN_COPY: Record<PlanId, { name: string; blurb: string }> = {
-  base_monthly: { name: "Base", blurb: "Every OVOA AI feature, month to month." },
-  base_annual: { name: "Base, yearly", blurb: "Every OVOA AI feature, a year at a time." },
-  pro_monthly: { name: "Pro", blurb: "Hands-free wake word, the background agent, more replies." },
-  pro_annual: { name: "Pro, yearly", blurb: "Everything in Pro, a year at a time." },
-};
-
-const INCLUDED = [
-  "The full OVOA app on your iPhone, today",
-  "Tasks, standing rules, memory and health",
-  "Every new build the day it ships",
-  "A direct line to the team building it",
-  "Your founding price, kept while you're a member",
-];
-
 const STEPS = [
   {
-    title: "Start your free trial",
-    copy: "Pick a plan and check out with card or Apple Pay. Nothing is charged for 7 days.",
+    title: "Pick a plan",
+    copy: "Free costs nothing. Base and Pro are paid by card or Apple Pay through Stripe, and you can cancel anytime.",
   },
   {
     title: "Install through TestFlight",
-    copy: "TestFlight is Apple's own app for beta software. We walk you through it right after checkout.",
+    copy: "TestFlight is Apple's own app for trying apps before they reach the App Store. We walk you through it.",
   },
   {
-    title: "Talk to OVOA",
-    copy: "Sign up in the app with the same email and start handing things off.",
+    title: "Sign up in OVOA",
+    copy: "Use the same email you paid with, and OVOA knows your plan.",
   },
 ];
 
-const FAQ = [
-  {
-    q: "What's TestFlight?",
-    a: "Apple's official app for trying iPhone apps before they reach the App Store. You install TestFlight from the App Store, tap your invite, and OVOA installs like any other app. It updates itself as we ship new builds.",
-  },
-  {
-    q: "Will I be charged during the trial?",
-    a: "No. Monthly and annual plans start with 7 free days. Stripe emails you before the trial ends, and if you cancel before then you pay nothing.",
-  },
-  {
-    q: "How do I cancel?",
-    a: "Tap Manage billing on your welcome page (bookmark it after checkout) and cancel there, or email support@ovoa.ai and we'll do it for you. You keep access until the end of the period you've paid for.",
-  },
-  {
-    q: "What happens when OVOA reaches the App Store?",
-    a: "Your membership moves with your account. You'll switch to the App Store version and keep your founding price. You won't pay twice.",
-  },
-  {
-    q: "Is it finished?",
-    a: "Not yet, and that's the point. It's a beta: things can break, and you'll see new builds often. Members tell us what to fix first.",
-  },
-  {
-    q: "Android?",
-    a: "iPhone only for now.",
-  },
-  {
-    q: "Refunds?",
-    a: "If a charge goes through and OVOA isn't for you, email support@ovoa.ai within 14 days and we'll refund it.",
-  },
-];
-
-function priceLine(plan: PublicPlan) {
-  const price = formatMoney(plan.amountCents, plan.currency);
-  if (plan.interval === "month") return { price, per: "/month" };
-  if (plan.interval === "year") return { price, per: "/year" };
-  return { price, per: "once" };
+function BetaBadge({ onDark = false }: { onDark?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] ${
+        onDark
+          ? "bg-landing-action text-landing-action-foreground"
+          : "border border-landing-action/40 bg-landing-action/10 text-landing-action"
+      }`}
+    >
+      Beta
+    </span>
+  );
 }
 
-function PlanCard({
-  plan,
-  trialDays,
+function Cell({ value, dark }: { value: FeatureCell; dark: boolean }) {
+  if (value === false)
+    return (
+      <Minus
+        aria-label="Not included"
+        className={`mt-0.5 size-4 shrink-0 ${dark ? "text-landing-action-foreground/35" : "text-landing-muted/60"}`}
+      />
+    );
+  return (
+    <Check
+      aria-label="Included"
+      className="mt-0.5 size-4 shrink-0 text-landing-action"
+      strokeWidth={2.5}
+    />
+  );
+}
+
+function PlanColumnCard({
+  column,
+  data,
+  period,
   enabled,
-  highlight,
-  badge,
-  note,
 }: {
-  plan: PublicPlan;
-  trialDays: number;
+  column: PlanColumn;
+  data: PlansResult;
+  period: BillingPeriod;
   enabled: boolean;
-  highlight: boolean;
-  badge?: string | undefined;
-  note?: string | undefined;
 }) {
-  const copy = PLAN_COPY[plan.id];
-  const { price, per } = priceLine(plan);
-  const recurring = plan.interval !== null;
-  const cta = recurring && trialDays > 0 ? `Start ${trialDays}-day free trial` : `Buy for ${price}`;
-  const terms = recurring
-    ? `${trialDays > 0 ? `${trialDays} days free, then ` : ""}${price} a ${plan.interval}. Cancel anytime.`
-    : `${price} once. No subscription.`;
+  const dark = column === "base";
+  const muted = dark ? "text-landing-action-foreground/65" : "text-landing-muted";
+  const paid = column === "free" ? null : planOf(data, column, period);
+  const savings = column === "free" ? null : annualSavings(data.plans, column as PaidTier);
+
+  let price = "$0";
+  let per = "forever";
+  let terms = "No card. No time limit.";
+  if (paid) {
+    price = formatMoney(paid.amountCents, paid.currency);
+    per = paid.interval === "year" ? "/year" : "/month";
+    terms =
+      period === "annual" && savings
+        ? `Works out to ${formatMoney(savings.perMonthCents, paid.currency)} a month. You save ${formatMoney(savings.saveCents, paid.currency)} a year over paying monthly.`
+        : `Billed every ${paid.interval} from today. Cancel anytime.`;
+  }
 
   return (
     <article
-      className={`relative flex flex-col rounded-[1.75rem] p-7 sm:p-8 ${
-        highlight
-          ? "order-first bg-landing-ink text-landing-action-foreground shadow-[0_24px_60px_-24px_var(--landing-shadow)] lg:order-none"
+      className={`flex flex-col rounded-[1.75rem] p-7 sm:p-8 ${
+        dark
+          ? "bg-landing-ink text-landing-action-foreground shadow-[0_24px_60px_-24px_var(--landing-shadow)]"
           : "bg-landing-control/70 text-landing-ink"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold">{copy.name}</h3>
-        {badge && (
+        <h3 className="text-lg font-semibold">{PLAN_NAMES[column]}</h3>
+        {period === "annual" && savings && (
           <span
             className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-              highlight
+              dark
                 ? "bg-landing-action text-landing-action-foreground"
                 : "bg-landing-canvas text-landing-ink"
             }`}
           >
-            {badge}
+            Save {savings.percent}%
           </span>
         )}
       </div>
-      <p
-        className={`mt-1 text-sm ${highlight ? "text-landing-action-foreground/65" : "text-landing-muted"}`}
-      >
-        {copy.blurb}
-      </p>
+      <p className={`mt-1 text-sm ${muted}`}>{PLAN_BLURBS[column]}</p>
       <p className="mt-7 flex items-baseline gap-1.5">
         <span className="text-[2.75rem] font-semibold leading-none tracking-tight">{price}</span>
-        <span
-          className={`text-sm ${highlight ? "text-landing-action-foreground/65" : "text-landing-muted"}`}
-        >
-          {per}
-        </span>
+        <span className={`text-sm ${muted}`}>{per}</span>
       </p>
-      <p
-        className={`mt-3 min-h-10 text-sm ${highlight ? "text-landing-action-foreground/75" : "text-landing-muted"}`}
-      >
-        {note ?? terms}
-      </p>
+      <p className={`mt-3 min-h-10 text-sm ${muted}`}>{terms}</p>
 
-      <form method="post" action="/api/public/billing/checkout" className="mt-auto pt-7">
-        <input type="hidden" name="plan" value={plan.id} />
-        <button
-          type="submit"
-          disabled={!enabled}
-          className={`h-12 w-full rounded-full text-sm font-semibold transition-[transform,opacity] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 ${
-            highlight
-              ? "bg-landing-action text-landing-action-foreground"
-              : "bg-landing-ink text-landing-action-foreground"
-          }`}
-        >
-          {enabled ? cta : "Opening soon"}
-        </button>
-      </form>
-      {note && (
-        <p
-          className={`mt-3 text-center text-[11px] ${highlight ? "text-landing-action-foreground/55" : "text-landing-muted"}`}
-        >
-          {terms}
-        </p>
-      )}
+      <ul className="mt-6 space-y-2.5">
+        {PLAN_FEATURES.map((f) => {
+          const value = f[column];
+          return (
+            <li
+              key={f.label}
+              className={`flex items-start gap-2.5 text-[14px] leading-snug ${
+                value === false ? muted : ""
+              }`}
+            >
+              <Cell value={value} dark={dark} />
+              <span>
+                {f.label}
+                {typeof value === "string" && <span className={muted}>: {value}</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="mt-auto pt-8">
+        {column === "free" ? (
+          <a
+            href={data.betaUrl ?? "mailto:support@ovoa.ai?subject=Join%20the%20OVOA%20beta"}
+            target={data.betaUrl ? "_blank" : undefined}
+            rel={data.betaUrl ? "noreferrer" : undefined}
+            className="flex h-12 w-full items-center justify-center rounded-full bg-landing-ink text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            {data.betaUrl ? "Join the free beta" : "Email us to join"}
+          </a>
+        ) : (
+          <form method="post" action="/api/public/billing/checkout">
+            <input type="hidden" name="plan" value={paid!.id} />
+            <button
+              type="submit"
+              disabled={!enabled}
+              className={`h-12 w-full rounded-full text-sm font-semibold transition-[transform,opacity] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 ${
+                dark
+                  ? "bg-landing-action text-landing-action-foreground"
+                  : "bg-landing-ink text-landing-action-foreground"
+              }`}
+            >
+              {enabled ? `Get ${PLAN_NAMES[column]}` : "Opening soon"}
+            </button>
+          </form>
+        )}
+      </div>
     </article>
   );
 }
 
 function EarlyAccess() {
-  const { configured, plans, trialDays } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  const { configured, plans, bandTrialDays } = data;
   const { error, canceled } = Route.useSearch();
-  const savings = annualSavings(plans, "base");
+  const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const baseMonthly = planOf(data, "base", "monthly");
+  const bestSaving = Math.max(
+    0,
+    ...(["base", "pro"] as const).map((t) => annualSavings(plans, t)?.percent ?? 0),
+  );
 
-  const byId = (id: PlanId) => plans.find((p) => p.id === id);
-  const monthly = byId("base_monthly");
-  const annual = byId("base_annual");
-  const pro = byId("pro_monthly");
+  const faq = [
+    {
+      q: "What's free?",
+      a: "Health tracking (Apple Health, and heart rate and activity from the Band) and notes. Notes you speak into the Band are written out on your iPhone, so they never need the AI. No card, no time limit.",
+    },
+    {
+      q: "What does Base add?",
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
+    },
+    {
+      q: "What's in Pro?",
+      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and about three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
+    },
+    {
+      q: "Is there a free trial?",
+      a: `Not on its own: Base and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Band comes with ${bandTrialDays} days of Base free.`,
+    },
+    {
+      q: "Is it finished?",
+      a: "No. OVOA is in beta: the app, the assistant and the Band. Things can break, and new builds come often. Members tell us what to fix first.",
+    },
+    {
+      q: "How does TestFlight work?",
+      a: "TestFlight is Apple's official app for trying iPhone apps before they reach the App Store. Install TestFlight from the App Store, open your OVOA invite or link, and tap Install. OVOA then updates itself as we ship new builds.",
+    },
+    {
+      q: "How do I cancel?",
+      a: "Tap Manage billing on your welcome page (bookmark it after checkout), or email support@ovoa.ai and we'll do it for you. You keep your plan until the end of the period you've paid for.",
+    },
+    {
+      q: "What happens when OVOA reaches the App Store?",
+      a: "Your plan moves with your account, at the price you joined at. You won't pay twice.",
+    },
+    { q: "Android?", a: "iPhone only for now." },
+    {
+      q: "Refunds?",
+      a: "If a charge goes through and OVOA isn't for you, email support@ovoa.ai within 14 days and we'll refund it.",
+    },
+  ];
 
   const banner =
     error === "not-configured" || (!configured && error)
-      ? "Memberships aren't open yet. Check back very soon."
+      ? "Paid plans aren't open yet. Check back very soon."
       : error === "checkout"
         ? "Checkout didn't open. Please try again, or email support@ovoa.ai."
         : canceled
-          ? "No problem, nothing was charged. Your trial is here whenever you're ready."
+          ? "No problem, nothing was charged."
           : null;
 
   return (
@@ -227,35 +286,32 @@ function EarlyAccess() {
           href="#plans"
           className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
         >
-          {trialDays > 0 ? "Try it free" : "Get OVOA"}
+          See plans
         </a>
       </MembershipHeader>
 
       <section className="px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:pb-28">
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium">
-              <span className="text-landing-action">Early access</span>
-              <span className="text-landing-muted"> · iPhone</span>
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <BetaBadge />
+              <span className="text-landing-muted">iPhone, through TestFlight</span>
             </p>
             <h1 className="mt-4 text-[clamp(2.6rem,6.5vw,5.25rem)] font-semibold leading-[0.98] tracking-normal">
-              Get OVOA before the App Store does.
+              Start free. Add the assistant when you want it.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-              OVOA is in private beta. Founding members get the full iPhone app today through
-              TestFlight, Apple&rsquo;s beta app, and keep their founding price for as long as they
-              stay.
+              OVOA is in beta. Health tracking and notes are free. Base turns on the OVOA assistant
+              for {perLabel(baseMonthly)}, and Pro adds hands-free and the background agent.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
               <a
                 href="#plans"
                 className="inline-flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-landing-action px-8 text-sm font-semibold text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                {trialDays > 0 ? `Start your ${trialDays}-day free trial` : "See plans"}
+                See plans
               </a>
-              <p className="text-sm text-landing-muted">
-                No charge during the trial. Cancel in two taps.
-              </p>
+              <p className="text-sm text-landing-muted">{FOUNDING_PRICE_LINE}</p>
             </div>
           </div>
           <div className="relative mx-auto w-[min(76vw,300px)]">
@@ -275,11 +331,44 @@ function EarlyAccess() {
         className="scroll-mt-14 border-t border-landing-line px-5 py-20 sm:px-8 sm:py-28"
       >
         <div className="mx-auto max-w-[1200px]">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-landing-muted">Founding plans</p>
-            <h2 className="mt-3 text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
-              Pick your plan. Keep the price.
-            </h2>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="flex items-center gap-2 text-sm font-medium text-landing-muted">
+                Plans <BetaBadge />
+              </p>
+              <h2 className="mt-3 text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
+                Pick your plan. Keep the price.
+              </h2>
+              <p className="mt-3 text-base text-landing-muted">{FOUNDING_PRICE_LINE}</p>
+            </div>
+
+            <div
+              role="radiogroup"
+              aria-label="Billing"
+              className="inline-flex self-start rounded-full bg-landing-control p-1 lg:self-auto"
+            >
+              {(
+                [
+                  ["monthly", "Monthly"],
+                  ["annual", bestSaving > 0 ? `Yearly · save up to ${bestSaving}%` : "Yearly"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={period === value}
+                  onClick={() => setPeriod(value)}
+                  className={`h-10 rounded-full px-4 text-sm font-semibold transition-colors ${
+                    period === value
+                      ? "bg-landing-canvas text-landing-ink shadow-sm"
+                      : "text-landing-muted hover:text-landing-ink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {banner && (
@@ -292,54 +381,39 @@ function EarlyAccess() {
           )}
 
           <div className="mt-10 grid gap-3 lg:grid-cols-3">
-            {monthly && (
-              <PlanCard
-                plan={monthly}
-                trialDays={trialDays}
+            {(["free", "base", "pro"] as const).map((column) => (
+              <PlanColumnCard
+                key={column}
+                column={column}
+                data={data}
+                period={period}
                 enabled={configured}
-                highlight={false}
               />
-            )}
-            {annual && (
-              <PlanCard
-                plan={annual}
-                trialDays={trialDays}
-                enabled={configured}
-                highlight
-                badge={savings ? `Save ${savings.percent}%` : "Best value"}
-                note={
-                  savings
-                    ? `Works out to ${formatMoney(savings.perMonthCents, annual.currency)} a month. ${formatMoney(savings.saveCents, annual.currency)} less than paying monthly.`
-                    : undefined
-                }
-              />
-            )}
-            {pro && (
-              <PlanCard plan={pro} trialDays={trialDays} enabled={configured} highlight={false} />
-            )}
+            ))}
           </div>
 
-          <div className="mt-10 grid gap-8 rounded-[1.75rem] border border-landing-line p-7 sm:p-9 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="mt-3 flex flex-col gap-4 rounded-[1.75rem] border border-landing-line p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
             <div>
-              <h3 className="text-xl font-semibold">Every plan includes</h3>
-              <p className="mt-2 flex items-center gap-1.5 text-sm text-landing-muted">
-                <LockKeyhole aria-hidden="true" className="size-3.5" /> Payments by Stripe. We never
-                see your card.
+              <h3 className="text-lg font-semibold">
+                Getting the OVOA Band? {bandTrialDays} days of Base come with it.
+              </h3>
+              <p className="mt-1 text-sm text-landing-muted">
+                The Band is {bandPrice(data)}, one time. Base starts after the free days, and you
+                can cancel before then.
               </p>
             </div>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {INCLUDED.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-[15px] font-medium">
-                  <Check
-                    aria-hidden="true"
-                    className="mt-0.5 size-4 shrink-0 text-landing-action"
-                    strokeWidth={2.5}
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <Link
+              to="/checkout"
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-landing-line px-6 text-sm font-semibold transition-colors hover:border-landing-muted"
+            >
+              See the Band
+            </Link>
           </div>
+
+          <p className="mt-6 flex items-center gap-1.5 text-sm text-landing-muted">
+            <LockKeyhole aria-hidden="true" className="size-3.5" /> Payments by Stripe. We never see
+            your card.
+          </p>
         </div>
       </section>
 
@@ -374,7 +448,7 @@ function EarlyAccess() {
             </h2>
           </div>
           <div className="divide-y divide-landing-line border-y border-landing-line">
-            {FAQ.map((item) => (
+            {faq.map((item) => (
               <details key={item.q} className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold [&::-webkit-details-marker]:hidden">
                   {item.q}
@@ -394,17 +468,23 @@ function EarlyAccess() {
 
       <section id="terms" className="scroll-mt-14 border-t border-landing-line px-5 py-14 sm:px-8">
         <div className="mx-auto max-w-[1200px] text-[13px] leading-relaxed text-landing-muted">
-          <h2 className="text-sm font-semibold text-landing-ink">Membership terms</h2>
+          <h2 className="text-sm font-semibold text-landing-ink">Plan terms, in short</h2>
           <p className="mt-3 max-w-3xl">
-            An OVOA membership is a subscription to the OVOA service. Monthly and annual plans start
-            with a {trialDays}-day free trial and a card on file; unless you cancel before the trial
-            ends, your card is charged the plan price and then again every month or year until you
-            cancel. You can cancel anytime from Manage billing on your welcome page or by emailing
-            support@ovoa.ai, and you keep access until the end of the period you paid for. The
-            Founder plan is a single payment with no renewals. The iPhone app is pre-release
-            software provided through Apple TestFlight; features can change and it may not always
-            work as expected. Refunds: email support@ovoa.ai within 14 days of a charge. Prices are
-            in US dollars; taxes may apply.
+            Base and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
+            day you sign up until you cancel. A plan that comes with an OVOA Band starts after its{" "}
+            {bandTrialDays} free days unless you cancel first. Cancel anytime from Manage billing or
+            by emailing support@ovoa.ai; you keep your plan until the end of the period you paid
+            for. OVOA is beta software delivered through Apple TestFlight, and features can change.
+            Refunds: email support@ovoa.ai within 14 days of a charge. Prices are in US dollars;
+            taxes may apply. The full{" "}
+            <Link to="/terms" className="underline underline-offset-2 hover:text-landing-ink">
+              terms
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="underline underline-offset-2 hover:text-landing-ink">
+              privacy policy
+            </Link>{" "}
+            apply.
           </p>
         </div>
       </section>

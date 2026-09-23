@@ -1,57 +1,87 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
+import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getPlans } from "@/lib/membership/membership.functions";
+import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
+import type { PlansResult } from "@/lib/membership/plans";
 
-const PAGE_TITLE = "Band FAQ — questions and answers";
+const PAGE_TITLE = "OVOA FAQ: plans, the Band and the beta";
 const PAGE_DESCRIPTION =
-  "Answers about Band, the AI wristband you talk to: battery life, water resistance, tasks, notes, standing rules, what the buzzes mean, and privacy.";
+  "Answers about OVOA and the OVOA Band: what's free, what Base and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
 
-const faqs = [
-  {
-    q: "What is Band?",
-    a: "Band is a woven wristband you talk to. Say or type what you want and it goes and does it — a one-off task, a note saved word for word, or a standing rule that keeps running in the background.",
-  },
-  {
-    q: "How do I ask Band to do something?",
-    a: "Press the button and speak, or type it in the Band app. Band buzzes once to confirm it heard you, then goes and does it.",
-  },
-  {
-    q: "How do I take a note?",
-    a: "Double-tap the button and speak. The note is saved word for word and shows up in the app, searchable, with a title Band writes for you.",
-  },
-  {
-    q: "What is a standing rule?",
-    a: "A request that keeps running instead of happening once. Band turns it into a rule that runs in the background and reports every time it fires. You can pause or delete any rule from the app.",
-  },
-  {
-    q: "What do the buzzes mean?",
-    a: "One short buzz: heard you. Two short: accepted. Three short: Band needs an answer from you. One long: done. Two long: it couldn't finish.",
-  },
-  {
-    q: "How long does the battery last?",
-    a: "All day with continuous heart rate and motion sensing running. You can check the exact level anytime in the Band app.",
-  },
-  {
-    q: "Is Band water resistant?",
-    a: "Yes. The woven strap and case are water resistant, so rain, sweat, and hand washing are fine.",
-  },
-  {
-    q: "What health tracking does Band do?",
-    a: "Continuous heart rate and motion sensing run in the background, and your history lives in the Band app.",
-  },
-  {
-    q: "When does the microphone listen?",
-    a: "The microphone is used when you ask Band something — when you press the button or double-tap for a note. It is not an always-listening recorder.",
-  },
-  {
-    q: "How much does Band cost?",
-    a: "$99, one time. That includes the band and the Band app.",
-  },
-];
+// Prices in the answers come from the live plans, never typed in here.
+function faqsFor(data: PlansResult | undefined) {
+  const baseMonthly = perLabel(planOf(data, "base", "monthly"));
+  const baseAnnual = perLabel(planOf(data, "base", "annual"));
+  const proMonthly = perLabel(planOf(data, "pro", "monthly"));
+  const proAnnual = perLabel(planOf(data, "pro", "annual"));
+  const days = data?.bandTrialDays ?? 7;
+  return [
+    {
+      q: "What is OVOA?",
+      a: "An assistant you text or talk to. It schedules, remembers and follows through, then tells you when it's done or when it needs you. The OVOA Band is a woven wristband with one button that brings it to your wrist.",
+    },
+    {
+      q: "What's free?",
+      a: "Health tracking (Apple Health, plus heart rate and activity from the Band) and notes. Notes you speak into the Band are written out on your iPhone, not on our servers. No card and no time limit.",
+    },
+    {
+      q: "What does Base add?",
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer. ${baseMonthly}, or ${baseAnnual}.`,
+    },
+    {
+      q: "What's in Pro?",
+      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and about three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
+    },
+    {
+      q: "Is this finished?",
+      a: "No. OVOA is in beta: the iPhone app, the assistant and the Band are all still being built. Things can break and new builds come often. Your plan's price is kept while you're a member.",
+    },
+    {
+      q: "How does TestFlight work?",
+      a: "TestFlight is Apple's own app for trying iPhone apps before they reach the App Store. Install TestFlight from the App Store, open your OVOA invite or link on your iPhone, and tap Install. OVOA then updates itself as we ship new builds. When OVOA reaches the App Store, your account and plan come with you.",
+    },
+    {
+      q: "How much is the Band?",
+      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base; after that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. The Band is beta hardware, made in small batches, and ships to US addresses.`,
+    },
+    {
+      q: "How do I ask OVOA to do something?",
+      a: "Press the Band's button and speak, or type in the app. The Band buzzes once to say it heard you, then OVOA gets to work. (That's the assistant, part of Base and Pro.)",
+    },
+    {
+      q: "How do I take a note?",
+      a: "Double-tap the Band's button and speak, or type it in the app. The note is saved word for word and shows up in the app, searchable. Notes are free.",
+    },
+    {
+      q: "What do the buzzes mean?",
+      a: "One short buzz: heard you. Two short: on it. Three short: OVOA needs an answer from you. One long: done. Two long: it couldn't finish.",
+    },
+    {
+      q: "How long does the battery last?",
+      a: "All day with heart rate and motion sensing running. You can check the level anytime in the app.",
+    },
+    {
+      q: "Is the Band water resistant?",
+      a: "Yes. Rain, sweat and hand washing are fine.",
+    },
+    {
+      q: "When does the microphone listen?",
+      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. Pro's hands-free wake word is the one exception, and it's off until you turn it on. OVOA never records your day in the background.",
+    },
+    {
+      q: "What happens to my data?",
+      a: "It's used to run OVOA for you and nothing else. We don't sell it or use it for ads. Spoken words are deleted after 14 days, and you can delete your account from the app. The privacy policy has the details.",
+    },
+  ];
+}
 
 export const Route = createFileRoute("/faq")({
   component: FaqPage,
   staticData: { sitemap: true },
-  head: () => ({
+  loader: () => getPlans(),
+  head: ({ loaderData }) => ({
     meta: [
       { title: PAGE_TITLE },
       { name: "description", content: PAGE_DESCRIPTION },
@@ -70,7 +100,7 @@ export const Route = createFileRoute("/faq")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: faqs.map((faq) => ({
+          mainEntity: faqsFor(loaderData).map((faq) => ({
             "@type": "Question",
             name: faq.q,
             acceptedAnswer: { "@type": "Answer", text: faq.a },
@@ -82,35 +112,54 @@ export const Route = createFileRoute("/faq")({
 });
 
 function FaqPage() {
+  const data = Route.useLoaderData();
+  const faqs = faqsFor(data);
   return (
-    <main className="min-h-dvh overflow-y-auto bg-background px-6 py-12">
-      <div className="mx-auto flex max-w-md flex-col items-center text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          Questions
-        </h1>
-        <p className="mt-3 max-w-sm text-base leading-relaxed text-muted-foreground">
-          Everything people ask about Band, answered plainly.
-        </p>
-
-        <div className="mt-10 grid w-full gap-3 text-left">
-          {faqs.map((faq) => (
-            <section key={faq.q} className="neu-raised-sm rounded-2xl px-4 py-4">
-              <h2 className="text-sm font-semibold text-foreground">{faq.q}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {faq.a}
-              </p>
-            </section>
-          ))}
-        </div>
-
-        <div className="mt-10 text-2xl font-medium text-foreground">$99</div>
+    <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
+      <MembershipHeader>
         <Link
-          to="/"
-          className="neo-btn mt-4 inline-flex h-12 items-center justify-center px-8 text-[12px] uppercase tracking-[0.18em]"
+          to="/early-access"
+          className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
         >
-          <span className="neu-embossed">Buy Band</span>
+          See plans
         </Link>
+      </MembershipHeader>
 
+      <section className="px-5 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="text-sm font-medium text-landing-muted">Questions</p>
+            <h1 className="mt-3 text-[clamp(2.25rem,4.5vw,3.5rem)] font-semibold leading-[1.04] tracking-normal">
+              Asked and answered.
+            </h1>
+            <p className="mt-4 max-w-sm text-base leading-relaxed text-landing-muted">
+              Anything else? Email{" "}
+              <a href="mailto:support@ovoa.ai" className="font-semibold text-landing-ink">
+                support@ovoa.ai
+              </a>
+              .
+            </p>
+          </div>
+          <div className="divide-y divide-landing-line border-y border-landing-line">
+            {faqs.map((item) => (
+              <details key={item.q} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold [&::-webkit-details-marker]:hidden">
+                  <h2>{item.q}</h2>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-landing-muted transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-landing-muted">
+                  {item.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-md px-6 pb-8">
         <SiteFooter />
       </div>
     </main>

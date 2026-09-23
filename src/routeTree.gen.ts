@@ -15,10 +15,12 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as Xmxhi72185Char3723ndgdjngfg17w7DothtmlRouteImport } from './routes/xmxhi72185%23ndgdjngfg17w7[.]html'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
@@ -61,9 +63,19 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -76,12 +88,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute =
-  Xmxhi72185Char3723ndgdjngfg17w7DothtmlRouteImport.update({
-    id: '/xmxhi72185%23ndgdjngfg17w7.html',
-    path: '/xmxhi72185%23ndgdjngfg17w7.html',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -147,10 +158,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
+  '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
@@ -170,10 +183,12 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
+  '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
@@ -194,10 +209,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/xmxhi72185%23ndgdjngfg17w7.html': typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
+  '/terms': typeof TermsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
@@ -219,10 +236,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/faq'
+    | '/llms.txt'
     | '/mcp'
+    | '/privacy'
     | '/settings'
     | '/sitemap.xml'
-    | '/xmxhi72185%23ndgdjngfg17w7.html'
+    | '/terms'
     | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
@@ -242,10 +261,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/faq'
+    | '/llms.txt'
     | '/mcp'
+    | '/privacy'
     | '/settings'
     | '/sitemap.xml'
-    | '/xmxhi72185%23ndgdjngfg17w7.html'
+    | '/terms'
     | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
@@ -265,10 +286,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/faq'
+    | '/llms.txt'
     | '/mcp'
+    | '/privacy'
     | '/settings'
     | '/sitemap.xml'
-    | '/xmxhi72185%23ndgdjngfg17w7.html'
+    | '/terms'
     | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
@@ -289,10 +312,12 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
+  PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute: typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute
+  TermsRoute: typeof TermsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
@@ -350,11 +375,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -371,11 +410,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/xmxhi72185%23ndgdjngfg17w7.html': {
-      id: '/xmxhi72185%23ndgdjngfg17w7.html'
-      path: '/xmxhi72185%23ndgdjngfg17w7.html'
-      fullPath: '/xmxhi72185%23ndgdjngfg17w7.html'
-      preLoaderRoute: typeof Xmxhi72185Char3723ndgdjngfg17w7DothtmlRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
@@ -465,11 +504,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
+  PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute:
-    Xmxhi72185Char3723ndgdjngfg17w7DothtmlRoute,
+  TermsRoute: TermsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
