@@ -1,8 +1,7 @@
 -- The email of the OVOA app account a membership unlocks, when it isn't the
--- email the member paid with. Same as the Supabase migration
--- 20260923120000_member_app_email.sql.
+-- email the member paid with.
 --
--- Apply: npm run cf:migrate
+-- Apply: npm run db:migrate
 
 ALTER TABLE members ADD COLUMN app_email TEXT;
 

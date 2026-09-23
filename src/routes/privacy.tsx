@@ -78,11 +78,11 @@ function Privacy() {
         <p>
           Your email, your name if you give it, and your password, which we store only as a salted
           hash. You confirm your email with a 6-digit code; we keep the code only as a hash, and it
-          stops working after 10 minutes. If you sign in on ovoa.ai with Google, Google tells us
-          your name and email address. Signed-in devices are tracked by a hashed token so you stay
-          signed in. We also keep your settings and a few facts you tell OVOA during setup, like
-          when you usually wake and sleep, so reminders and the morning brief land at the right
-          time.
+          stops working after 10 minutes. If you sign in or create your account on ovoa.ai with
+          Google, we keep only your name and email address from Google. Signed-in devices are
+          tracked by a hashed token so you stay signed in. We also keep your settings and a few
+          facts you tell OVOA during setup, like when you usually wake and sleep, so reminders and
+          the morning brief land at the right time.
         </p>
 
         <h3>What you say and type to OVOA</h3>
@@ -235,8 +235,9 @@ function Privacy() {
         </p>
         <ul>
           <li>
-            <strong>Cloudflare</strong>: runs OVOA&rsquo;s server and database, where everything the
-            app sends us is stored.
+            <strong>Cloudflare</strong>: runs OVOA&rsquo;s server and ovoa.ai, and the databases
+            that hold everything the app sends us and the plan, order and partner records from
+            ovoa.ai.
           </li>
           <li>
             <strong>Z.ai</strong> (the GLM models, from Zhipu AI): writes OVOA&rsquo;s replies.
@@ -278,10 +279,6 @@ function Privacy() {
           </li>
           <li>
             <strong>Stripe</strong>: payments. We never see your card number.
-          </li>
-          <li>
-            <strong>Lovable and Supabase</strong>: the ovoa.ai website and its member, order and
-            partner records.
           </li>
           <li>
             <strong>Google</strong>, only if you connect it: Gmail, Calendar, files OVOA made in

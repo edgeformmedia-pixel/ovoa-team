@@ -1,10 +1,14 @@
-<!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
+> ovoa.ai is the Cloudflare Worker `ovoa-site` on the admin@ovoa.ai account
+> (`wrangler.site.jsonc`), with its data in the D1 database `ovoa-site-db`.
+> Deploy from Git Bash with that account's wrangler login:
 >
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+> ```bash
+> XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate   # only when migrations/ changed
+> XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy
+> ```
+>
+> Before deploying, `npm run test:billing` and `npm run test:account` (it needs
+> `ovoa-app` next to this folder) must pass. Secrets are Worker secrets
+> (`npx wrangler secret put NAME -c wrangler.site.jsonc`); setup.md lists them.
+> Don't rewrite pushed git history.

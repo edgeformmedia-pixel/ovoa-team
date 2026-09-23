@@ -234,8 +234,8 @@ function Admin() {
 
         {!config.database && (
           <p className="mt-4 rounded-xl bg-landing-control px-4 py-3 text-sm">
-            The members tables aren&rsquo;t there yet. On Lovable, do setup.md step 5; on the
-            Cloudflare test Worker, run <code>npm run cf:migrate</code>. Then refresh.
+            The members tables aren&rsquo;t there yet. Run <code>npm run db:migrate</code>, then
+            refresh.
           </p>
         )}
 

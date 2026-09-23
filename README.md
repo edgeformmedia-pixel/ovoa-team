@@ -1,29 +1,32 @@
-# Welcome to your Lovable project
+# ovoa.ai
 
-This project was built with [Lovable](https://lovable.dev).
+The OVOA website: the landing pages, plans and Band checkout (Stripe), OVOA accounts
+(shared with the app), the members admin and the partner program.
 
-## Build with Lovable
-
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+It runs as a Cloudflare Worker (`ovoa-site`, `wrangler.site.jsonc`) on the admin@ovoa.ai
+account, with members, partners and Band orders in Cloudflare D1 (`ovoa-site-db`,
+tables in `migrations/`). [setup.md](setup.md) has everything about running it.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+```sh
+npm install
+npm run dev            # http://localhost:8080
+npm run test:billing   # checkout, webhooks and memberships against a fake Stripe
+npm run test:account   # sign-in and sign-up; needs ovoa-app next to this folder
+```
+
+## Deploying
+
+From Git Bash, with the admin@ovoa.ai wrangler login:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate   # when migrations/ changed
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy
 ```
 
 ## Built with
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+- TanStack Start, React, TypeScript, Tailwind CSS
+- Cloudflare Workers and D1
+- Stripe, Resend

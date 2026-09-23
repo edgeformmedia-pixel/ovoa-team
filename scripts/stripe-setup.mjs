@@ -7,16 +7,15 @@
 //       ovoa_band         $89.99 once
 //   - the webhook that keeps members in sync (prints its signing secret)
 //   - customer portal settings (so members can cancel and change cards)
-// and prints every secret to paste into Lovable.
+// and puts the secrets on the site's Worker (printing them too, to keep).
 //
-//   node scripts/stripe-setup.mjs --key sk_test_... --site https://ovoa.ai
+//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_... --site https://ovoa.ai
 //
 // Options: --base-monthly 9.95 --base-annual 95.99 --pro-monthly 25.95
 //          --pro-annual 195.99 --band 89.99  (USD; these are the defaults)
 //          --new-webhook   replace the webhook and print a fresh secret
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
-//          --cloudflare    also upload the secrets to the Cloudflare test Worker
-//                          (use with --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev)
+//          --no-upload     only print the secrets; don't put them on the Worker
 //
 // Safe to run again: it reuses what exists and only creates what's missing.
 // A changed price creates a new Stripe price and moves the lookup key to it
@@ -282,7 +281,7 @@ async function main() {
   // ---- Secrets to paste ----
   const adminKey = randomBytes(24).toString("hex");
   const appKey = randomBytes(24).toString("hex");
-  say("\n──────── Paste these into Lovable → Cloud → Secrets ────────\n");
+  say("\n──────── Keep these (stripe/.env and your password manager) ────────\n");
   say(`STRIPE_SECRET_KEY=${SECRET}`);
   say(
     webhookSecret
@@ -295,8 +294,8 @@ async function main() {
     say("\n(The two keys above are freshly made. If you already set them, keep your old ones.)");
   }
 
-  // ---- Cloudflare test Worker ----
-  if (opts.cloudflare) {
+  // ---- The site's Worker ----
+  if (!opts["no-upload"]) {
     const secrets = {
       STRIPE_SECRET_KEY: SECRET,
       ...(webhookSecret ? { STRIPE_WEBHOOK_SECRET: webhookSecret } : {}),
@@ -305,7 +304,7 @@ async function main() {
     const file = join(tmpdir(), `ovoa-secrets-${randomBytes(6).toString("hex")}.json`);
     writeFileSync(file, JSON.stringify(secrets));
     try {
-      say(`\nUploading ${Object.keys(secrets).join(", ")} to the Cloudflare test Worker…`);
+      say(`\nUploading ${Object.keys(secrets).join(", ")} to the site's Worker…`);
       const res = spawnSync(`npx wrangler secret bulk "${file}" -c wrangler.site.jsonc`, {
         shell: true,
         stdio: "inherit",
@@ -313,7 +312,7 @@ async function main() {
       });
       if (res.status !== 0)
         throw new Error(
-          "wrangler secret bulk failed (is `npx wrangler login` on the right account?)",
+          "wrangler secret bulk failed (run it with XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa)",
         );
       say("✓ Secrets are on the Worker. Save the lines above in your password manager too.");
     } finally {

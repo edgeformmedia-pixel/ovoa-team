@@ -1,26 +1,8 @@
-// Where members, partners and commissions are kept. Two backends, same shape:
-//
-//   - Lovable (the real site): Lovable Cloud's Supabase, tables from
-//     supabase/migrations/20260922150000_membership.sql,
-//     20260922200000_tiers_and_band_orders.sql, 20260923120000_member_app_email.sql
-//     and 20260923180000_partner_cpm.sql
-//   - The Cloudflare test Worker: D1 bound as SITE_DB, tables from
-//     migrations/ (Lovable's Supabase service key can't be used outside Lovable)
-//
-// store() picks D1 whenever the SITE_DB binding exists.
+// Where members, partners and commissions are kept: Cloudflare D1, bound as
+// SITE_DB (wrangler.site.jsonc), with the tables from migrations/.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { MemberPlan, PaidTier } from "./plans";
-import {
-  all,
-  databaseConnected,
-  isMissingTable,
-  isUniqueViolation,
-  now,
-  one,
-  run,
-} from "./db.server";
+import { all, isMissingTable, isUniqueViolation, now, one, run } from "./db.server";
 
 export type Member = {
   id: string;
@@ -136,7 +118,6 @@ export class StoreNotReadyError extends Error {}
 type MemberKey = "id" | "stripe_subscription_id" | "checkout_session_id";
 
 export interface Store {
-  kind: "d1" | "supabase";
   findMember(column: MemberKey, value: string): Promise<Member | null>;
   insertMember(patch: MemberPatch): Promise<Member>;
   updateMember(id: string, patch: MemberPatch): Promise<Member>;
@@ -171,7 +152,7 @@ export interface Store {
 }
 
 export function store(): Store {
-  return databaseConnected() ? d1Store : supabaseStore;
+  return d1Store;
 }
 
 const MEMBER_COLUMNS = new Set([
@@ -248,14 +229,13 @@ async function d1<T>(work: () => Promise<T>): Promise<T> {
     return await work();
   } catch (error) {
     if (isMissingTable(error))
-      throw new StoreNotReadyError("Run the D1 migration (npm run cf:migrate).");
+      throw new StoreNotReadyError("Run the D1 migration (npm run db:migrate).");
     if (isUniqueViolation(error)) throw new DuplicateError((error as Error).message);
     throw error;
   }
 }
 
 const d1Store: Store = {
-  kind: "d1",
   findMember: (column, value) =>
     d1(async () => {
       const row = await one<Record<string, unknown>>(
@@ -466,242 +446,4 @@ const d1Store: Store = {
         )
       ).map(toBandOrder),
     ),
-};
-
-// ---------- Lovable Cloud (Supabase) ----------
-
-// The generated Database type doesn't know these tables until Lovable
-// regenerates it after the migration, so they're used untyped here.
-const sb = () => supabaseAdmin as unknown as SupabaseClient;
-
-type PgError = { code?: string; message: string } | null;
-
-function check(error: PgError) {
-  if (!error) return;
-  if (
-    error.code === "42P01" ||
-    error.code === "PGRST205" ||
-    /does not exist|Could not find the table/i.test(error.message)
-  ) {
-    throw new StoreNotReadyError("Apply the Supabase migration in Lovable (setup.md, step 5).");
-  }
-  if (error.code === "23505") throw new DuplicateError(error.message);
-  throw new Error(error.message);
-}
-
-async function rows(query: PromiseLike<{ data: unknown; error: PgError }>) {
-  const { data, error } = await query;
-  check(error);
-  return (data ?? []) as Record<string, unknown>[];
-}
-
-const supabaseStore: Store = {
-  kind: "supabase",
-  async findMember(column, value) {
-    const { data, error } = await sb().from("members").select("*").eq(column, value).maybeSingle();
-    check(error);
-    return data ? toMember(data) : null;
-  },
-  async insertMember(patch) {
-    const { data, error } = await sb()
-      .from("members")
-      .insert(Object.fromEntries(patchEntries(patch)))
-      .select("*")
-      .single();
-    check(error);
-    return toMember(data);
-  },
-  async updateMember(id, patch) {
-    const { data, error } = await sb()
-      .from("members")
-      .update(Object.fromEntries(patchEntries(patch)))
-      .eq("id", id)
-      .select("*")
-      .single();
-    check(error);
-    return toMember(data);
-  },
-  async membersByEmail(email) {
-    return (
-      await rows(
-        sb()
-          .from("members")
-          .select("*")
-          .eq("email", email)
-          .order("created_at", { ascending: false }),
-      )
-    ).map(toMember);
-  },
-  async membersForApp(email) {
-    let found: Record<string, unknown>[][];
-    try {
-      found = await Promise.all([
-        rows(sb().from("members").select("*").eq("app_email", email)),
-        rows(sb().from("members").select("*").eq("email", email).is("app_email", null)),
-      ]);
-    } catch (error) {
-      // Published before the app_email migration was applied: nobody has moved
-      // a membership yet, so the paying email is the whole answer.
-      if (error instanceof StoreNotReadyError) return supabaseStore.membersByEmail(email);
-      throw error;
-    }
-    const [moved, own] = found;
-    return [...moved!, ...own!]
-      .map(toMember)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  },
-  async membersByRef(code) {
-    return (await rows(sb().from("members").select("*").eq("ref_code", code).limit(10000))).map(
-      toMember,
-    );
-  },
-  async lifetimeByPaymentIntent(pi) {
-    return (
-      await rows(
-        sb().from("members").select("*").eq("stripe_payment_intent_id", pi).eq("plan", "lifetime"),
-      )
-    ).map(toMember);
-  },
-  async listMembers(limit) {
-    return (
-      await rows(
-        sb().from("members").select("*").order("created_at", { ascending: false }).limit(limit),
-      )
-    ).map(toMember);
-  },
-  async getAffiliate(code) {
-    const { data, error } = await sb()
-      .from("affiliates")
-      .select("*")
-      .eq("code", code)
-      .maybeSingle();
-    check(error);
-    return data ? toAffiliate(data) : null;
-  },
-  async insertAffiliate(row) {
-    const { error } = await sb().from("affiliates").insert(row);
-    check(error);
-  },
-  async setAffiliateStatus(id, status) {
-    const { error } = await sb().from("affiliates").update({ status }).eq("id", id);
-    check(error);
-  },
-  async setAffiliateCpm(id, cpmCents) {
-    const { error } = await sb().from("affiliates").update({ cpm_cents: cpmCents }).eq("id", id);
-    check(error);
-  },
-  async listAffiliates() {
-    return (
-      await rows(sb().from("affiliates").select("*").order("created_at", { ascending: false }))
-    ).map(toAffiliate);
-  },
-  async recordClick(code) {
-    const { error } = await sb().rpc("record_affiliate_click", { p_code: code });
-    check(error);
-  },
-  async insertCommission({ views, ...row }) {
-    // `views` only goes in when there are some (see the D1 version).
-    const values: Record<string, unknown> = views == null ? row : { ...row, views };
-    const { error } = await sb().from("affiliate_commissions").upsert(values, {
-      onConflict: "source_id",
-      ignoreDuplicates: true,
-    });
-    check(error);
-  },
-  async voidCommissions(pi, source) {
-    const filters = [pi && `payment_intent_id.eq.${pi}`, source && `source_id.eq.${source}`]
-      .filter(Boolean)
-      .join(",");
-    if (!filters) return;
-    const { error } = await sb()
-      .from("affiliate_commissions")
-      .update({ status: "void" })
-      .eq("status", "owed")
-      .or(filters);
-    check(error);
-  },
-  async markCommissionsPaid(code) {
-    const { error } = await sb()
-      .from("affiliate_commissions")
-      .update({ status: "paid", paid_at: new Date().toISOString() })
-      .eq("affiliate_code", code)
-      .eq("status", "owed");
-    check(error);
-  },
-  async listCommissions(code) {
-    const base = sb()
-      .from("affiliate_commissions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20000);
-    return (await rows(code ? base.eq("affiliate_code", code) : base)) as unknown as Commission[];
-  },
-  async recordBandOrder(order) {
-    const existing = await sb()
-      .from("band_orders")
-      .select("*")
-      .eq("checkout_session_id", order.checkout_session_id)
-      .maybeSingle();
-    check(existing.error);
-    if (existing.data) {
-      const row = toBandOrder(existing.data);
-      const fill = {
-        ...(!row.stripe_payment_intent_id && order.stripe_payment_intent_id
-          ? { stripe_payment_intent_id: order.stripe_payment_intent_id }
-          : {}),
-        ...(!row.stripe_invoice_id && order.stripe_invoice_id
-          ? { stripe_invoice_id: order.stripe_invoice_id }
-          : {}),
-      };
-      if (Object.keys(fill).length === 0) return row;
-      const { data, error } = await sb()
-        .from("band_orders")
-        .update(fill)
-        .eq("id", row.id)
-        .select("*")
-        .single();
-      check(error);
-      return toBandOrder(data);
-    }
-    const { data, error } = await sb()
-      .from("band_orders")
-      .insert(Object.fromEntries(BAND_COLUMNS.map((c) => [c, order[c]])))
-      .select("*")
-      .single();
-    if (error?.code === "23505") return this.recordBandOrder(order); // raced the other sync
-    check(error);
-    return toBandOrder(data);
-  },
-  async bandOrdersByPayment(pi, invoice) {
-    const filters = [
-      pi && `stripe_payment_intent_id.eq.${pi}`,
-      invoice && `stripe_invoice_id.eq.${invoice}`,
-    ]
-      .filter(Boolean)
-      .join(",");
-    if (!filters) return [];
-    return (await rows(sb().from("band_orders").select("*").or(filters))).map(toBandOrder);
-  },
-  async getBandOrder(id) {
-    const { data, error } = await sb().from("band_orders").select("*").eq("id", id).maybeSingle();
-    check(error);
-    return data ? toBandOrder(data) : null;
-  },
-  async setBandOrderStatus(id, status) {
-    const { error } = await sb()
-      .from("band_orders")
-      .update({
-        status,
-        ...(status === "shipped" ? { shipped_at: new Date().toISOString() } : {}),
-      })
-      .eq("id", id);
-    check(error);
-  },
-  async listBandOrders(limit) {
-    return (
-      await rows(
-        sb().from("band_orders").select("*").order("created_at", { ascending: false }).limit(limit),
-      )
-    ).map(toBandOrder);
-  },
 };

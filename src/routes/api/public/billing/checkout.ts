@@ -18,6 +18,9 @@ import { createFileRoute } from "@tanstack/react-router";
 // The partner code comes from the ovoa_ref cookie (or ?ref=), and rides along
 // in the session's metadata so the webhook can credit the partner. Partners
 // earn on subscriptions only, never on the Band (see plans.ts).
+//
+// Signed in on /account, the checkout is locked to that account's email, so
+// what they buy unlocks the app account they're signed in to.
 
 // Plan names from before tiers, so old links still land somewhere sensible.
 const OLD_PLAN_NAMES: Record<string, string> = {
@@ -31,6 +34,7 @@ async function startCheckout(request: Request): Promise<Response> {
     await import("@/lib/membership/plans");
   const { loadPrices } = await import("@/lib/membership/sync.server");
   const { stripe, stripeConfigured } = await import("@/lib/membership/stripe.server");
+  const { accountEmail } = await import("@/lib/account/account.server");
 
   const url = new URL(request.url);
   const origin = url.origin;
@@ -66,7 +70,7 @@ async function startCheckout(request: Request): Promise<Response> {
   if (!stripeConfigured()) return back("not-configured");
 
   try {
-    const prices = await loadPrices();
+    const [prices, email] = await Promise.all([loadPrices(), accountEmail(request)]);
     const planPrice = prices.plans.get(plan);
     if (band ? !prices.band || (withAi && !planPrice) : !planPrice) return back("not-configured");
 
@@ -84,6 +88,7 @@ async function startCheckout(request: Request): Promise<Response> {
       allow_promotion_codes: true,
       billing_address_collection: "auto",
       client_reference_id: ref ?? undefined,
+      ...(email ? { customer_email: email } : {}),
       metadata,
       custom_text: {
         after_submit: {

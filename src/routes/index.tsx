@@ -208,6 +208,12 @@ function Landing() {
 
           <div className="flex items-center gap-5 sm:gap-7">
             <Link
+              to="/account"
+              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
+            >
+              Account
+            </Link>
+            <Link
               to="/early-access"
               className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
             >

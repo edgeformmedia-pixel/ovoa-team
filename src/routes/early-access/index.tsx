@@ -282,6 +282,12 @@ function EarlyAccess() {
         >
           Partners
         </Link>
+        <Link
+          to="/account"
+          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
+        >
+          Account
+        </Link>
         <a
           href="#plans"
           className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"

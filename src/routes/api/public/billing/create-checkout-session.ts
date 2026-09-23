@@ -16,7 +16,8 @@ import { createFileRoute } from "@tanstack/react-router";
 // The Band price is found by its lookup key (loadPrices), so test and live
 // keys each pick up their own price with no code change. Stripe finishes on
 // /order-complete, and the webhook records the order exactly as it does for
-// the hosted checkout (same metadata).
+// the hosted checkout (same metadata). Signed in on /account, the email is
+// that account's, as in the hosted checkout.
 
 type Body = { ai?: unknown; ref?: unknown };
 
@@ -26,6 +27,7 @@ async function createSession(request: Request): Promise<Response> {
   const { loadPrices } = await import("@/lib/membership/sync.server");
   const { stripe, stripeConfigured } = await import("@/lib/membership/stripe.server");
   const { envVar } = await import("@/lib/membership/db.server");
+  const { accountEmail } = await import("@/lib/account/account.server");
 
   const publishableKey = envVar("STRIPE_PUBLISHABLE_KEY");
   if (!stripeConfigured() || !publishableKey)
@@ -40,7 +42,7 @@ async function createSession(request: Request): Promise<Response> {
   const origin = new URL(request.url).origin;
 
   try {
-    const prices = await loadPrices();
+    const [prices, email] = await Promise.all([loadPrices(), accountEmail(request)]);
     const planPrice = prices.plans.get("base_monthly");
     if (!prices.band || (withAi && !planPrice))
       return Response.json({ error: "not-configured" }, { status: 503 });
@@ -64,6 +66,7 @@ async function createSession(request: Request): Promise<Response> {
       allow_promotion_codes: true,
       billing_address_collection: "auto",
       client_reference_id: ref ?? undefined,
+      ...(email ? { customer_email: email } : {}),
       metadata,
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },

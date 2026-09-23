@@ -6,10 +6,8 @@ import type { AnyRoute, AnyRouter, ParsedLocation } from "@tanstack/react-router
 
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {
-    // Optional for MCP compatibility: generated MCP routes are recreated without
-    // staticData. Routes without a decision stay excluded from the sitemap.
+    // Routes without a decision (like /mcp) stay excluded from the sitemap.
     sitemap?: boolean | "exclude-subtree";
-
   }
 }
 
@@ -43,14 +41,17 @@ export function sitemapPathForLocation(
   location: Pick<ParsedLocation, "pathname" | "publicHref">,
   routeId: string,
 ): string | undefined {
-  if (!isSafeSitemapPath(location.pathname) || !isSafeSitemapPath(location.publicHref)) return undefined;
+  if (!isSafeSitemapPath(location.pathname) || !isSafeSitemapPath(location.publicHref))
+    return undefined;
 
   const result = router.getMatchedRoutes(location.pathname) as RouteMatch;
   const [params, foundRoute] = Array.isArray(result)
     ? [result[1], result[2]]
     : [result.routeParams, result.parseError ? undefined : result.foundRoute];
 
-  return params["**"] === undefined && foundRoute?.id === routeId && isSitemapRouteIncluded(foundRoute)
+  return params["**"] === undefined &&
+    foundRoute?.id === routeId &&
+    isSitemapRouteIncluded(foundRoute)
     ? location.publicHref
     : undefined;
 }
@@ -61,7 +62,8 @@ export interface SitemapEntry {
 }
 
 function isSafeSitemapPath(pathname: string): boolean {
-  if (!pathname.startsWith("/") || pathname.startsWith("//") || /[?#\\]/.test(pathname)) return false;
+  if (!pathname.startsWith("/") || pathname.startsWith("//") || /[?#\\]/.test(pathname))
+    return false;
   try {
     return decodeURI(new URL(pathname, "https://sitemap.invalid").pathname) === decodeURI(pathname);
   } catch {

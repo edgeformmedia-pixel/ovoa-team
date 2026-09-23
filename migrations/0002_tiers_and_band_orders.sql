@@ -5,7 +5,7 @@
 --     keeps the billing period: monthly | annual | lifetime (old) | comp.
 --   - band_orders: every Band sold, so the admin page shows what to ship.
 --
--- Apply: npm run cf:migrate
+-- Apply: npm run db:migrate
 
 ALTER TABLE members ADD COLUMN tier TEXT NOT NULL DEFAULT 'base' CHECK (tier IN ('base', 'pro'));
 
