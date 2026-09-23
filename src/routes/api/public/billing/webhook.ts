@@ -7,6 +7,12 @@ import { createFileRoute } from "@tanstack/react-router";
 //   customer.subscription.created, customer.subscription.updated,
 //   customer.subscription.deleted, invoice.paid, charge.refunded
 //
+// checkout.session.completed covers both kinds of checkout: subscription mode
+// (a plan, or the Band with Base AI) and payment mode ("Band only, no AI").
+// Either way a paid Band is written to band_orders for the admin page, and an
+// AI subscription to members with its tier. charge.refunded marks a Band
+// order refunded and voids partner commission on the refunded money.
+//
 // Every handler is idempotent, so Stripe's retries and duplicate deliveries are
 // harmless. A 500 makes Stripe retry for up to three days.
 

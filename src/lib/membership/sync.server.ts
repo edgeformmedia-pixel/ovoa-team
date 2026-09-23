@@ -6,21 +6,34 @@
 
 import {
   AFFILIATE_PERCENT,
+  BAND_LOOKUP_KEY,
   COMMISSION_MONTHS,
+  LEGACY_LOOKUP_KEYS,
   PLAN_IDS,
   PLAN_LOOKUP_KEYS,
   cleanRef,
   isEntitled,
+  periodOfPlan,
+  tierOf,
+  tierOfPlan,
   type MemberPlan,
+  type PaidTier,
   type PlanId,
+  type PublicBand,
   type PublicPlan,
 } from "./plans";
 import { now } from "./db.server";
 import { stripe, stripeConfigured } from "./stripe.server";
-import { DuplicateError, store, type Member, type MemberPatch } from "./store.server";
+import {
+  DuplicateError,
+  store,
+  type BandOrder,
+  type Member,
+  type MemberPatch,
+} from "./store.server";
 import { inviteTester, removeTester, testflightInvitesConfigured } from "./testflight.server";
 
-export type { Member };
+export type { BandOrder, Member };
 
 // ---------- Stripe shapes (only the fields read here) ----------
 
@@ -44,6 +57,19 @@ type StripeSubscription = {
   items: { data: { id: string; price: StripePrice; current_period_end?: number }[] };
 };
 
+type StripeAddress = {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+};
+
+type StripeShipping = { name: string | null; address: StripeAddress | null } | null;
+
+type StripeInvoiceRef = { id: string; payment_intent?: string | { id: string } | null };
+
 type StripeCheckoutSession = {
   id: string;
   mode: "payment" | "subscription" | "setup";
@@ -51,13 +77,18 @@ type StripeCheckoutSession = {
   payment_status: "paid" | "unpaid" | "no_payment_required";
   customer: string | { id: string } | null;
   customer_email: string | null;
-  customer_details: { email: string | null; name: string | null } | null;
+  customer_details: { email: string | null; name: string | null; phone?: string | null } | null;
   subscription: string | StripeSubscription | null;
   payment_intent: string | { id: string } | null;
+  invoice?: string | StripeInvoiceRef | null;
   amount_total: number | null;
   currency: string | null;
   metadata: Record<string, string> | null;
   client_reference_id: string | null;
+  // 2024-06-20 puts shipping here; newer API versions under collected_information.
+  shipping_details?: StripeShipping;
+  collected_information?: { shipping_details?: StripeShipping } | null;
+  line_items?: { data: { price: StripePrice | null; amount_total: number }[] };
 };
 
 type StripeCustomer = { id: string; email: string | null; name: string | null; deleted?: boolean };
@@ -70,47 +101,56 @@ const iso = (seconds: number | null | undefined) =>
 
 // ---------- Prices ----------
 
-let priceCache: { at: number; prices: Map<PlanId, StripePrice> } | null = null;
+export type Prices = { plans: Map<PlanId, StripePrice>; band: StripePrice | null };
 
-export async function loadPrices(): Promise<Map<PlanId, StripePrice>> {
+let priceCache: { at: number; prices: Prices } | null = null;
+
+export async function loadPrices(): Promise<Prices> {
   if (priceCache && Date.now() - priceCache.at < 5 * 60 * 1000) return priceCache.prices;
   const res = await stripe<{ data: StripePrice[] }>("GET", "/prices", {
     active: true,
     limit: 10,
-    lookup_keys: PLAN_IDS.map((id) => PLAN_LOOKUP_KEYS[id]),
+    lookup_keys: [...PLAN_IDS.map((id) => PLAN_LOOKUP_KEYS[id]), BAND_LOOKUP_KEY],
   });
-  const prices = new Map<PlanId, StripePrice>();
+  const prices: Prices = { plans: new Map(), band: null };
   for (const price of res.data) {
+    if (price.lookup_key === BAND_LOOKUP_KEY) prices.band = price;
     const plan = PLAN_IDS.find((id) => PLAN_LOOKUP_KEYS[id] === price.lookup_key);
-    if (plan) prices.set(plan, price);
+    if (plan) prices.plans.set(plan, price);
   }
   priceCache = { at: Date.now(), prices };
   return prices;
 }
 
-export async function publicPlans(): Promise<PublicPlan[]> {
+export async function publicPlans(): Promise<{ plans: PublicPlan[]; band: PublicBand | null }> {
   const prices = await loadPrices();
-  return PLAN_IDS.flatMap((id) => {
-    const p = prices.get(id);
+  const plans = PLAN_IDS.flatMap((id): PublicPlan[] => {
+    const p = prices.plans.get(id);
     if (!p || p.unit_amount == null) return [];
-    const interval = p.recurring?.interval;
     return [
       {
         id,
+        tier: tierOfPlan(id),
+        period: periodOfPlan(id),
         amountCents: p.unit_amount,
         currency: p.currency,
-        interval: interval === "month" || interval === "year" ? interval : null,
+        interval: p.recurring?.interval === "year" ? "year" : "month",
       },
     ];
   });
+  const band =
+    prices.band?.unit_amount != null
+      ? { amountCents: prices.band.unit_amount, currency: prices.band.currency }
+      : null;
+  return { plans, band };
 }
 
-function planFromPrice(price: StripePrice | undefined): PlanId {
-  const byKey = PLAN_IDS.find((id) => PLAN_LOOKUP_KEYS[id] === price?.lookup_key);
-  if (byKey) return byKey;
-  if (price?.recurring?.interval === "year") return "annual";
-  if (price?.recurring) return "monthly";
-  return "lifetime";
+// The member row's billing period and tier, from the subscription's price.
+// Old ovoa_member_* prices and prices made by hand count as Base.
+function billingOf(price: StripePrice | undefined): { plan: MemberPlan; tier: PaidTier } {
+  const tier = tierOf(price?.lookup_key) ?? "base";
+  if (price?.lookup_key === LEGACY_LOOKUP_KEYS.lifetime) return { plan: "lifetime", tier };
+  return { plan: price?.recurring?.interval === "year" ? "annual" : "monthly", tier };
 }
 
 // ---------- Members ----------
@@ -150,10 +190,12 @@ export async function syncSubscription(
     typeof subscriptionOrId === "string"
       ? await retrieveSubscription(subscriptionOrId)
       : subscriptionOrId;
-  const item = sub.items.data[0];
+  // The AI plan is the recurring item. (A Band bought in the same checkout is
+  // billed once on the first invoice and never becomes a subscription item.)
+  const item = sub.items.data.find((i) => i.price?.recurring) ?? sub.items.data[0];
   const customerId = idOf(sub.customer);
   const billing: MemberPatch = {
-    plan: planFromPrice(item?.price),
+    ...billingOf(item?.price),
     status: sub.status,
     stripe_customer_id: customerId,
     trial_ends_at: sub.status === "trialing" ? iso(sub.trial_end) : null,
@@ -190,29 +232,91 @@ export async function syncSubscription(
   return syncTestflight(member);
 }
 
-// Everything a finished checkout implies. Returns null while the checkout is
-// still open (the buyer hit back, or the payment is still processing).
-export async function syncCheckoutSession(sessionId: string): Promise<Member | null> {
+export type CheckoutResult = { member: Member | null; bandOrder: BandOrder | null };
+
+const isBandCheckout = (session: StripeCheckoutSession) =>
+  session.metadata?.["band"] === "1" ||
+  Boolean(session.line_items?.data.some((li) => li.price?.lookup_key === BAND_LOOKUP_KEY));
+
+// Writes down a paid Band so the admin page shows it to ship. Safe to repeat.
+async function recordBand(
+  session: StripeCheckoutSession,
+  email: string,
+  ref: string | null,
+): Promise<BandOrder> {
+  const shipping = session.shipping_details ?? session.collected_information?.shipping_details;
+  const address = shipping?.address;
+  const invoice = typeof session.invoice === "object" ? session.invoice : null;
+  const invoiceId = idOf(session.invoice ?? null);
+  const bandLine = session.line_items?.data.find((li) => li.price?.lookup_key === BAND_LOOKUP_KEY);
+  const paymentIntentId =
+    idOf(session.payment_intent) ??
+    idOf(invoice?.payment_intent) ??
+    (invoiceId
+      ? idOf((await stripe<StripeInvoiceRef>("GET", `/invoices/${invoiceId}`)).payment_intent)
+      : null);
+
+  return store().recordBandOrder({
+    email,
+    name: shipping?.name ?? session.customer_details?.name ?? null,
+    phone: session.customer_details?.phone ?? null,
+    checkout_session_id: session.id,
+    stripe_customer_id: idOf(session.customer),
+    stripe_payment_intent_id: paymentIntentId,
+    stripe_invoice_id: invoiceId,
+    amount_cents:
+      bandLine?.amount_total ?? (session.mode === "payment" ? (session.amount_total ?? 0) : 0),
+    currency: session.currency ?? "usd",
+    with_ai: session.mode === "subscription",
+    ship_name: shipping?.name ?? null,
+    ship_line1: address?.line1 ?? null,
+    ship_line2: address?.line2 ?? null,
+    ship_city: address?.city ?? null,
+    ship_state: address?.state ?? null,
+    ship_postal_code: address?.postal_code ?? null,
+    ship_country: address?.country ?? null,
+    ref_code: ref,
+  });
+}
+
+// Everything a finished checkout implies: the AI membership (if any) and the
+// Band order (if any). Returns null while the checkout is still open (the
+// buyer hit back, or the payment is still processing).
+export async function syncCheckoutSession(sessionId: string): Promise<CheckoutResult | null> {
   const session = await stripe<StripeCheckoutSession>("GET", `/checkout/sessions/${sessionId}`, {
-    expand: ["subscription"],
+    expand: ["subscription", "invoice", "line_items"],
   });
   if (session.status !== "complete") return null;
 
-  const email = session.customer_details?.email ?? session.customer_email;
+  const email = (
+    session.customer_details?.email ??
+    session.customer_email ??
+    "unknown@ovoa.ai"
+  ).toLowerCase();
   const name = session.customer_details?.name ?? null;
   const ref = cleanRef(session.metadata?.["ref"] ?? session.client_reference_id);
+  const paid = session.payment_status === "paid";
+  const band = isBandCheckout(session);
+
+  // The Band is charged at checkout, even when the AI part starts with free days.
+  const bandOrder = band && paid ? await recordBand(session, email, ref) : null;
 
   if (session.mode === "subscription" && session.subscription) {
-    return syncSubscription(session.subscription, {
+    const member = await syncSubscription(session.subscription, {
       email,
       name,
       ref,
       checkoutSessionId: session.id,
     });
+    return { member, bandOrder };
   }
 
   if (session.mode !== "payment") return null;
-  const paid = session.payment_status === "paid";
+  // "Band only, no AI": no membership, and no commission (hardware earns none).
+  if (band) return paid ? { member: null, bandOrder } : null;
+
+  // An old Founder (lifetime) checkout. No longer sold; kept so old sessions
+  // still resolve. It counts as Base with no end date.
   const paymentIntentId = idOf(session.payment_intent);
   const existing = await store().findMember("checkout_session_id", session.id);
   // A refund recorded earlier stays recorded.
@@ -222,9 +326,10 @@ export async function syncCheckoutSession(sessionId: string): Promise<Member | n
     "checkout_session_id",
     session.id,
     {
-      email: (email ?? "unknown@ovoa.ai").toLowerCase(),
+      email,
       name,
       plan: "lifetime",
+      tier: "base",
       status,
       stripe_customer_id: idOf(session.customer),
       stripe_payment_intent_id: paymentIntentId,
@@ -243,7 +348,7 @@ export async function syncCheckoutSession(sessionId: string): Promise<Member | n
       currency: session.currency ?? "usd",
     });
   }
-  return syncTestflight(member);
+  return { member: await syncTestflight(member), bandOrder: null };
 }
 
 // ---------- TestFlight ----------
@@ -272,7 +377,7 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
       });
     }
     if (!entitled && invited) {
-      // Someone who switched from monthly to lifetime keeps their access.
+      // Someone with another live membership on the same email keeps their access.
       if (await otherEntitledRow(member))
         return patchTestflight(member, { testflight_state: "removed" });
       await removeTester(member.testflight_tester_id, member.email);
@@ -326,6 +431,12 @@ async function recordCommission(
   });
 }
 
+type StripeInvoiceLine = {
+  amount: number;
+  price?: { id: string; lookup_key?: string | null } | null;
+  pricing?: { price_details?: { price?: string | null } | null } | null;
+};
+
 type StripeInvoice = {
   id: string;
   customer: string | { id: string } | null;
@@ -334,7 +445,24 @@ type StripeInvoice = {
   subscription?: string | { id: string } | null;
   payment_intent?: string | { id: string } | null;
   parent?: { subscription_details?: { subscription?: string | null } | null } | null;
+  lines?: { data: StripeInvoiceLine[] };
 };
+
+// The Band earns no commission, so its amount comes off the invoice total.
+async function bandCentsOn(invoice: StripeInvoice): Promise<number> {
+  let bandPriceId: string | null = null;
+  let cents = 0;
+  for (const line of invoice.lines?.data ?? []) {
+    let band = line.price?.lookup_key === BAND_LOOKUP_KEY;
+    const priceId = line.price?.id ?? line.pricing?.price_details?.price ?? null;
+    if (!band && priceId) {
+      bandPriceId ??= (await loadPrices()).band?.id ?? "";
+      band = priceId === bandPriceId;
+    }
+    if (band) cents += line.amount;
+  }
+  return cents;
+}
 
 export async function handleInvoicePaid(invoice: StripeInvoice) {
   const subscriptionId =
@@ -345,7 +473,7 @@ export async function handleInvoicePaid(invoice: StripeInvoice) {
   await recordCommission(member, {
     sourceId: invoice.id,
     paymentIntentId: idOf(invoice.payment_intent),
-    amountCents: invoice.amount_paid,
+    amountCents: Math.max(0, invoice.amount_paid - (await bandCentsOn(invoice))),
     currency: invoice.currency,
   });
 }
@@ -364,9 +492,17 @@ export async function handleChargeRefunded(charge: StripeCharge) {
   // Commissions on refunded money are void, unless already paid out.
   if (paymentIntentId || invoiceId) await store().voidCommissions(paymentIntentId, invoiceId);
 
-  // A fully refunded lifetime purchase ends that membership. (Subscriptions end
-  // through customer.subscription.deleted when you cancel them.)
-  if (charge.refunded && paymentIntentId) {
+  if (!charge.refunded) return;
+
+  // A fully refunded Band: don't ship it (or expect it back). Any AI
+  // subscription bought with it carries on until it's cancelled in Stripe.
+  for (const order of await store().bandOrdersByPayment(paymentIntentId, invoiceId)) {
+    if (order.status !== "refunded") await store().setBandOrderStatus(order.id, "refunded");
+  }
+
+  // A fully refunded old lifetime purchase ends that membership. (Subscriptions
+  // end through customer.subscription.deleted when you cancel them.)
+  if (paymentIntentId) {
     for (const row of await store().lifetimeByPaymentIntent(paymentIntentId)) {
       await syncTestflight(await store().updateMember(row.id, { status: "refunded" }));
     }

@@ -136,6 +136,35 @@ function Welcome() {
     );
   }
 
+  if (welcome.state === "band") {
+    const b = welcome;
+    return (
+      <Shell>
+        <h1 className="text-[clamp(2.25rem,6vw,3.25rem)] font-semibold leading-[1.04]">
+          {b.band.status === "refunded"
+            ? "This Band order was refunded."
+            : `Your Band is on its way${b.firstName ? `, ${b.firstName}` : ""}.`}
+        </h1>
+        <p className="mt-4 text-lg leading-relaxed text-landing-muted">
+          {b.band.status === "shipped"
+            ? "It has shipped."
+            : `We'll ship it${b.band.shipTo ? ` to ${b.band.shipTo}` : ""} and email ${b.email} when it's sent.`}{" "}
+          The free OVOA app covers health tracking and notes. AI plans are at ovoa.ai/early-access.
+        </p>
+        {b.testflight.publicUrl && (
+          <a
+            href={b.testflight.publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={primaryButton}
+          >
+            Join the OVOA beta
+          </a>
+        )}
+      </Shell>
+    );
+  }
+
   if (welcome.state === "error") {
     return (
       <Shell>

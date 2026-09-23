@@ -39,9 +39,10 @@ export const Route = createFileRoute("/early-access/")({
 });
 
 const PLAN_COPY: Record<PlanId, { name: string; blurb: string }> = {
-  monthly: { name: "Monthly", blurb: "Try it, keep it month to month." },
-  annual: { name: "Annual", blurb: "The founding price, a year at a time." },
-  lifetime: { name: "Founder", blurb: "One payment. No renewals, ever." },
+  base_monthly: { name: "Base", blurb: "Every OVOA AI feature, month to month." },
+  base_annual: { name: "Base, yearly", blurb: "Every OVOA AI feature, a year at a time." },
+  pro_monthly: { name: "Pro", blurb: "Hands-free wake word, the background agent, more replies." },
+  pro_annual: { name: "Pro, yearly", blurb: "Everything in Pro, a year at a time." },
 };
 
 const INCLUDED = [
@@ -197,12 +198,12 @@ function PlanCard({
 function EarlyAccess() {
   const { configured, plans, trialDays } = Route.useLoaderData();
   const { error, canceled } = Route.useSearch();
-  const savings = annualSavings(plans);
+  const savings = annualSavings(plans, "base");
 
   const byId = (id: PlanId) => plans.find((p) => p.id === id);
-  const monthly = byId("monthly");
-  const annual = byId("annual");
-  const lifetime = byId("lifetime");
+  const monthly = byId("base_monthly");
+  const annual = byId("base_annual");
+  const pro = byId("pro_monthly");
 
   const banner =
     error === "not-configured" || (!configured && error)
@@ -313,14 +314,8 @@ function EarlyAccess() {
                 }
               />
             )}
-            {lifetime && (
-              <PlanCard
-                plan={lifetime}
-                trialDays={trialDays}
-                enabled={configured}
-                highlight={false}
-                badge="Founders"
-              />
+            {pro && (
+              <PlanCard plan={pro} trialDays={trialDays} enabled={configured} highlight={false} />
             )}
           </div>
 

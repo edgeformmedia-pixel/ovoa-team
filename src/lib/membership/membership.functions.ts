@@ -1,69 +1,115 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
+  BAND_TRIAL_DAYS,
   CHECKOUT_SESSION_PATTERN,
+  FALLBACK_BAND,
   FALLBACK_PLANS,
+  NO_BAND_TRIAL_DAYS,
   REF_PATTERN,
-  TRIAL_DAYS,
   cleanRef,
   isEntitled,
+  isPaidTier,
+  planId,
   type MemberPlan,
+  type PaidTier,
   type PlansResult,
 } from "./plans";
 
 // Server-only modules are imported inside each handler: this file also ships
 // to the browser, where the handlers are swapped for RPC calls.
 
+// Prices for the pages. `configured` is false until Stripe has the plans, and
+// the pages keep their buy buttons off in that state.
 export const getPlans = createServerFn({ method: "GET" }).handler(
   async (): Promise<PlansResult> => {
+    const trial = { trialDays: NO_BAND_TRIAL_DAYS, bandTrialDays: BAND_TRIAL_DAYS };
+    const fallback: PlansResult = {
+      configured: false,
+      plans: FALLBACK_PLANS,
+      band: FALLBACK_BAND,
+      ...trial,
+    };
     const { stripeConfigured, publicPlans } = await import("./sync.server");
-    if (!stripeConfigured())
-      return { configured: false, plans: FALLBACK_PLANS, trialDays: TRIAL_DAYS };
+    if (!stripeConfigured()) return fallback;
     try {
-      const plans = await publicPlans();
-      if (plans.length === 0)
-        return { configured: false, plans: FALLBACK_PLANS, trialDays: TRIAL_DAYS };
-      return { configured: true, plans, trialDays: TRIAL_DAYS };
+      const { plans, band } = await publicPlans();
+      if (plans.length === 0) return { ...fallback, band: band ?? FALLBACK_BAND };
+      return { configured: true, plans, band, ...trial };
     } catch (error) {
       console.error("[membership] plans", error);
-      return { configured: false, plans: FALLBACK_PLANS, trialDays: TRIAL_DAYS };
+      return fallback;
     }
   },
 );
 
 // ---------- Welcome page ----------
 
+export type WelcomeBand = { status: string; withAi: boolean; shipTo: string | null };
+
+export type WelcomeTestflight = {
+  mode: "invite" | "link" | "manual";
+  state: string;
+  publicUrl: string | null;
+};
+
 export type WelcomeData =
   | { state: "pending" }
   | { state: "error"; message: string }
+  // "Band only, no AI": a Band order and no membership.
+  | {
+      state: "band";
+      firstName: string | null;
+      email: string;
+      band: WelcomeBand;
+      testflight: WelcomeTestflight;
+    }
   | {
       state: "ready";
       firstName: string | null;
       email: string;
       plan: MemberPlan;
+      tier: PaidTier;
       status: string;
       entitled: boolean;
       trialEndsAt: string | null;
       renewsAt: string | null;
       cancelAtPeriodEnd: boolean;
-      testflight: {
-        mode: "invite" | "link" | "manual";
-        state: string;
-        publicUrl: string | null;
-      };
+      // Set when a Band came in the same checkout.
+      band: WelcomeBand | null;
+      testflight: WelcomeTestflight;
       upgrade: { annualCents: number; saveCents: number; currency: string } | null;
     };
+
+function bandSummary(order: import("./store.server").BandOrder): WelcomeBand {
+  const place = [order.ship_city, order.ship_state].filter(Boolean).join(", ");
+  return { status: order.status, withAi: order.with_ai, shipTo: place || null };
+}
 
 async function welcomeFor(sessionId: string): Promise<WelcomeData> {
   const sync = await import("./sync.server");
   const { testflightInvitesConfigured, testflightPublicUrl } = await import("./testflight.server");
-  const member = await sync.syncCheckoutSession(sessionId);
-  if (!member) return { state: "pending" };
+  const result = await sync.syncCheckoutSession(sessionId);
+  if (!result) return { state: "pending" };
+  const { member, bandOrder } = result;
+  const publicUrl = testflightPublicUrl();
 
+  if (!member) {
+    if (!bandOrder) return { state: "pending" };
+    return {
+      state: "band",
+      firstName: (bandOrder.ship_name ?? bandOrder.name)?.split(/\s+/)[0] ?? null,
+      email: bandOrder.email,
+      band: bandSummary(bandOrder),
+      testflight: { mode: publicUrl ? "link" : "manual", state: "off", publicUrl },
+    };
+  }
+
+  // Monthly → annual (same tier) while the Band's free days are running.
   let upgrade: Extract<WelcomeData, { state: "ready" }>["upgrade"] = null;
   if (member.plan === "monthly" && member.status === "trialing") {
     const prices = await sync.loadPrices();
-    const monthly = prices.get("monthly")?.unit_amount;
-    const annual = prices.get("annual");
+    const monthly = prices.plans.get(planId(member.tier, "monthly"))?.unit_amount;
+    const annual = prices.plans.get(planId(member.tier, "annual"));
     if (monthly && annual?.unit_amount && monthly * 12 > annual.unit_amount) {
       upgrade = {
         annualCents: annual.unit_amount,
@@ -73,17 +119,18 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
     }
   }
 
-  const publicUrl = testflightPublicUrl();
   return {
     state: "ready",
     firstName: member.name?.split(/\s+/)[0] ?? null,
     email: member.email,
     plan: member.plan,
+    tier: member.tier,
     status: member.status,
     entitled: isEntitled(member.status),
     trialEndsAt: member.trial_ends_at,
     renewsAt: member.current_period_end,
     cancelAtPeriodEnd: member.cancel_at_period_end,
+    band: bandOrder ? bandSummary(bandOrder) : null,
     testflight: {
       mode: testflightInvitesConfigured() ? "invite" : publicUrl ? "link" : "manual",
       state: member.testflight_state,
@@ -120,7 +167,7 @@ export const switchToAnnual = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<WelcomeData> => {
     const sync = await import("./sync.server");
     const { stripe } = await import("./stripe.server");
-    const member = await sync.syncCheckoutSession(data.sessionId);
+    const member = (await sync.syncCheckoutSession(data.sessionId))?.member;
     if (
       !member?.stripe_subscription_id ||
       member.plan !== "monthly" ||
@@ -128,7 +175,7 @@ export const switchToAnnual = createServerFn({ method: "POST" })
     ) {
       throw new Error("This membership can't be switched here. Use Manage billing instead.");
     }
-    const annual = (await sync.loadPrices()).get("annual");
+    const annual = (await sync.loadPrices()).plans.get(planId(member.tier, "annual"));
     if (!annual) throw new Error("The annual plan isn't set up yet.");
     const sub = await stripe<{ items: { data: { id: string }[] }; trial_end: number | null }>(
       "GET",
@@ -287,6 +334,7 @@ export type AdminMember = {
   email: string;
   name: string | null;
   plan: string;
+  tier: PaidTier;
   status: string;
   trialEndsAt: string | null;
   renewsAt: string | null;
@@ -316,6 +364,21 @@ export type AdminAffiliate = {
   createdAt: string;
 };
 
+export type AdminBandOrder = {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  withAi: boolean;
+  amountCents: number;
+  currency: string;
+  // One line per row of the address label.
+  shipTo: string[];
+  status: string;
+  shippedAt: string | null;
+  createdAt: string;
+};
+
 export type AdminOverview = {
   config: {
     stripe: boolean;
@@ -335,8 +398,12 @@ export type AdminOverview = {
     trialMrrCents: number;
     lifetimeCents: number;
     owedCents: number;
+    // Paid and not yet shipped.
+    bandsToShip: number;
+    bandCents: number;
   };
   members: AdminMember[];
+  bandOrders: AdminBandOrder[];
   affiliates: AdminAffiliate[];
 };
 
@@ -350,6 +417,8 @@ const EMPTY_STATS: AdminOverview["stats"] = {
   trialMrrCents: 0,
   lifetimeCents: 0,
   owedCents: 0,
+  bandsToShip: 0,
+  bandCents: 0,
 };
 
 export const getAdminOverview = createServerFn({ method: "POST" })
@@ -376,6 +445,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         store().listMembers(5000),
         store().listAffiliates(),
         store().listCommissions(),
+        store().listBandOrders(1000),
       ]);
     } catch (error) {
       if (!(error instanceof StoreNotReadyError)) throw error;
@@ -383,40 +453,47 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         config: { ...config, database: false },
         stats: EMPTY_STATS,
         members: [],
+        bandOrders: [],
         affiliates: [],
       };
     }
-    const [members, affiliateRows, commissions] = loaded;
+    const [members, affiliateRows, commissions, bands] = loaded;
 
     let prices = new Map<string, number>();
     if (config.stripe) {
       try {
         const current = await sync.loadPrices();
-        prices = new Map([...current].map(([id, p]) => [id, p.unit_amount ?? 0]));
+        prices = new Map([...current.plans].map(([id, p]) => [id, p.unit_amount ?? 0]));
       } catch {
         /* stats fall back to zero revenue */
       }
     }
-    const monthlyValue = (plan: string) =>
-      plan === "monthly"
-        ? (prices.get("monthly") ?? 0)
-        : plan === "annual"
-          ? Math.round((prices.get("annual") ?? 0) / 12)
+    // Today's list price for the member's tier and period. Members on an older
+    // price pay what they signed up at, so this is an estimate.
+    const monthlyValue = (m: { plan: string; tier: PaidTier }) =>
+      m.plan === "monthly"
+        ? (prices.get(planId(m.tier, "monthly")) ?? 0)
+        : m.plan === "annual"
+          ? Math.round((prices.get(planId(m.tier, "annual")) ?? 0) / 12)
           : 0;
 
     const stats = { ...EMPTY_STATS };
     for (const m of members) {
       if (m.status === "trialing") {
         stats.trialing++;
-        if (!m.cancel_at_period_end) stats.trialMrrCents += monthlyValue(m.plan);
+        if (!m.cancel_at_period_end) stats.trialMrrCents += monthlyValue(m);
       } else if (m.status === "active" || m.status === "past_due") {
         stats.paying++;
-        if (!m.cancel_at_period_end) stats.mrrCents += monthlyValue(m.plan);
+        if (!m.cancel_at_period_end) stats.mrrCents += monthlyValue(m);
       } else if (m.status === "lifetime") {
+        // Old Founder plan; no longer sold, so its price isn't loaded.
         stats.lifetime++;
-        stats.lifetimeCents += prices.get("lifetime") ?? 0;
       } else if (m.status === "comp") stats.comp++;
       else stats.ended++;
+    }
+    for (const b of bands) {
+      if (b.status === "paid") stats.bandsToShip++;
+      if (b.status !== "refunded") stats.bandCents += b.amount_cents;
     }
 
     const affiliates: AdminAffiliate[] = affiliateRows.map((a) => {
@@ -450,6 +527,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         email: m.email,
         name: m.name,
         plan: m.plan,
+        tier: m.tier,
         status: m.status,
         trialEndsAt: m.trial_ends_at,
         renewsAt: m.current_period_end,
@@ -460,6 +538,27 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         note: m.note,
         checkoutSessionId: m.checkout_session_id,
         createdAt: m.created_at,
+      })),
+      bandOrders: bands.map((b) => ({
+        id: b.id,
+        email: b.email,
+        name: b.name,
+        phone: b.phone,
+        withAi: b.with_ai,
+        amountCents: b.amount_cents,
+        currency: b.currency,
+        shipTo: [
+          b.ship_name,
+          b.ship_line1,
+          b.ship_line2,
+          [[b.ship_city, b.ship_state].filter(Boolean).join(", "), b.ship_postal_code]
+            .filter(Boolean)
+            .join(" "),
+          b.ship_country,
+        ].filter((line): line is string => Boolean(line)),
+        status: b.status,
+        shippedAt: b.shipped_at,
+        createdAt: b.created_at,
       })),
       affiliates,
     };
@@ -512,8 +611,27 @@ export const listTestflightGroups = createServerFn({ method: "POST" })
     return tf.listBetaGroups();
   });
 
-// Free access for reviewers, friends and creators. Shows up to the app like
-// any paying member.
+// Band orders: mark one shipped once it's in the post (or back to paid if that
+// was a mistake). Refunds happen in Stripe and arrive through the webhook.
+export const setBandOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator(
+    adminInput((input) => ({
+      id: String(input["id"] ?? ""),
+      status: (input["status"] === "paid" ? "paid" : "shipped") as "paid" | "shipped",
+    })),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin(data.key);
+    const { store } = await import("./store.server");
+    await store().setBandOrderStatus(data.id, data.status);
+    return { ok: true };
+  });
+
+// Free access for reviewers, friends and creators, at the tier picked
+// ("base" when none is given). Shows up to the app like any paying member;
+// App Review's login needs "pro".
+//
+//   grantAccess({ data: { key, email, name?, note?, tier?: "base" | "pro" } })
 export const grantAccess = createServerFn({ method: "POST" })
   .inputValidator(
     adminInput((input) => {
@@ -531,6 +649,7 @@ export const grantAccess = createServerFn({ method: "POST" })
           String(input["note"] ?? "")
             .trim()
             .slice(0, 200) || null,
+        tier: (isPaidTier(input["tier"]) ? input["tier"] : "base") as PaidTier,
       };
     }),
   )
@@ -544,6 +663,7 @@ export const grantAccess = createServerFn({ method: "POST" })
       name: data.name,
       note: data.note,
       plan: "comp",
+      tier: data.tier,
       status: "comp",
       testflight_state: testflightInvitesConfigured() ? "pending" : "off",
     });

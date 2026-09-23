@@ -1,22 +1,28 @@
 #!/usr/bin/env node
-// Sets up Stripe for OVOA early access in one go:
-//   - the "OVOA Founding Membership" product
-//   - monthly, annual and lifetime prices (found by the site through lookup keys)
+// Sets up Stripe for OVOA in one go:
+//   - one product per thing: Base AI, Pro AI, and the OVOA Band
+//   - five prices, found by the site through lookup keys:
+//       ovoa_base_monthly $9.95/month    ovoa_base_annual $95.99/year
+//       ovoa_pro_monthly  $25.95/month   ovoa_pro_annual  $195.99/year
+//       ovoa_band         $89.99 once
 //   - the webhook that keeps members in sync (prints its signing secret)
 //   - customer portal settings (so members can cancel and change cards)
 // and prints every secret to paste into Lovable.
 //
 //   node scripts/stripe-setup.mjs --key sk_test_... --site https://ovoa.ai
 //
-// Options: --monthly 9.99 --annual 99.99 --lifetime 249  (USD; these are the defaults)
+// Options: --base-monthly 9.95 --base-annual 95.99 --pro-monthly 25.95
+//          --pro-annual 195.99 --band 89.99  (USD; these are the defaults)
 //          --new-webhook   replace the webhook and print a fresh secret
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
 //          --cloudflare    also upload the secrets to the Cloudflare test Worker
 //                          (use with --site https://edgeformmedia-pixel-ovoa-team.edgeformmedia.workers.dev)
 //
 // Safe to run again: it reuses what exists and only creates what's missing.
-// A changed price creates a new Stripe price and moves the lookup key to it;
-// people already subscribed keep what they pay today.
+// A changed price creates a new Stripe price and moves the lookup key to it
+// (transfer_lookup_key); the old price is left alone, so people already
+// subscribed keep what they pay today. The old ovoa_member_* prices and the
+// ovoa_membership product aren't touched; the site still reads them as Base.
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -27,7 +33,24 @@ import { createInterface } from "node:readline/promises";
 
 const API = process.env.STRIPE_API_BASE ?? "https://api.stripe.com/v1";
 const API_VERSION = "2024-06-20";
-const PRODUCT_ID = "ovoa_membership";
+const PRODUCTS = [
+  {
+    id: "ovoa_base",
+    name: "OVOA Base AI",
+    description: "The OVOA assistant: chat, voice, reminders, email, calendar, memory. Beta.",
+  },
+  {
+    id: "ovoa_pro",
+    name: "OVOA Pro AI",
+    description:
+      "Everything in Base, plus the hands-free wake word, the background agent and a bigger daily allowance. Beta.",
+  },
+  {
+    id: "ovoa_band",
+    name: "OVOA Band",
+    description: "The OVOA wristband (beta hardware). Comes with 7 days of Base AI.",
+  },
+];
 const EVENTS = [
   "checkout.session.completed",
   "checkout.session.async_payment_succeeded",
@@ -118,40 +141,55 @@ async function main() {
     `\nStripe account: ${account.settings?.dashboard?.display_name ?? account.business_profile?.name ?? account.id} (${live ? "LIVE" : "test"} mode)`,
   );
 
-  // ---- Product ----
-  let product;
-  try {
-    product = await stripe("GET", `/products/${PRODUCT_ID}`);
-    say(`✓ Product exists: ${product.name}`);
-  } catch (e) {
-    if (e.status !== 404) throw e;
-    product = await stripe("POST", "/products", {
-      id: PRODUCT_ID,
-      name: "OVOA Founding Membership",
-      description: "The OVOA assistant on iPhone, with early access to every new build.",
-    });
-    say(`✓ Created product: ${product.name}`);
+  // ---- Products ----
+  for (const p of PRODUCTS) {
+    try {
+      const product = await stripe("GET", `/products/${p.id}`);
+      if (!product.active) await stripe("POST", `/products/${p.id}`, { active: true });
+      say(`✓ Product exists: ${product.name}`);
+    } catch (e) {
+      if (e.status !== 404) throw e;
+      await stripe("POST", "/products", p);
+      say(`✓ Created product: ${p.name}`);
+    }
   }
 
   // ---- Prices ----
   const wanted = [
     {
-      key: "ovoa_member_monthly",
-      nickname: "Monthly",
-      amount: cents(opts.monthly ?? 9.99),
-      recurring: { interval: "month" },
+      key: "ovoa_base_monthly",
+      product: "ovoa_base",
+      nickname: "Base monthly",
+      amount: cents(opts["base-monthly"] ?? 9.95),
+      interval: "month",
     },
     {
-      key: "ovoa_member_annual",
-      nickname: "Annual",
-      amount: cents(opts.annual ?? 99.99),
-      recurring: { interval: "year" },
+      key: "ovoa_base_annual",
+      product: "ovoa_base",
+      nickname: "Base yearly",
+      amount: cents(opts["base-annual"] ?? 95.99),
+      interval: "year",
     },
     {
-      key: "ovoa_member_lifetime",
-      nickname: "Founder (lifetime)",
-      amount: cents(opts.lifetime ?? 249),
-      recurring: null,
+      key: "ovoa_pro_monthly",
+      product: "ovoa_pro",
+      nickname: "Pro monthly",
+      amount: cents(opts["pro-monthly"] ?? 25.95),
+      interval: "month",
+    },
+    {
+      key: "ovoa_pro_annual",
+      product: "ovoa_pro",
+      nickname: "Pro yearly",
+      amount: cents(opts["pro-annual"] ?? 195.99),
+      interval: "year",
+    },
+    {
+      key: "ovoa_band",
+      product: "ovoa_band",
+      nickname: "Band",
+      amount: cents(opts.band ?? 89.99),
+      interval: null,
     },
   ];
   const existing = await stripe("GET", "/prices", {
@@ -162,18 +200,24 @@ async function main() {
   for (const w of wanted) {
     if (!(w.amount > 0)) throw new Error(`Bad amount for ${w.nickname}`);
     const found = existing.data.find((p) => p.lookup_key === w.key);
-    if (found && found.unit_amount === w.amount && found.product === PRODUCT_ID) {
+    const same =
+      found &&
+      found.unit_amount === w.amount &&
+      found.currency === "usd" &&
+      found.product === w.product &&
+      (found.recurring?.interval ?? null) === w.interval;
+    if (same) {
       say(`✓ ${w.nickname} price: $${(w.amount / 100).toFixed(2)}`);
       continue;
     }
     await stripe("POST", "/prices", {
-      product: PRODUCT_ID,
+      product: w.product,
       currency: "usd",
       unit_amount: w.amount,
       nickname: w.nickname,
       lookup_key: w.key,
       transfer_lookup_key: true,
-      ...(w.recurring ? { recurring: w.recurring } : {}),
+      ...(w.interval ? { recurring: { interval: w.interval } } : {}),
     });
     say(`✓ ${found ? "Updated" : "Created"} ${w.nickname} price: $${(w.amount / 100).toFixed(2)}`);
   }
@@ -201,7 +245,7 @@ async function main() {
       url,
       enabled_events: EVENTS,
       api_version: API_VERSION,
-      description: "OVOA early access memberships",
+      description: "OVOA memberships and Band orders",
     });
     webhookSecret = hook.secret;
     say(`✓ Created webhook: ${url}`);

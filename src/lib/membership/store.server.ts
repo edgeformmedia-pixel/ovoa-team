@@ -1,16 +1,16 @@
 // Where members, partners and commissions are kept. Two backends, same shape:
 //
 //   - Lovable (the real site): Lovable Cloud's Supabase, tables from
-//     supabase/migrations/20260922150000_membership.sql
+//     supabase/migrations/20260922150000_membership.sql and
+//     20260922200000_tiers_and_band_orders.sql
 //   - The Cloudflare test Worker: D1 bound as SITE_DB, tables from
-//     migrations/0001_membership.sql (Lovable's Supabase service key can't be
-//     used outside Lovable)
+//     migrations/ (Lovable's Supabase service key can't be used outside Lovable)
 //
 // store() picks D1 whenever the SITE_DB binding exists.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { MemberPlan } from "./plans";
+import type { MemberPlan, PaidTier } from "./plans";
 import {
   all,
   databaseConnected,
@@ -26,6 +26,7 @@ export type Member = {
   email: string;
   name: string | null;
   plan: MemberPlan;
+  tier: PaidTier;
   status: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -80,6 +81,35 @@ export type Commission = {
 
 export type NewCommission = Omit<Commission, "status" | "created_at">;
 
+export type BandOrderStatus = "paid" | "shipped" | "refunded";
+
+export type BandOrder = {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  checkout_session_id: string;
+  stripe_customer_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_invoice_id: string | null;
+  amount_cents: number;
+  currency: string;
+  with_ai: boolean;
+  ship_name: string | null;
+  ship_line1: string | null;
+  ship_line2: string | null;
+  ship_city: string | null;
+  ship_state: string | null;
+  ship_postal_code: string | null;
+  ship_country: string | null;
+  ref_code: string | null;
+  status: BandOrderStatus;
+  shipped_at: string | null;
+  created_at: string;
+};
+
+export type NewBandOrder = Omit<BandOrder, "id" | "status" | "shipped_at" | "created_at">;
+
 export class DuplicateError extends Error {}
 
 // The tables aren't there yet: the migration hasn't been applied.
@@ -105,6 +135,16 @@ export interface Store {
   voidCommissions(paymentIntentId: string | null, sourceId: string | null): Promise<void>;
   markCommissionsPaid(code: string): Promise<void>;
   listCommissions(code?: string): Promise<Commission[]>;
+  // Records a paid Band once per checkout; later calls fill in payment ids
+  // that weren't known yet and leave the status alone.
+  recordBandOrder(row: NewBandOrder): Promise<BandOrder>;
+  // Marks the Band orders paid through this payment intent or invoice.
+  bandOrdersByPayment(
+    paymentIntentId: string | null,
+    invoiceId: string | null,
+  ): Promise<BandOrder[]>;
+  setBandOrderStatus(id: string, status: BandOrderStatus): Promise<void>;
+  listBandOrders(limit: number): Promise<BandOrder[]>;
 }
 
 export function store(): Store {
@@ -115,6 +155,7 @@ const MEMBER_COLUMNS = new Set([
   "email",
   "name",
   "plan",
+  "tier",
   "status",
   "stripe_customer_id",
   "stripe_subscription_id",
@@ -140,6 +181,34 @@ function patchEntries(patch: MemberPatch) {
 
 const toMember = (row: Record<string, unknown>): Member =>
   ({ ...row, cancel_at_period_end: Boolean(row["cancel_at_period_end"]) }) as Member;
+
+const toBandOrder = (row: Record<string, unknown>): BandOrder =>
+  ({
+    ...row,
+    with_ai: Boolean(row["with_ai"]),
+    amount_cents: Number(row["amount_cents"]),
+  }) as BandOrder;
+
+const BAND_COLUMNS = [
+  "email",
+  "name",
+  "phone",
+  "checkout_session_id",
+  "stripe_customer_id",
+  "stripe_payment_intent_id",
+  "stripe_invoice_id",
+  "amount_cents",
+  "currency",
+  "with_ai",
+  "ship_name",
+  "ship_line1",
+  "ship_line2",
+  "ship_city",
+  "ship_state",
+  "ship_postal_code",
+  "ship_country",
+  "ref_code",
+] as const satisfies readonly (keyof NewBandOrder)[];
 
 const toAffiliate = (row: Record<string, unknown>): Affiliate =>
   ({ ...row, percent: Number(row["percent"]) }) as Affiliate;
@@ -300,6 +369,52 @@ const d1Store: Store = {
           )
         : all<Commission>("SELECT * FROM affiliate_commissions ORDER BY created_at DESC"),
     ),
+  recordBandOrder: (order) =>
+    d1(async () => {
+      const row = await one<Record<string, unknown>>(
+        `INSERT INTO band_orders (${BAND_COLUMNS.join(", ")})
+         VALUES (${BAND_COLUMNS.map(() => "?").join(", ")})
+         ON CONFLICT (checkout_session_id) DO UPDATE SET
+           stripe_payment_intent_id = COALESCE(band_orders.stripe_payment_intent_id, excluded.stripe_payment_intent_id),
+           stripe_invoice_id = COALESCE(band_orders.stripe_invoice_id, excluded.stripe_invoice_id),
+           updated_at = ?
+         RETURNING *`,
+        ...BAND_COLUMNS.map((c) => order[c]),
+        now(),
+      );
+      if (!row) throw new Error("Band order insert returned nothing");
+      return toBandOrder(row);
+    }),
+  bandOrdersByPayment: (pi, invoice) =>
+    d1(async () =>
+      (
+        await all<Record<string, unknown>>(
+          "SELECT * FROM band_orders WHERE stripe_payment_intent_id = ? OR stripe_invoice_id = ?",
+          pi ?? "",
+          invoice ?? "",
+        )
+      ).map(toBandOrder),
+    ),
+  setBandOrderStatus: (id, status) =>
+    d1(async () => {
+      await run(
+        "UPDATE band_orders SET status = ?, shipped_at = CASE WHEN ? = 'shipped' THEN ? ELSE shipped_at END, updated_at = ? WHERE id = ?",
+        status,
+        status,
+        now(),
+        now(),
+        id,
+      );
+    }),
+  listBandOrders: (limit) =>
+    d1(async () =>
+      (
+        await all<Record<string, unknown>>(
+          "SELECT * FROM band_orders ORDER BY created_at DESC LIMIT ?",
+          limit,
+        )
+      ).map(toBandOrder),
+    ),
 };
 
 // ---------- Lovable Cloud (Supabase) ----------
@@ -444,5 +559,68 @@ const supabaseStore: Store = {
       .order("created_at", { ascending: false })
       .limit(20000);
     return (await rows(code ? base.eq("affiliate_code", code) : base)) as unknown as Commission[];
+  },
+  async recordBandOrder(order) {
+    const existing = await sb()
+      .from("band_orders")
+      .select("*")
+      .eq("checkout_session_id", order.checkout_session_id)
+      .maybeSingle();
+    check(existing.error);
+    if (existing.data) {
+      const row = toBandOrder(existing.data);
+      const fill = {
+        ...(!row.stripe_payment_intent_id && order.stripe_payment_intent_id
+          ? { stripe_payment_intent_id: order.stripe_payment_intent_id }
+          : {}),
+        ...(!row.stripe_invoice_id && order.stripe_invoice_id
+          ? { stripe_invoice_id: order.stripe_invoice_id }
+          : {}),
+      };
+      if (Object.keys(fill).length === 0) return row;
+      const { data, error } = await sb()
+        .from("band_orders")
+        .update(fill)
+        .eq("id", row.id)
+        .select("*")
+        .single();
+      check(error);
+      return toBandOrder(data);
+    }
+    const { data, error } = await sb()
+      .from("band_orders")
+      .insert(Object.fromEntries(BAND_COLUMNS.map((c) => [c, order[c]])))
+      .select("*")
+      .single();
+    if (error?.code === "23505") return this.recordBandOrder(order); // raced the other sync
+    check(error);
+    return toBandOrder(data);
+  },
+  async bandOrdersByPayment(pi, invoice) {
+    const filters = [
+      pi && `stripe_payment_intent_id.eq.${pi}`,
+      invoice && `stripe_invoice_id.eq.${invoice}`,
+    ]
+      .filter(Boolean)
+      .join(",");
+    if (!filters) return [];
+    return (await rows(sb().from("band_orders").select("*").or(filters))).map(toBandOrder);
+  },
+  async setBandOrderStatus(id, status) {
+    const { error } = await sb()
+      .from("band_orders")
+      .update({
+        status,
+        ...(status === "shipped" ? { shipped_at: new Date().toISOString() } : {}),
+      })
+      .eq("id", id);
+    check(error);
+  },
+  async listBandOrders(limit) {
+    return (
+      await rows(
+        sb().from("band_orders").select("*").order("created_at", { ascending: false }).limit(limit),
+      )
+    ).map(toBandOrder);
   },
 };
