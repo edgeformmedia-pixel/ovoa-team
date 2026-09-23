@@ -26,7 +26,7 @@ import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership
 import type { PlansResult } from "@/lib/membership/plans";
 
 const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
-const PAGE_TITLE = "OVOA — the AI assistant that gets things done";
+const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
 
 function describe(data: PlansResult | undefined) {
   return `OVOA is a Jarvis in your phone: text or talk and it schedules, remembers and follows through. In beta on iPhone: health and notes are free, the assistant is ${perLabel(planOf(data, "base", "monthly"))}, and the OVOA Band is ${bandPrice(data)}.`;
