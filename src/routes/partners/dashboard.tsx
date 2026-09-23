@@ -27,7 +27,7 @@ export const Route = createFileRoute("/partners/dashboard")({
     }
   },
   head: () => ({
-    meta: [{ title: "Partner dashboard — OVOA" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [{ title: "Partner dashboard | OVOA" }, { name: "robots", content: "noindex, nofollow" }],
   }),
 });
 
