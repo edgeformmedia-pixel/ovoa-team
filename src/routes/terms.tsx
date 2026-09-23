@@ -58,7 +58,8 @@ function Terms() {
         <h2>Plans</h2>
         <ul>
           <li>
-            <strong>Free</strong>: health tracking and notes. No payment.
+            <strong>Free</strong>: health tracking, notes, and the apps that don&rsquo;t use AI. No
+            payment.
           </li>
           <li>
             <strong>Base</strong>: the OVOA assistant, with every AI feature,{" "}
@@ -129,7 +130,9 @@ function Terms() {
         </ul>
         <p>
           You own what you put into OVOA. You let us store and process it only to run OVOA for you,
-          as the privacy policy describes.
+          as the privacy policy describes. OVOA&rsquo;s replies are written by AI and can be wrong.
+          Nothing goes to an AI company until you agree to it in the app, and then only to the
+          companies the privacy policy names.
         </p>
       </section>
 

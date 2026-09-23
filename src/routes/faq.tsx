@@ -72,7 +72,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What happens to my data?",
-      a: "It's used to run OVOA for you and nothing else. We don't sell it or use it for ads. Spoken words are deleted after 14 days, and you can delete your account from the app. The privacy policy has the details.",
+      a: "It's used to run OVOA for you and nothing else. We don't sell it, use it for ads or train AI on it, and the app asks before anything goes to an AI company. After 14 days everything is deleted except a short summary of each day and what you entered or set up yourself, and you can delete your account from the app. The privacy policy has the details.",
     },
   ];
 }
