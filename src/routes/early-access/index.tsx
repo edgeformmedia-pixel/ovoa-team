@@ -258,14 +258,15 @@ function PlanCheckout({
           <ChevronLeft aria-hidden="true" className="size-4" />
           All plans
         </button>
-        <h3 className="mt-6 text-2xl font-semibold">OVOA {PLAN_NAMES[tier]}</h3>
+        <h3 className="mt-5 text-2xl font-semibold lg:mt-6">OVOA {PLAN_NAMES[tier]}</h3>
         <p className={`mt-1 text-sm ${muted}`}>{PLAN_BLURBS[tier]}</p>
-        <p className="mt-6 flex items-baseline gap-1.5">
+        <p className="mt-5 flex items-baseline gap-1.5 lg:mt-6">
           <span className="text-[2.75rem] font-semibold leading-none tracking-tight">{price}</span>
           <span className={`text-sm ${muted}`}>{per}</span>
         </p>
         <p className={`mt-3 text-sm ${muted}`}>{terms}</p>
-        <ul className="mt-6 space-y-2.5">
+        {/* On a phone the list was just on the plan card; keep the form close. */}
+        <ul className="mt-6 hidden space-y-2.5 lg:block">
           {PLAN_FEATURES.filter((f) => f[tier] !== false).map((f) => (
             <li key={f.label} className="flex items-start gap-2.5 text-[14px] leading-snug">
               <Cell value={f[tier]} dark />
@@ -276,7 +277,7 @@ function PlanCheckout({
             </li>
           ))}
         </ul>
-        <p className={`mt-7 flex items-center gap-1.5 text-[13px] ${muted}`}>
+        <p className={`mt-7 hidden items-center gap-1.5 text-[13px] lg:flex ${muted}`}>
           <LockKeyhole aria-hidden="true" className="size-3.5" /> Card or Apple Pay, secured by
           Stripe.
         </p>
