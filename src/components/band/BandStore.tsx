@@ -101,7 +101,7 @@ export function BandProvider({ children }: { children: React.ReactNode }) {
               status: "done",
               question: undefined,
               steps: [...t.steps, `You picked ${choice}`],
-              result: `Done — ${choice}.`,
+              result: `Done: ${choice}.`,
             }
           : t,
       ),
