@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChevronDown, LockKeyhole, Minus } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronDown, ChevronLeft, LockKeyhole, Minus } from "lucide-react";
+import { useRef, useState } from "react";
 import OvoaIphoneDemo from "@/components/OvoaIphoneDemo";
+import { EmbeddedCheckout } from "@/components/membership/EmbeddedCheckout";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TASKS_SCRIPT } from "@/lib/demo-scripts";
@@ -104,33 +105,39 @@ function Cell({ value, dark }: { value: FeatureCell; dark: boolean }) {
   );
 }
 
+// The price, its period and the line under it, for a plan card.
+function priceOf(data: PlansResult, column: PlanColumn, period: BillingPeriod) {
+  if (column === "free") return { price: "$0", per: "forever", terms: "No card. No time limit." };
+  const paid = planOf(data, column, period);
+  const savings = annualSavings(data.plans, column);
+  return {
+    price: formatMoney(paid.amountCents, paid.currency),
+    per: paid.interval === "year" ? "/year" : "/month",
+    terms:
+      period === "annual" && savings
+        ? `Works out to ${formatMoney(savings.perMonthCents, paid.currency)} a month. You save ${formatMoney(savings.saveCents, paid.currency)} a year over paying monthly.`
+        : `Billed every ${paid.interval} from today. Cancel anytime.`,
+  };
+}
+
 function PlanColumnCard({
   column,
   data,
   period,
   enabled,
+  onPick,
 }: {
   column: PlanColumn;
   data: PlansResult;
   period: BillingPeriod;
   enabled: boolean;
+  onPick: (tier: PaidTier) => void;
 }) {
   const dark = column === "base";
   const muted = dark ? "text-landing-action-foreground/65" : "text-landing-muted";
   const paid = column === "free" ? null : planOf(data, column, period);
-  const savings = column === "free" ? null : annualSavings(data.plans, column as PaidTier);
-
-  let price = "$0";
-  let per = "forever";
-  let terms = "No card. No time limit.";
-  if (paid) {
-    price = formatMoney(paid.amountCents, paid.currency);
-    per = paid.interval === "year" ? "/year" : "/month";
-    terms =
-      period === "annual" && savings
-        ? `Works out to ${formatMoney(savings.perMonthCents, paid.currency)} a month. You save ${formatMoney(savings.saveCents, paid.currency)} a year over paying monthly.`
-        : `Billed every ${paid.interval} from today. Cancel anytime.`;
-  }
+  const savings = column === "free" ? null : annualSavings(data.plans, column);
+  const { price, per, terms } = priceOf(data, column, period);
 
   return (
     <article
@@ -194,7 +201,16 @@ function PlanColumnCard({
             {data.betaUrl ? "Join the free beta" : "Get the free app"}
           </a>
         ) : (
-          <form method="post" action="/api/public/billing/checkout">
+          // Pays right on this page once it has loaded; before that, the form
+          // goes to Stripe's hosted checkout instead.
+          <form
+            method="post"
+            action="/api/public/billing/checkout"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onPick(column);
+            }}
+          >
             <input type="hidden" name="plan" value={paid!.id} />
             <button
               type="submit"
@@ -214,11 +230,79 @@ function PlanColumnCard({
   );
 }
 
+// The picked plan, paid right here with Stripe's embedded Checkout. The
+// Monthly/Yearly switch above still works: it makes a new checkout for the
+// other period. Paid, Stripe goes on to /early-access/welcome.
+function PlanCheckout({
+  tier,
+  data,
+  period,
+  onBack,
+}: {
+  tier: PaidTier;
+  data: PlansResult;
+  period: BillingPeriod;
+  onBack: () => void;
+}) {
+  const plan = planOf(data, tier, period);
+  const { price, per, terms } = priceOf(data, tier, period);
+  const muted = "text-landing-action-foreground/65";
+  return (
+    <div className="mt-10 grid items-start gap-3 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+      <aside className="rounded-[1.75rem] bg-landing-ink p-7 text-landing-action-foreground sm:p-8">
+        <button
+          type="button"
+          onClick={onBack}
+          className={`-ml-1 inline-flex items-center gap-1 text-sm font-medium ${muted} transition-colors hover:text-landing-action-foreground`}
+        >
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          All plans
+        </button>
+        <h3 className="mt-6 text-2xl font-semibold">OVOA {PLAN_NAMES[tier]}</h3>
+        <p className={`mt-1 text-sm ${muted}`}>{PLAN_BLURBS[tier]}</p>
+        <p className="mt-6 flex items-baseline gap-1.5">
+          <span className="text-[2.75rem] font-semibold leading-none tracking-tight">{price}</span>
+          <span className={`text-sm ${muted}`}>{per}</span>
+        </p>
+        <p className={`mt-3 text-sm ${muted}`}>{terms}</p>
+        <ul className="mt-6 space-y-2.5">
+          {PLAN_FEATURES.filter((f) => f[tier] !== false).map((f) => (
+            <li key={f.label} className="flex items-start gap-2.5 text-[14px] leading-snug">
+              <Cell value={f[tier]} dark />
+              <span>
+                {f.label}
+                {typeof f[tier] === "string" && <span className={muted}>: {f[tier]}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className={`mt-7 flex items-center gap-1.5 text-[13px] ${muted}`}>
+          <LockKeyhole aria-hidden="true" className="size-3.5" /> Card or Apple Pay, secured by
+          Stripe.
+        </p>
+      </aside>
+      <div className="min-h-[420px] rounded-[1.75rem] bg-landing-action-foreground p-3 sm:p-5">
+        <EmbeddedCheckout order={{ plan: plan.id }} />
+      </div>
+    </div>
+  );
+}
+
 function EarlyAccess() {
   const data = Route.useLoaderData();
   const { configured, plans, bandTrialDays } = data;
   const { error, canceled } = Route.useSearch();
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const [picked, setPicked] = useState<PaidTier | null>(null);
+  const plansRef = useRef<HTMLElement>(null);
+
+  // Opening or closing checkout reshapes the section: bring its top into view.
+  const pick = (tier: PaidTier | null) => {
+    setPicked(tier);
+    requestAnimationFrame(() =>
+      plansRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
   const baseMonthly = planOf(data, "base", "monthly");
   const bestSaving = Math.max(
     0,
@@ -335,6 +419,7 @@ function EarlyAccess() {
 
       <section
         id="plans"
+        ref={plansRef}
         className="scroll-mt-14 border-t border-landing-line px-5 py-20 sm:px-8 sm:py-28"
       >
         <div className="mx-auto max-w-[1200px]">
@@ -378,7 +463,7 @@ function EarlyAccess() {
             </div>
           </div>
 
-          {banner && (
+          {banner && !picked && (
             <p
               role="status"
               className="mt-8 rounded-2xl bg-landing-control px-5 py-4 text-sm font-medium"
@@ -387,40 +472,49 @@ function EarlyAccess() {
             </p>
           )}
 
-          <div className="mt-10 grid gap-3 lg:grid-cols-3">
-            {(["free", "base", "pro"] as const).map((column) => (
-              <PlanColumnCard
-                key={column}
-                column={column}
-                data={data}
-                period={period}
-                enabled={configured}
-              />
-            ))}
-          </div>
-
-          <div className="mt-3 flex flex-col gap-4 rounded-[1.75rem] border border-landing-line p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <div>
-              <h3 className="text-lg font-semibold">
-                Getting the OVOA Band? {bandTrialDays} days of Base come with it.
-              </h3>
-              <p className="mt-1 text-sm text-landing-muted">
-                The Band is {bandPrice(data)}, one time. You start the free days when you choose,
-                Base starts after them, and you can cancel before then.
-              </p>
+          {picked ? (
+            <PlanCheckout tier={picked} data={data} period={period} onBack={() => pick(null)} />
+          ) : (
+            <div className="mt-10 grid gap-3 lg:grid-cols-3">
+              {(["free", "base", "pro"] as const).map((column) => (
+                <PlanColumnCard
+                  key={column}
+                  column={column}
+                  data={data}
+                  period={period}
+                  enabled={configured}
+                  onPick={pick}
+                />
+              ))}
             </div>
-            <Link
-              to="/checkout"
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-landing-line px-6 text-sm font-semibold transition-colors hover:border-landing-muted"
-            >
-              See the Band
-            </Link>
-          </div>
+          )}
 
-          <p className="mt-6 flex items-center gap-1.5 text-sm text-landing-muted">
-            <LockKeyhole aria-hidden="true" className="size-3.5" /> Payments by Stripe. We never see
-            your card.
-          </p>
+          {!picked && (
+            <>
+              <div className="mt-3 flex flex-col gap-4 rounded-[1.75rem] border border-landing-line p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    Getting the OVOA Band? {bandTrialDays} days of Base come with it.
+                  </h3>
+                  <p className="mt-1 text-sm text-landing-muted">
+                    The Band is {bandPrice(data)}, one time. You start the free days when you
+                    choose, Base starts after them, and you can cancel before then.
+                  </p>
+                </div>
+                <Link
+                  to="/checkout"
+                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-landing-line px-6 text-sm font-semibold transition-colors hover:border-landing-muted"
+                >
+                  See the Band
+                </Link>
+              </div>
+
+              <p className="mt-6 flex items-center gap-1.5 text-sm text-landing-muted">
+                <LockKeyhole aria-hidden="true" className="size-3.5" /> Payments by Stripe. We never
+                see your card.
+              </p>
+            </>
+          )}
         </div>
       </section>
 

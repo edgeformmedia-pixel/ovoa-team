@@ -101,6 +101,21 @@ async function checkout(query) {
   return { sessionId, params };
 }
 
+// What /early-access and /checkout do: an embedded session, paid inside the page.
+async function embedded(order) {
+  const res = await fetch(`${SITE}/api/public/billing/create-checkout-session`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(order),
+  });
+  const json = await res.json();
+  const sessionId = /^(cs_test_\w+?)_secret_/.exec(json.clientSecret ?? "")?.[1];
+  if (!sessionId || json.publishableKey !== "pk_test_fake")
+    throw new Error(`embedded ${JSON.stringify(order)} → ${res.status} ${JSON.stringify(json)}`);
+  const params = await (await fetch(`${STRIPE}/__sessions/${sessionId}`)).json();
+  return { sessionId, params };
+}
+
 async function pay(sessionId, email, name = "Test Buyer") {
   const res = await fetch(`${STRIPE}/__complete/${sessionId}`, {
     method: "POST",
@@ -203,6 +218,7 @@ async function main() {
     [
       `npx wrangler dev -c wrangler.site.jsonc --local --port ${SITE_PORT} --persist-to "${persist}"`,
       `--var STRIPE_API_BASE:${STRIPE}/v1 --var STRIPE_SECRET_KEY:sk_test_fake`,
+      `--var STRIPE_PUBLISHABLE_KEY:pk_test_fake`,
       `--var STRIPE_WEBHOOK_SECRET:${WHSEC} --var MEMBERSHIP_API_KEY:${API_KEY} --var OVOA_ADMIN_KEY:${ADMIN_KEY}`,
       `--var RESEND_API_KEY:re_fake --var RESEND_API_BASE:${STRIPE}`,
       `--var ASC_API_BASE:${STRIPE}/asc/v1 --var ASC_KEY_ID:FAKEKEY1 --var ASC_ISSUER_ID:fake-issuer`,
@@ -444,6 +460,50 @@ async function main() {
     results.baseSub = s.subscription.id ?? s.subscription;
     const tf = await beta("base@buyer.test");
     check("base monthly: invited to the beta", tf.inGroup && tf.emails === 1, tf);
+  }
+
+  // ---- 3b. Base yearly, paid inside /early-access (embedded) ----
+  {
+    const { sessionId, params } = await embedded({ plan: "base_annual" });
+    check(
+      "embedded plan: subscription that returns to the welcome page",
+      params.ui_mode === "embedded" &&
+        params.mode === "subscription" &&
+        !params.success_url &&
+        !params.cancel_url &&
+        String(params.return_url).endsWith(
+          "/early-access/welcome?session_id={CHECKOUT_SESSION_ID}",
+        ) &&
+        !params.shipping_address_collection,
+      params,
+    );
+    await pay(sessionId, "embedded@buyer.test");
+    const member = await membership("embedded@buyer.test");
+    check(
+      "embedded plan: membership",
+      member.tier === "base" && member.status === "active" && member.source === "stripe",
+      member,
+    );
+    const bad = await fetch(`${SITE}/api/public/billing/create-checkout-session`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ plan: "gold_monthly" }),
+    });
+    check("embedded plan: an unknown plan is refused", bad.status === 400);
+
+    // The Band's embedded checkout asks for what the hosted one does.
+    const band = (await embedded({ ai: true })).params;
+    check(
+      "embedded band: ships, saves the card, returns to /order-complete",
+      band.ui_mode === "embedded" &&
+        band.mode === "payment" &&
+        band.metadata?.band === "1" &&
+        band.metadata?.plan === "base_monthly" &&
+        band.shipping_address_collection?.allowed_countries?.[0] === "US" &&
+        band.payment_intent_data?.setup_future_usage === "off_session" &&
+        String(band.return_url).includes("/order-complete?session_id="),
+      band,
+    );
   }
 
   // ---- 4. Pro annual (with a partner) ----

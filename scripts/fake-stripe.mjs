@@ -15,6 +15,7 @@
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
 //   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
 //                                            click-throughs; it returns to success_url
+//                                            (return_url for an embedded session)
 //
 // It also stands in for Resend's POST /emails (point RESEND_API_BASE at the
 // server's root); GET /__emails lists what the site sent.
@@ -316,7 +317,10 @@ async function handle(req, res) {
               name: q.name || "Test Buyer",
               phone: "+15125550100",
             });
-      const to = String(s._params.success_url ?? "").replace("{CHECKOUT_SESSION_ID}", done.id);
+      const to = String(s._params.success_url ?? s._params.return_url ?? "").replace(
+        "{CHECKOUT_SESSION_ID}",
+        done.id,
+      );
       res.writeHead(303, { location: to });
       return res.end();
     }
@@ -440,7 +444,13 @@ async function handle(req, res) {
       _items: items,
       _params: q,
     };
-    s.url = `http://127.0.0.1:${PORT}/pay/${s.id}`;
+    // Embedded Checkout pays inside the site's page, with the client secret;
+    // the hosted one has a page of its own.
+    if (q.ui_mode === "embedded") {
+      s.ui_mode = "embedded";
+      s.url = null;
+      s.client_secret = `${s.id}_secret_${randomBytes(12).toString("hex")}`;
+    } else s.url = `http://127.0.0.1:${PORT}/pay/${s.id}`;
     db.sessions.set(s.id, s);
     return send(sessionView(s));
   }
