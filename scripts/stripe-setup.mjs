@@ -9,13 +9,18 @@
 //   - customer portal settings (so members can cancel and change cards)
 // and puts the secrets on the site's Worker (printing them too, to keep).
 //
-//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_... --site https://ovoa.ai
+//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_... --publishable pk_live_... --site https://ovoa.ai
 //
 // Options: --base-monthly 9.95 --base-annual 95.99 --pro-monthly 25.95
 //          --pro-annual 195.99 --band 89.99  (USD; these are the defaults)
+//          --publishable pk_...  the publishable key, for the Band's checkout on /checkout
 //          --new-webhook   replace the webhook and print a fresh secret
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
 //          --no-upload     only print the secrets; don't put them on the Worker
+//          --config wrangler.test.jsonc   which Worker gets them (default: wrangler.site.jsonc, ovoa.ai)
+//
+// With STRIPE_API_BASE set (the fake Stripe in the smoke tests) it never
+// uploads, so a test run can't put a fake key on the live site.
 //
 // Safe to run again: it reuses what exists and only creates what's missing.
 // A changed price creates a new Stripe price and moves the lookup key to it
@@ -134,6 +139,13 @@ async function main() {
       "The site address must start with https:// (Stripe won't send webhooks to http).",
     );
   const live = SECRET.includes("_live_");
+  const publishable = String(opts.publishable ?? "").trim();
+  if (publishable && !/^pk_(test|live)_/.test(publishable))
+    throw new Error(
+      "That doesn't look like a Stripe publishable key (pk_test_... or pk_live_...).",
+    );
+  if (publishable && publishable.includes("_live_") !== live)
+    throw new Error("The secret and publishable keys must both be test keys or both be live keys.");
 
   const account = await stripe("GET", "/account");
   say(
@@ -283,6 +295,7 @@ async function main() {
   const appKey = randomBytes(24).toString("hex");
   say("\n──────── Keep these (stripe/.env and your password manager) ────────\n");
   say(`STRIPE_SECRET_KEY=${SECRET}`);
+  if (publishable) say(`STRIPE_PUBLISHABLE_KEY=${publishable}`);
   say(
     webhookSecret
       ? `STRIPE_WEBHOOK_SECRET=${webhookSecret}`
@@ -295,17 +308,21 @@ async function main() {
   }
 
   // ---- The site's Worker ----
-  if (!opts["no-upload"]) {
+  const config = String(opts.config ?? "wrangler.site.jsonc");
+  if (process.env.STRIPE_API_BASE && !opts["no-upload"])
+    say("\nNot uploading: STRIPE_API_BASE points at a fake Stripe.");
+  else if (!opts["no-upload"]) {
     const secrets = {
       STRIPE_SECRET_KEY: SECRET,
+      ...(publishable ? { STRIPE_PUBLISHABLE_KEY: publishable } : {}),
       ...(webhookSecret ? { STRIPE_WEBHOOK_SECRET: webhookSecret } : {}),
       ...(opts["no-keys"] ? {} : { OVOA_ADMIN_KEY: adminKey, MEMBERSHIP_API_KEY: appKey }),
     };
     const file = join(tmpdir(), `ovoa-secrets-${randomBytes(6).toString("hex")}.json`);
     writeFileSync(file, JSON.stringify(secrets));
     try {
-      say(`\nUploading ${Object.keys(secrets).join(", ")} to the site's Worker…`);
-      const res = spawnSync(`npx wrangler secret bulk "${file}" -c wrangler.site.jsonc`, {
+      say(`\nUploading ${Object.keys(secrets).join(", ")} to the Worker in ${config}…`);
+      const res = spawnSync(`npx wrangler secret bulk "${file}" -c ${config}`, {
         shell: true,
         stdio: "inherit",
         cwd: new URL("..", import.meta.url),

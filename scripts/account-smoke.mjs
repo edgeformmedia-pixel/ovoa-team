@@ -167,7 +167,9 @@ async function main() {
     `node scripts/fake-stripe.mjs --port ${STRIPE_PORT} --deliver ${SITE}`,
     "fake-stripe]",
   );
-  sh(`node scripts/stripe-setup.mjs --key sk_test_fake --site https://fake.local.test --no-keys`);
+  sh(
+    `node scripts/stripe-setup.mjs --key sk_test_fake --site https://fake.local.test --no-keys --no-upload`,
+  );
 
   sh(`npx wrangler d1 migrations apply jarvis-db --local --persist-to "${apiPersist}"`, API_DIR);
   await start(

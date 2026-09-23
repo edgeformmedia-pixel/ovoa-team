@@ -158,7 +158,7 @@ async function main() {
   // ---- stripe-setup.mjs: first run, re-run, price change ----
   const setup = (extra = "") =>
     sh(
-      `node scripts/stripe-setup.mjs --key sk_test_fake --site https://fake.local.test --no-keys ${extra}`,
+      `node scripts/stripe-setup.mjs --key sk_test_fake --site https://fake.local.test --no-keys --no-upload ${extra}`,
     );
   const first = setup();
   check(

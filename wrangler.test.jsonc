@@ -1,0 +1,36 @@
+// The test copy of ovoa.ai: the same site on Stripe TEST keys, so checkout
+// takes the 4242 4242 4242 4242 card and nothing is charged. It has its own
+// database, so test members and Band orders never mix with real ones.
+//
+//   https://ovoa-site-test.ovoa.workers.dev   (no custom domain; ovoa.ai stays live)
+//
+// Run with the admin@ovoa.ai wrangler profile, from Git Bash:
+//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy:test
+//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate:test   (when migrations/ changed)
+// Stripe test keys go on it with scripts/stripe-setup.mjs --config wrangler.test.jsonc
+// (setup.md, "The test site").
+{
+  "name": "ovoa-site-test",
+  "account_id": "e58b0ec5305410f9d3cd70f461f39cb6",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-04-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
+  "assets": { "binding": "ASSETS", "directory": ".output/public" },
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "SITE_DB",
+      "database_name": "ovoa-site-test-db",
+      "database_id": "7e6f600a-62d0-4b9c-91bb-c352abad849d",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Same Google client as ovoa.ai. Its secret isn't set here, so
+    // "Continue with Google" is off on the test site; the emailed code works.
+    "GOOGLE_CLIENT_ID": "681579233268-eegju2n5qcpg6ja35np11vpl9fic51pf.apps.googleusercontent.com"
+  },
+  "observability": { "enabled": true }
+}

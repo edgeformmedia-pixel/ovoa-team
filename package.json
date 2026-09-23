@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "deploy": "vite build && wrangler deploy -c wrangler.site.jsonc",
+    "deploy:test": "vite build && wrangler deploy -c wrangler.test.jsonc",
     "db:migrate": "wrangler d1 migrations apply ovoa-site-db --remote -c wrangler.site.jsonc",
+    "db:migrate:test": "wrangler d1 migrations apply ovoa-site-test-db --remote -c wrangler.test.jsonc",
     "dev:worker": "vite build && wrangler dev -c wrangler.site.jsonc --local",
     "test:billing": "vite build && node scripts/billing-smoke.mjs",
     "test:account": "vite build && node scripts/account-smoke.mjs"
