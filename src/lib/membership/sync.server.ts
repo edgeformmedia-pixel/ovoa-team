@@ -1,5 +1,5 @@
-// Keeps the members table in step with Stripe, and TestFlight access in step
-// with members. Everything here is idempotent: the webhook and the welcome page
+// Keeps the members table in step with Stripe, and sends members their
+// TestFlight invite. Everything here is idempotent: the webhook and the welcome page
 // can both run it for the same purchase, in either order, as often as they
 // like. Subscription state is always re-read from Stripe rather than trusted
 // from an event payload, so events arriving out of order can't roll it back.
@@ -37,7 +37,7 @@ import {
   type Member,
   type MemberPatch,
 } from "./store.server";
-import { inviteTester, removeTester, testflightInvitesConfigured } from "./testflight.server";
+import { inviteTester, testflightInvitesConfigured } from "./testflight.server";
 
 export type { BandOrder, Member };
 
@@ -600,49 +600,24 @@ export async function emailBandShipped(order: BandOrder) {
 
 // ---------- TestFlight ----------
 
-async function otherEntitledRow(member: Member): Promise<boolean> {
-  const rows = await store().membersByEmail(member.email.toLowerCase());
-  return rows.some((row) => row.id !== member.id && isEntitled(row.status));
-}
-
-// A plan that came with a Band (Band only's free days, or Band + Base) whose
-// Band wasn't refunded: the Band works with the free app, so its owner stays
-// in the beta when the plan ends. Keyed on the order, not the subscription's
-// band metadata, which stays set after a refund.
-async function ownsBand(member: Member): Promise<boolean> {
-  if (!member.checkout_session_id) return false;
-  const order = await store().bandOrderByCheckout(member.checkout_session_id);
-  return order !== null && order.status !== "refunded";
-}
-
+// Invites a member once they're entitled (again with `force`, the admin page's
+// Retry). The app is free, so a plan ending leaves them in the beta: the app
+// drops them to the free plan itself.
 export async function syncTestflight(member: Member, { force = false } = {}): Promise<Member> {
   if (!testflightInvitesConfigured()) {
     if (member.testflight_state === "pending")
       return patchTestflight(member, { testflight_state: "off" });
     return member;
   }
-
-  const entitled = isEntitled(member.status);
-  const invited = member.testflight_state === "invited";
+  if (!isEntitled(member.status) || (member.testflight_state === "invited" && !force))
+    return member;
   try {
-    if (entitled && (!invited || force)) {
-      const testerId = await inviteTester(member.email, member.name);
-      return patchTestflight(member, {
-        testflight_state: "invited",
-        testflight_tester_id: testerId,
-        testflight_error: null,
-      });
-    }
-    if (!entitled && invited) {
-      // A Band owner keeps the free app: left 'invited', which the welcome
-      // page shows as joined and the admin page can still retry.
-      if (await ownsBand(member)) return member;
-      // Someone with another live membership on the same email keeps their access.
-      if (await otherEntitledRow(member))
-        return patchTestflight(member, { testflight_state: "removed" });
-      await removeTester(member.testflight_tester_id, member.email);
-      return patchTestflight(member, { testflight_state: "removed", testflight_error: null });
-    }
+    const { testerId } = await inviteTester(member.email, member.name, { resend: force });
+    return patchTestflight(member, {
+      testflight_state: "invited",
+      testflight_tester_id: testerId,
+      testflight_error: null,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[membership] TestFlight", member.email, message);
@@ -651,7 +626,6 @@ export async function syncTestflight(member: Member, { force = false } = {}): Pr
       testflight_error: message.slice(0, 500),
     });
   }
-  return member;
 }
 
 function patchTestflight(member: Member, patch: MemberPatch): Promise<Member> {
@@ -781,20 +755,16 @@ export async function handleChargeRefunded(charge: StripeCharge) {
   // A fully refunded Band: don't ship it (or expect it back). Any AI
   // subscription bought with it carries on until it's cancelled in Stripe;
   // Band only's free days, if started, still end on their own. Free days not
-  // started yet can't be started any more (syncCheckout). A plan from the
-  // order that has already ended kept its owner in the beta for the Band's
-  // sake (syncTestflight); without the Band, that access ends too.
+  // started yet can't be started any more (syncCheckout).
   for (const order of await store().bandOrdersByPayment(paymentIntentId, invoiceId)) {
     if (order.status !== "refunded") await store().setBandOrderStatus(order.id, "refunded");
-    const member = await store().findMember("checkout_session_id", order.checkout_session_id);
-    if (member && !isEntitled(member.status)) await syncTestflight(member);
   }
 
   // A fully refunded old lifetime purchase ends that membership. (Subscriptions
   // end through customer.subscription.deleted when you cancel them.)
   if (paymentIntentId) {
     for (const row of await store().lifetimeByPaymentIntent(paymentIntentId)) {
-      await syncTestflight(await store().updateMember(row.id, { status: "refunded" }));
+      await store().updateMember(row.id, { status: "refunded" });
     }
   }
 }

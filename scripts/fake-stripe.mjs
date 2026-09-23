@@ -22,6 +22,7 @@
 //   GET  /__sessions/<checkout session id>   what the site asked Checkout for
 //   GET  /pay/<checkout session id>          a bare "Pay (fake)" page for browser
 //                                            click-throughs; it returns to success_url
+//                                            (return_url for an embedded session)
 //
 // Like real Stripe, a subscription's default_payment_method must be attached
 // to its customer, and the card a checkout took is attached only when the
@@ -30,6 +31,12 @@
 //
 // It also stands in for Resend's POST /emails (point RESEND_API_BASE at the
 // server's root); GET /__emails lists what the site sent.
+//
+// And for the App Store Connect calls TestFlight invites make (point
+// ASC_API_BASE at <server>/asc/v1): one app, the external group "grp_members",
+// testers kept by email. GET /__asc lists testers and the invite emails Apple
+// would have sent; POST /__asc/tester {"email","groups":[...]} adds one as if
+// they'd been invited before.
 
 import { createHmac, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -58,6 +65,10 @@ const db = {
   // Idempotency-Key → the first answer, as real Stripe keeps them.
   idempotent: new Map(),
   emails: [],
+  // App Store Connect: email → { id, email, firstName, lastName, groups: Set }
+  testers: new Map(),
+  // The invite emails Apple would have sent: { email, why }
+  ascEmails: [],
 };
 const id = (prefix) => `${prefix}_${randomBytes(12).toString("hex")}`;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -260,6 +271,8 @@ async function handle(req, res) {
     res.writeHead(status, { "content-type": "application/json" });
     res.end(JSON.stringify(obj));
   };
+  if (url.pathname.startsWith("/asc/") || url.pathname.startsWith("/__asc"))
+    return handleAsc(req, res, url, body, send);
   const path = url.pathname.replace(/^\/v1/, "");
   const q = req.method === "GET" ? parseForm(url.search.slice(1)) : parseForm(body);
   const m = (re) => re.exec(path);
@@ -354,7 +367,10 @@ async function handle(req, res) {
               name: q.name || "Test Buyer",
               phone: "+15125550100",
             });
-      const to = String(s._params.success_url ?? "").replace("{CHECKOUT_SESSION_ID}", done.id);
+      const to = String(s._params.success_url ?? s._params.return_url ?? "").replace(
+        "{CHECKOUT_SESSION_ID}",
+        done.id,
+      );
       res.writeHead(303, { location: to });
       return res.end();
     }
@@ -478,7 +494,13 @@ async function handle(req, res) {
       _items: items,
       _params: q,
     };
-    s.url = `http://127.0.0.1:${PORT}/pay/${s.id}`;
+    // Embedded Checkout pays inside the site's page, with the client secret;
+    // the hosted one has a page of its own.
+    if (q.ui_mode === "embedded") {
+      s.ui_mode = "embedded";
+      s.url = null;
+      s.client_secret = `${s.id}_secret_${randomBytes(12).toString("hex")}`;
+    } else s.url = `http://127.0.0.1:${PORT}/pay/${s.id}`;
     db.sessions.set(s.id, s);
     return send(sessionView(s));
   }
@@ -587,6 +609,87 @@ async function handle(req, res) {
     return inv ? send(inv) : err(res, 404, "No such invoice");
   }
   return err(res, 404, `fake-stripe has no ${req.method} ${path}`);
+}
+
+// ---- App Store Connect ----
+
+const ASC_GROUP = "grp_members";
+const ASC_APP = "app_ovoa";
+
+function ascError(send, status, detail) {
+  return send({ errors: [{ status: String(status), title: "Error", detail }] }, status);
+}
+
+async function handleAsc(req, res, url, body, send) {
+  const path = url.pathname.replace(/^\/asc\/v1/, "");
+  const json = body ? JSON.parse(body) : {};
+  const view = (t) => ({ type: "betaTesters", id: t.id, attributes: { email: t.email } });
+
+  if (url.pathname === "/__asc")
+    return send({
+      testers: [...db.testers.values()].map((t) => ({ ...t, groups: [...t.groups] })),
+      emails: db.ascEmails,
+    });
+  if (url.pathname === "/__asc/tester" && req.method === "POST") {
+    const t = {
+      id: id("tst"),
+      email: json.email,
+      firstName: "Old",
+      lastName: "Tester",
+      groups: new Set(json.groups ?? []),
+    };
+    db.testers.set(t.email, t);
+    return send(view(t));
+  }
+
+  // Every real call carries a signed ES256 token.
+  const auth = req.headers.authorization ?? "";
+  const [head, payload, sig] = auth.replace(/^Bearer /, "").split(".");
+  const claims = payload ? JSON.parse(Buffer.from(payload, "base64url").toString()) : {};
+  if (!sig || JSON.parse(Buffer.from(head, "base64url").toString()).alg !== "ES256")
+    return ascError(send, 401, "Bad token");
+  if (claims.aud !== "appstoreconnect-v1") return ascError(send, 401, "Bad audience");
+
+  if (path === "/betaTesters" && req.method === "GET") {
+    const email = url.searchParams.get("filter[email]");
+    const group = url.searchParams.get("filter[betaGroups]");
+    const t = db.testers.get(email);
+    const hit = t && (!group || t.groups.has(group));
+    return send({ data: hit ? [view(t)] : [] });
+  }
+  if (path === "/betaTesters" && req.method === "POST") {
+    const { attributes, relationships } = json.data;
+    if (db.testers.has(attributes.email))
+      return ascError(send, 409, "A tester with this email already exists.");
+    const groups = relationships.betaGroups.data.map((g) => g.id);
+    if (groups.some((g) => g !== ASC_GROUP)) return ascError(send, 404, "No such beta group.");
+    const t = { id: id("tst"), ...attributes, groups: new Set(groups) };
+    db.testers.set(t.email, t);
+    db.ascEmails.push({ email: t.email, why: "created" });
+    return send({ data: view(t) }, 201);
+  }
+  let hit;
+  if (
+    (hit = /^\/betaGroups\/(\w+)\/relationships\/betaTesters$/.exec(path)) &&
+    req.method === "POST"
+  ) {
+    for (const { id: tid } of json.data) {
+      const t = [...db.testers.values()].find((x) => x.id === tid);
+      t?.groups.add(hit[1]);
+    }
+    res.writeHead(204);
+    return res.end();
+  }
+  if ((hit = /^\/betaGroups\/(\w+)\/app$/.exec(path)))
+    return send({ data: { type: "apps", id: ASC_APP } });
+  if (path === "/betaTesterInvitations" && req.method === "POST") {
+    const tid = json.data.relationships.betaTester.data.id;
+    const t = [...db.testers.values()].find((x) => x.id === tid);
+    if (!t) return ascError(send, 404, "No such tester.");
+    db.ascEmails.push({ email: t.email, why: "resent" });
+    return send({ data: { type: "betaTesterInvitations", id: id("inv") } }, 201);
+  }
+  return ascError(send, 404, `fake App Store Connect has no ${req.method} ${path}`);
 }
 
 createServer((req, res) =>

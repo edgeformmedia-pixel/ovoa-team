@@ -11,6 +11,7 @@ import {
   listTestflightGroups,
   logAffiliateViews,
   markAffiliatePaid,
+  retryAppInvite,
   retryTestflight,
   setAffiliateCpm,
   setAffiliateStatus,
@@ -114,6 +115,7 @@ function Admin() {
   const setCpm = useServerFn(setAffiliateCpm);
   const logViews = useServerFn(logAffiliateViews);
   const retry = useServerFn(retryTestflight);
+  const retryInvite = useServerFn(retryAppInvite);
   const findGroups = useServerFn(listTestflightGroups);
   const giveAccess = useServerFn(grantAccess);
   const endAccess = useServerFn(endCompAccess);
@@ -196,7 +198,7 @@ function Admin() {
     );
   }
 
-  const { config, stats, members, affiliates, bandOrders } = data;
+  const { config, stats, members, affiliates, bandOrders, appInvites } = data;
   const pending = affiliates.filter((a) => a.status === "pending");
   const approved = affiliates.filter((a) => a.status === "approved");
   const origin = typeof window === "undefined" ? "https://ovoa.ai" : window.location.origin;
@@ -276,8 +278,8 @@ function Admin() {
             />
             <ConfigRow
               ok={config.invites}
-              label="Automatic TestFlight invites (optional)"
-              hint="Add the four ASC_* / TESTFLIGHT_GROUP_ID secrets"
+              label="Automatic TestFlight invites"
+              hint="Add the four ASC_* / TESTFLIGHT_GROUP_ID secrets (setup.md, Part B)"
             />
             <ConfigRow
               ok={config.membershipApi}
@@ -544,10 +546,12 @@ function Admin() {
             </div>
           )}
           <p className="mt-2 text-xs text-landing-muted">
-            Band-only buyers get the free app. Without a TestFlight public link set, email them an
-            invite. With Base, the free days start when the buyer taps Start on their order page
-            (the order email and the shipped email link to it). Without emails set up, send them the
-            start link, only to their own address.
+            Every Band buyer gets the free app, and Apple emails them the TestFlight invite (with
+            automatic invites set up; otherwise their order page shows the public link). The free
+            days start when the buyer taps Start on their order page (the order email and the
+            shipped email link to it): with Base on the card saved at checkout, Band only with no
+            card, so they end on their own. Without emails set up, send them the start link, only to
+            their own address.
           </p>
         </Section>
 
@@ -851,6 +855,88 @@ function Admin() {
                         )}
                       </td>
                       <td className="px-4 py-2.5">{date(m.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+
+        <Section title={`Free app invites${appInvites ? ` (${appInvites.length})` : ""}`}>
+          {!config.invites ? (
+            <p className="text-sm text-landing-muted">
+              Off. With the four ASC_* / TESTFLIGHT_GROUP_ID secrets set, everyone who signs in on
+              /account or buys a Band gets Apple&rsquo;s TestFlight email by themselves.
+            </p>
+          ) : appInvites === null ? (
+            <p className="text-sm text-landing-muted">
+              Invites go out, but aren&rsquo;t listed here without the app_invites table (npm run
+              db:migrate).
+            </p>
+          ) : appInvites.length === 0 ? (
+            <p className="text-sm text-landing-muted">No one yet.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-landing-line">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-landing-control/60 text-landing-muted">
+                  <tr>
+                    <th className="px-4 py-2.5 font-medium">Email</th>
+                    <th className="px-4 py-2.5 font-medium">From</th>
+                    <th className="px-4 py-2.5 font-medium">TestFlight</th>
+                    <th className="px-4 py-2.5 font-medium">Emails sent</th>
+                    <th className="px-4 py-2.5 font-medium">First asked</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-landing-line">
+                  {appInvites.map((i) => (
+                    <tr key={i.email} className="align-top">
+                      <td className="px-4 py-2.5">
+                        <span className="font-medium">{i.email}</span>
+                        {i.name && (
+                          <span className="block text-xs text-landing-muted">{i.name}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {i.source === "band" ? "Band order" : "Account"}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={i.state === "failed" ? "font-semibold" : ""}>
+                          {i.state}
+                        </span>
+                        {i.error && (
+                          <span className="block max-w-[260px] text-xs text-landing-muted">
+                            {i.error}
+                          </span>
+                        )}
+                        {i.state === "failed" && (
+                          <button
+                            type="button"
+                            className={`${smallButton} mt-1.5`}
+                            disabled={busy === i.email}
+                            onClick={() =>
+                              void act(i.email, () =>
+                                retryInvite({ data: { key, email: i.email } }),
+                              )
+                            }
+                          >
+                            {busy === i.email ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              "Retry invite"
+                            )}
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {i.sends}
+                        {i.lastSentAt && (
+                          <span className="block text-xs text-landing-muted">
+                            last {date(i.lastSentAt)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">{date(i.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

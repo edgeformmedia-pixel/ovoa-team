@@ -44,12 +44,67 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// One address per page, so search engines index https://ovoa.ai and nothing
+// else. www and plain http move there for good (301), as do a trailing slash
+// or capitals in a page's path, and the addresses people (and AI assistants)
+// guess for the plans, the Band and help. ovoa-site.ovoa.workers.dev keeps
+// working (Google sign-in and testing use it) but asks not to be indexed.
+const SITE_HOST = "ovoa.ai";
+
+const PATH_ALIASES: Record<string, string> = {
+  "/pricing": "/early-access",
+  "/plans": "/early-access",
+  "/band": "/checkout",
+  "/buy": "/checkout",
+  "/shop": "/checkout",
+  "/help": "/faq",
+  "/support": "/faq",
+  "/privacy-policy": "/privacy",
+  "/terms-of-service": "/terms",
+  "/login": "/account",
+  "/signin": "/account",
+  "/sign-in": "/account",
+  "/signup": "/account",
+  "/sign-up": "/account",
+  "/affiliates": "/partners",
+};
+
+function canonicalRedirect(request: Request): Response | null {
+  if (request.method !== "GET" && request.method !== "HEAD") return null;
+  const url = new URL(request.url);
+  const target = new URL(url);
+  if (target.hostname === `www.${SITE_HOST}`) {
+    target.hostname = SITE_HOST;
+    target.protocol = "https:";
+  }
+  // Cloudflare says how the visitor connected. The URL can't: wrangler dev
+  // hands the Worker http://ovoa.ai/… for every local request.
+  if (target.hostname === SITE_HOST && request.headers.get("x-forwarded-proto") === "http") {
+    target.protocol = "https:";
+  }
+  // Pages only: not the API, server functions (/_serverFn/…) or files.
+  if (!/^\/(api\/|_)/.test(url.pathname) && !url.pathname.includes(".")) {
+    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+    target.pathname = PATH_ALIASES[path] ?? path;
+  }
+  return target.href === url.href ? null : Response.redirect(target.href, 301);
+}
+
+function noindexWorkersDev(request: Request, response: Response): Response {
+  if (!new URL(request.url).hostname.endsWith(".workers.dev")) return response;
+  const copy = new Response(response.body, response);
+  copy.headers.set("X-Robots-Tag", "noindex");
+  return copy;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const redirect = canonicalRedirect(request);
+      if (redirect) return redirect;
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return noindexWorkersDev(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

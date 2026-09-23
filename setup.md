@@ -51,7 +51,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views |
+| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B) |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -101,10 +101,10 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do these in order. Everything stays in Stripe **test mode**. If you're starting fresh, skip this and follow Part A; it has the same steps.
 
-1. **New Stripe prices for ovoa.ai.** From the `ovoa-team` folder in Git Bash, with your `sk_test_` key:
+1. **New Stripe prices for ovoa.ai.** From the `ovoa-team` folder in Git Bash, with your `sk_test_` and `pk_test_` keys:
 
    ```bash
-   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai --no-keys
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --publishable pk_test_XXXX --site https://ovoa.ai --no-keys
    ```
 
    It makes the Base AI, Pro AI and OVOA Band products and their five prices, puts the Stripe secrets on the site, and leaves your admin and membership keys alone (`--no-keys`). To change a price, add `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` or `--band` with the amount (the old `--monthly`, `--annual` and `--lifetime` are gone).
@@ -113,7 +113,7 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 4. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 5.
 5. **The app's plan check** (Part C) stays off for v1. When you switch plans on, it's the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
 
-The database tables are already there (all four migrations, as of Sept 23).
+The database tables are already there (migrations `0001` to `0004`, as of Sept 23). `0005` (the free app's TestFlight invites) is new: apply it with `npm run db:migrate` before deploying.
 
 ---
 
@@ -133,7 +133,19 @@ Every command below runs from the `ovoa-team` folder in Git Bash, with the admin
 
 A secret takes effect as soon as it's set; there's nothing to publish. If that login ever expires: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler login`, and pick **Admin@ovoa.ai's Account**.
 
-Test Stripe end to end with **test** keys (`sk_test_`) on the live site before Step 9. On your PC, `npm run test:billing` and `npm run test:account` run the same flows against a fake Stripe.
+ovoa.ai runs on the **live** Stripe keys. To try checkout with the `4242 4242 4242 4242` test card, use the test site below, never test keys on ovoa.ai. On your PC, `npm run test:billing` and `npm run test:account` run the same flows against a fake Stripe.
+
+## The test site (Stripe test mode)
+
+https://ovoa-site-test.ovoa.workers.dev is the same site as a second Worker, `ovoa-site-test` (`wrangler.test.jsonc`), on Stripe **test** keys and its own database, `ovoa-site-test-db`. Pay there with `4242 4242 4242 4242`, any future date, any CVC and any ZIP. Nothing is charged, and test members and Band orders never show up on ovoa.ai. Its admin key is in `stripe/test.env`, and its admin page is https://ovoa-site-test.ovoa.workers.dev/early-access/admin.
+
+| You want to… | Run |
+| --- | --- |
+| Put Stripe test keys on it (once) | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --publishable pk_test_XXXX --site https://ovoa-site-test.ovoa.workers.dev --config wrangler.test.jsonc --no-keys --new-webhook` |
+| Ship code changes to it | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy:test` |
+| Apply a new file in `migrations/` | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate:test` |
+
+The test keys are in Stripe → **Developers → API keys** with **Test mode** (or a sandbox) switched on: the publishable key starts with `pk_test_`, the secret key with `sk_test_`. "Continue with Google" is off on the test site; sign in with the emailed code.
 
 ---
 
@@ -159,17 +171,17 @@ In the Stripe dashboard (test mode is fine; these settings are shared):
 
 ### Step 3. Run the setup script (test mode)
 
-1. In Stripe, open **Developers → API keys** and click **Reveal test key** next to *Secret key*. Copy it (starts with `sk_test_`).
+1. In Stripe, open **Developers → API keys** and copy two keys: the *Publishable key* (starts with `pk_test_`) and, after **Reveal test key**, the *Secret key* (starts with `sk_test_`).
 2. Open Git Bash and go to the site repo:
 
 ```bash
 cd /c/Users/thoma/OneDrive/Documents/GitHub/ovoa-team
 ```
 
-3. Run this, pasting your key in place of `sk_test_XXXX`:
+3. Run this, pasting your keys in place of `sk_test_XXXX` and `pk_test_XXXX`:
 
 ```bash
-XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --publishable pk_test_XXXX --site https://ovoa.ai
 ```
 
 It creates three products (Base AI, Pro AI, OVOA Band) and five prices: `ovoa_base_monthly` $9.95, `ovoa_base_annual` $95.99, `ovoa_pro_monthly` $25.95, `ovoa_pro_annual` $195.99 and `ovoa_band` $89.99. To use different prices, add them to the end, for example `--base-monthly 10.95 --pro-annual 199`. The options are `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` and `--band`. You can change prices any time later by running it again; existing members keep the price they signed up at.
@@ -178,6 +190,7 @@ It creates three products (Base AI, Pro AI, OVOA Band) and five prices: `ovoa_ba
 
 ```
 STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 OVOA_ADMIN_KEY=4f1c...
 MEMBERSHIP_API_KEY=9ab2...
@@ -197,11 +210,11 @@ To set one by hand instead, see [Where the site runs](#where-the-site-runs).
 
 ### Step 5. The database tables
 
-They're already there: `migrations/` holds four files, and all four are applied as of Sept 23. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
+`migrations/` holds five files. The first four are applied as of Sept 23; the fifth (`0005`, the free app's TestFlight invites, Part B) needs `npm run db:migrate`. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and Band buyers. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
 
 ### Step 6. Check the site
 
-Open https://ovoa.ai/early-access. The plan buttons should say "Get Base" and "Get Pro", and https://ovoa.ai/checkout should say "Continue to payment". If they say "Opening soon", Stripe isn't connected: check the `STRIPE_SECRET_KEY` secret (Step 4).
+Open https://ovoa.ai/early-access. The plan buttons should say "Get Base" and "Get Pro", and https://ovoa.ai/checkout should say "Continue to payment". If they say "Opening soon", Stripe isn't connected: check the `STRIPE_SECRET_KEY` secret (Step 4), and for /checkout `STRIPE_PUBLISHABLE_KEY` too.
 
 ### Step 7. Open TestFlight to people outside your team
 
@@ -261,14 +274,14 @@ Bookmark the admin page. It's your control room.
 
 1. Finish Stripe's account activation (**Settings → Business → Account details**) until the dashboard stops asking for anything.
 2. Flip the dashboard to **Live mode** (top right toggle), then do Step 2's settings again if Stripe shows them as separate for live mode.
-3. **Developers → API keys**, copy the **live** secret key (starts with `sk_live_`).
+3. **Developers → API keys**, copy the **live** secret key (starts with `sk_live_`) and publishable key (starts with `pk_live_`).
 4. Run the script again with the live key:
 
 ```bash
-XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_XXXX --publishable pk_live_XXXX --site https://ovoa.ai --no-keys --new-webhook
 ```
 
-(`--no-keys` stops it making new admin/app keys; keep the ones you already set.) It replaces `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` on the site with the live ones.
+(`--no-keys` stops it making new admin/app keys; keep the ones you already set.) It replaces `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` and `STRIPE_WEBHOOK_SECRET` on the site with the live ones.
 
 5. Buy Base monthly yourself with a real card, check the welcome page and admin page, then cancel it from Manage billing and refund yourself in Stripe (plans have no free days, so this one is charged).
 
@@ -276,9 +289,21 @@ XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --ke
 
 ---
 
-## Part B: automatic, personal TestFlight invites (optional)
+## Part B: Apple emails everyone their TestFlight invite
 
-With only the public link, anyone who gets the link can install the beta, paid or not, and cancelling doesn't take it away. Part B fixes that: each member is added to the `Members` group by email (Apple emails them their own invite), and removed when their membership ends or is refunded. A plan that came with a Band is the exception while the Band isn't refunded: the Band works with the free app, so its owner stays in the group.
+The app is free, so everyone who wants it should get it without asking. With Part B set up, the site adds each person to the `Members` group by email and **Apple emails them their own TestFlight invite**, by itself:
+
+| Who | When |
+| --- | --- |
+| Anyone with an OVOA account | The first time they're signed in on https://ovoa.ai/account: made there (the emailed code proves the address), or made in the app and signed in on the site. The free plan's **Get the free app** button and the home page's **Get the app** both lead there. |
+| Band buyers (Band only, or with Base) | When their order page opens after checkout |
+| Members, and **Give free access** | When the plan starts |
+
+Each email is invited once: someone already in the group (a free account who then buys Base, say) isn't emailed again. The account page says to open Apple's email and has **send it again** (at most every 10 minutes, 5 in all). A plan ending doesn't take anyone out of the beta: they're back on the free app, which the app works out from the plan check (Part C). That's also what Apple's rule 2.2 asks: TestFlight isn't something anyone pays for.
+
+The admin page lists the free-app invites under **Free app invites**, with **Retry invite** on any that failed. They're kept in the `app_invites` table (`migrations/0005_app_invites.sql`). Without it, invites still go out and Apple's own tester list is the record, but there's no list and no "send it again".
+
+Apple only sends the email once the group has a build that passed beta review (Step 7). People added before that get theirs when the first build is approved.
 
 1. App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys** → **+**. Name it `OVOA website`, access **App Manager**. Click **Generate**.
 2. **Download API Key** (a `.p8` file; Apple only lets you download it once). Note the **Key ID** next to it and the **Issuer ID** at the top of the page.
@@ -293,7 +318,7 @@ With only the public link, anyone who gets the link can install the beta, paid o
 4. Open the admin page → **Find my TestFlight group ids**. Copy the id next to `Members` (it must say *External*).
 5. Set the secret `TESTFLIGHT_GROUP_ID` to that id.
 6. In App Store Connect, open the `Members` group → **Public Link** → **Disable**, and delete the site's `TESTFLIGHT_PUBLIC_URL` secret. (Keep it if you'd rather have a backup link; the welcome page then offers it under "No email?")
-7. Test: on the admin page, **Give free access** to a second email of yours. Its TestFlight column should say `invited`, and Apple's email should arrive within minutes. If it says `failed`, the reason is right under it; fix it and press **Retry invite**.
+7. Test: sign in on https://ovoa.ai/account with a second email of yours (or create an account with it). The page should say to open the invite Apple emailed, and Apple's email should arrive within minutes. On the admin page, it's under **Free app invites** as `invited`. If it says `failed`, the reason is right under it; fix it and press **Retry invite**.
 
 ---
 
@@ -450,7 +475,7 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 
 | Symptom | Fix |
 | --- | --- |
-| Buttons say "Opening soon" | `STRIPE_SECRET_KEY` missing or wrong, or Step 3 wasn't run with that same key. Run the script again (it sets the secret). |
+| Buttons say "Opening soon" | `STRIPE_SECRET_KEY` missing or wrong, or Step 3 wasn't run with that same key. Run the script again (it sets the secrets; add `--new-webhook` so the webhook secret matches too). `npx wrangler tail` shows Stripe's error. Before Sept 23, `npm run test:billing` and `test:account` put a fake key (`sk_test_fake`) on the live site; they don't any more. |
 | Admin page: "The members table isn't there yet" | Run `npm run db:migrate` ([Where the site runs](#where-the-site-runs)). |
 | Admin page: "Wrong admin key" | Paste the exact `OVOA_ADMIN_KEY` value from `stripe/.env` or your password manager. |
 | Stripe webhooks show `400 Bad signature` | `STRIPE_WEBHOOK_SECRET` doesn't match the endpoint. Run the script with `--new-webhook`; it sets the new secret. |
@@ -458,7 +483,7 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 | Stripe webhooks show `500` | Usually the database step. The admin *Setup* list shows which part is missing. Stripe retries for 3 days, so fixing it catches up automatically. |
 | Welcome page stuck on "Finishing your checkout…" | The payment didn't complete (e.g. a bank check still pending). It fills in once Stripe confirms. |
 | TestFlight column says `failed` | Read the reason under it. Common ones: the group is internal (make an external one), no approved build in the group yet, or a mistyped `ASC_*` secret. Fix it, then **Retry invite**. |
-| Member says the invite never came | Check spam. Otherwise send them the public link, or Retry invite from the admin page. |
+| Someone says the invite never came | Check spam. They can press **send it again** on https://ovoa.ai/account. Otherwise Retry invite from the admin page, or send them the public link. |
 
 ---
 

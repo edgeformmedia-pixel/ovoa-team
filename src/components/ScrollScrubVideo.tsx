@@ -33,7 +33,10 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
     if (video.readyState >= 1) handleMetadata();
     else video.addEventListener("loadedmetadata", handleMetadata, { once: true });
     video.addEventListener("playing", scheduleSwap, { once: true });
-    video.load();
+    // preload="auto" has most browsers downloading the clip before this runs,
+    // and load() would throw that away and start again. iOS ignores preload,
+    // so it still needs the nudge.
+    if (video.readyState === 0 && video.networkState !== video.NETWORK_LOADING) video.load();
 
     // Give the page a moment to settle, then play the clip through once.
     const playTimer = window.setTimeout(() => {

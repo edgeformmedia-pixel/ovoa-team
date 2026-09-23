@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPage } from "@/components/LegalPage";
+import { breadcrumbs, jsonLd } from "@/lib/seo";
 
 // Written from what the app server actually stores (ovoa-app/jarvis/api
 // migrations and its nightly purge) and from the v1 decisions of 2026-09-23:
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:url", content: "https://ovoa.ai/privacy" },
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/privacy" }],
+    scripts: [jsonLd(breadcrumbs("Privacy policy", "/privacy"))],
   }),
 });
 
@@ -256,8 +258,8 @@ function Privacy() {
         <ul>
           <li>
             <strong>Cloudflare</strong>: runs OVOA&rsquo;s server and ovoa.ai, and the databases
-            that hold everything the app sends us and the plan, order and partner records from
-            ovoa.ai.
+            that hold everything the app sends us and the plan, order, partner and TestFlight invite
+            records from ovoa.ai.
           </li>
           <li>
             <strong>Z.ai</strong> (the GLM models, from Zhipu AI): writes OVOA&rsquo;s replies.
@@ -299,8 +301,8 @@ function Privacy() {
             can&rsquo;t do it themselves, by Apple&rsquo;s speech service. Also TestFlight (which
             shares crash reports, and any feedback you choose to send, with us), Apple Health, push
             notifications, and Siri if you set up &ldquo;Ask OVOA&rdquo; (Siri hears you and sends
-            OVOA the words). When you buy on ovoa.ai, we send your email and name to Apple to invite
-            you to the TestFlight beta.
+            OVOA the words). When you buy on ovoa.ai, or sign in or create your account there, we
+            send your email and name to Apple so it emails you the invite to the TestFlight beta.
           </li>
           <li>
             <strong>Expo</strong>: its push service carries the text of OVOA&rsquo;s notifications
@@ -357,8 +359,9 @@ function Privacy() {
           the markers that stop OVOA repeating a reminder or warning within a month or pay cycle.
         </p>
         <p>
-          On ovoa.ai, your plan, orders and partner records stay while you&rsquo;re a member, and
-          payment records as long as tax and accounting law requires.
+          On ovoa.ai, your plan, orders and partner records stay while you&rsquo;re a member, the
+          record of your TestFlight invite until you ask us to delete it, and payment records as
+          long as tax and accounting law requires.
         </p>
       </section>
 
@@ -377,8 +380,8 @@ function Privacy() {
         <p>
           Deleting your account doesn&rsquo;t cancel a plan bought on ovoa.ai, so cancel that from
           Manage billing first. Cancelling a plan doesn&rsquo;t delete your account. Payment records
-          stay with Stripe as the law requires; email us to delete your member and order records on
-          ovoa.ai.
+          stay with Stripe as the law requires; email us to delete your member, order and invite
+          records on ovoa.ai.
         </p>
       </section>
 

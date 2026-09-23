@@ -147,8 +147,6 @@ export interface Store {
     invoiceId: string | null,
   ): Promise<BandOrder[]>;
   getBandOrder(id: string): Promise<BandOrder | null>;
-  // The Band order a checkout paid for, if it was one.
-  bandOrderByCheckout(checkoutSessionId: string): Promise<BandOrder | null>;
   setBandOrderStatus(id: string, status: BandOrderStatus): Promise<void>;
   listBandOrders(limit: number): Promise<BandOrder[]>;
 }
@@ -426,14 +424,6 @@ const d1Store: Store = {
   getBandOrder: (id) =>
     d1(async () => {
       const row = await one<Record<string, unknown>>("SELECT * FROM band_orders WHERE id = ?", id);
-      return row ? toBandOrder(row) : null;
-    }),
-  bandOrderByCheckout: (checkoutSessionId) =>
-    d1(async () => {
-      const row = await one<Record<string, unknown>>(
-        "SELECT * FROM band_orders WHERE checkout_session_id = ?",
-        checkoutSessionId,
-      );
       return row ? toBandOrder(row) : null;
     }),
   setBandOrderStatus: (id, status) =>

@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
-import { getAccount, type AccountPage } from "@/lib/account/account.functions";
+import { getAccount, sendInviteAgain, type AccountPage } from "@/lib/account/account.functions";
 import { PLAN_BLURBS, PLAN_NAMES } from "@/lib/membership/copy";
 import { TESTFLIGHT_APP_URL } from "@/lib/membership/plans";
 import type { Membership } from "@/lib/membership/resolve";
@@ -702,36 +703,7 @@ function SignedIn({
         )}
       </div>
 
-      <section className="mt-10 rounded-[1.75rem] bg-landing-control/70 px-6 py-6 sm:px-7">
-        <h2 className="text-lg font-semibold">Get the app</h2>
-        <ol className="mt-3 grid list-decimal gap-2 pl-5 text-[15px] leading-relaxed text-landing-muted">
-          <li>
-            On your iPhone, install{" "}
-            <a href={TESTFLIGHT_APP_URL} target="_blank" rel="noreferrer" className={linkButton}>
-              TestFlight
-            </a>
-            , Apple&rsquo;s app for betas.
-          </li>
-          <li>
-            {data.betaUrl ? (
-              <>
-                <a href={data.betaUrl} target="_blank" rel="noreferrer" className={linkButton}>
-                  Join the OVOA beta
-                </a>{" "}
-                and tap Install.
-              </>
-            ) : (
-              <>
-                Join the OVOA beta from your TestFlight invite. No invite? Write to support@ovoa.ai.
-              </>
-            )}
-          </li>
-          <li>
-            Open OVOA and sign in with <strong className="text-landing-ink">{data.email}</strong>{" "}
-            and your password.
-          </li>
-        </ol>
-      </section>
+      <GetTheApp data={data} />
 
       <button
         type="button"
@@ -743,5 +715,89 @@ function SignedIn({
         Sign out
       </button>
     </>
+  );
+}
+
+// Install TestFlight → open Apple's invite (sent when the account first came
+// here) or the public link → sign in.
+function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
+  const again = useServerFn(sendInviteAgain);
+  const [invite, setInvite] = useState(data.invite);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const invited = invite.state === "invited";
+  const email = <strong className="text-landing-ink">{data.email}</strong>;
+
+  async function sendAgain() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await again();
+      setInvite(res.invite);
+      setMessage(res.message);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "That didn't work. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mt-10 rounded-[1.75rem] bg-landing-control/70 px-6 py-6 sm:px-7">
+      <h2 className="text-lg font-semibold">Get the app</h2>
+      <ol className="mt-3 grid list-decimal gap-2 pl-5 text-[15px] leading-relaxed text-landing-muted">
+        <li>
+          On your iPhone, install{" "}
+          <a href={TESTFLIGHT_APP_URL} target="_blank" rel="noreferrer" className={linkButton}>
+            TestFlight
+          </a>
+          , Apple&rsquo;s app for betas.
+        </li>
+        <li>
+          {invited ? (
+            <>
+              Open the invite Apple emailed to {email} (it&rsquo;s from TestFlight) on your iPhone,
+              tap <strong className="text-landing-ink">View in TestFlight</strong>, then Install.
+            </>
+          ) : data.betaUrl ? (
+            <>
+              <a href={data.betaUrl} target="_blank" rel="noreferrer" className={linkButton}>
+                Join the OVOA beta
+              </a>{" "}
+              and tap Install.
+            </>
+          ) : invite.state === "failed" ? (
+            <>
+              Your TestFlight invite is on its way to {email}. If it isn&rsquo;t there within the
+              hour, write to support@ovoa.ai.
+            </>
+          ) : (
+            <>
+              Join the OVOA beta from your TestFlight invite. No invite? Write to support@ovoa.ai.
+            </>
+          )}
+        </li>
+        <li>Open OVOA and sign in with {email} and your password.</li>
+      </ol>
+      {invited && invite.resend && (
+        <p className="mt-4 text-sm text-landing-muted">
+          No email? Check spam, or{" "}
+          <button
+            type="button"
+            onClick={() => void sendAgain()}
+            disabled={busy}
+            className={linkButton}
+          >
+            {busy ? "sending…" : "send it again"}
+          </button>
+          .
+        </p>
+      )}
+      {message && (
+        <p role="status" className="mt-2 text-sm font-medium text-landing-ink">
+          {message}
+        </p>
+      )}
+    </section>
   );
 }

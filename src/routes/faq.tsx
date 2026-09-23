@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
 import type { PlansResult } from "@/lib/membership/plans";
+import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA FAQ: plans, the Band and the beta";
 const PAGE_DESCRIPTION =
@@ -89,24 +90,20 @@ export const Route = createFileRoute("/faq")({
       { property: "og:description", content: PAGE_DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/faq" },
-      { property: "og:image", content: "https://ovoa.ai/og-band.jpg" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://ovoa.ai/og-band.jpg" },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/faq" }],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: faqsFor(loaderData).map((faq) => ({
-            "@type": "Question",
-            name: faq.q,
-            acceptedAnswer: { "@type": "Answer", text: faq.a },
-          })),
-        }),
-      },
+      jsonLd({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqsFor(loaderData).map((faq) => ({
+          "@type": "Question",
+          name: faq.q,
+          acceptedAnswer: { "@type": "Answer", text: faq.a },
+        })),
+      }),
+      jsonLd(breadcrumbs("FAQ", "/faq")),
     ],
   }),
 });

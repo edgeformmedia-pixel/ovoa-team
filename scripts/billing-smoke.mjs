@@ -8,9 +8,11 @@
 // (twice, plus a price change, to prove re-runs are safe), gives the Worker a
 // fresh local D1 with every migration, starts `wrangler dev --local`, then
 // buys, cancels and refunds through the real checkout and webhook routes and
-// checks what /api/public/membership answers after each step.
+// checks what /api/public/membership answers after each step, and who the
+// fake App Store Connect emailed a TestFlight invite.
 
 import { spawn, spawnSync } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -43,6 +45,10 @@ globalThis.fetch = async (url, init) => {
 };
 
 const env = { ...process.env, STRIPE_API_BASE: `${STRIPE}/v1`, FAKE_WEBHOOK_SECRET: WHSEC };
+// An App Store Connect key of our own: the fake Apple only checks it's an ES256 token.
+const ascKey = generateKeyPairSync("ec", { namedCurve: "P-256" })
+  .privateKey.export({ type: "pkcs8", format: "der" })
+  .toString("base64");
 
 function check(label, ok, detail) {
   if (!ok) failures++;
@@ -97,6 +103,21 @@ async function checkout(query) {
   return { sessionId, params };
 }
 
+// What /early-access and /checkout do: an embedded session, paid inside the page.
+async function embedded(order) {
+  const res = await fetch(`${SITE}/api/public/billing/create-checkout-session`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(order),
+  });
+  const json = await res.json();
+  const sessionId = /^(cs_test_\w+?)_secret_/.exec(json.clientSecret ?? "")?.[1];
+  if (!sessionId || json.publishableKey !== "pk_test_fake")
+    throw new Error(`embedded ${JSON.stringify(order)} → ${res.status} ${JSON.stringify(json)}`);
+  const params = await (await fetch(`${STRIPE}/__sessions/${sessionId}`)).json();
+  return { sessionId, params };
+}
+
 async function pay(sessionId, email, name = "Test Buyer") {
   const res = await fetch(`${STRIPE}/__complete/${sessionId}`, {
     method: "POST",
@@ -137,6 +158,16 @@ async function serverFn(name, data) {
     body: JSON.stringify(await toJSONAsync({ data })),
   });
   return { ok: res.ok, status: res.status, text: await res.text() };
+}
+
+// Who the fake Apple has in the beta group, and the invite emails it sent them.
+async function beta(email) {
+  const asc = await (await fetch(`${STRIPE}/__asc`)).json();
+  const tester = asc.testers.find((t) => t.email === email);
+  return {
+    inGroup: Boolean(tester?.groups.includes("grp_members")),
+    emails: asc.emails.filter((e) => e.email === email).length,
+  };
 }
 
 // The welcome page's "Start my free days" button.
@@ -216,8 +247,11 @@ async function main() {
     [
       `npx wrangler dev -c wrangler.site.jsonc --local --port ${SITE_PORT} --persist-to "${persist}"`,
       `--var STRIPE_API_BASE:${STRIPE}/v1 --var STRIPE_SECRET_KEY:sk_test_fake`,
+      `--var STRIPE_PUBLISHABLE_KEY:pk_test_fake`,
       `--var STRIPE_WEBHOOK_SECRET:${WHSEC} --var MEMBERSHIP_API_KEY:${API_KEY} --var OVOA_ADMIN_KEY:${ADMIN_KEY}`,
       `--var RESEND_API_KEY:re_fake --var RESEND_API_BASE:${STRIPE}`,
+      `--var ASC_API_BASE:${STRIPE}/asc/v1 --var ASC_KEY_ID:FAKEKEY1 --var ASC_ISSUER_ID:fake-issuer`,
+      `--var ASC_PRIVATE_KEY:${ascKey} --var TESTFLIGHT_GROUP_ID:grp_members`,
     ].join(" "),
     "Ready on",
   );
@@ -366,6 +400,12 @@ async function main() {
       "band+ai: welcome page renders the membership",
       page.includes("You&#x27;re in") || page.includes("You're in"),
     );
+    const tf = await beta("band-ai@buyer.test");
+    check(
+      "band+ai: in the beta, one invite email across the Band and its Base days",
+      tf.inGroup && tf.emails === 1,
+      tf,
+    );
   }
 
   // ---- 2. Band only ----
@@ -438,6 +478,18 @@ async function main() {
       "band only: welcome page has the start form, no card, no price",
       Object.values(waitingChecks).every(Boolean),
       { ...waitingChecks, startForm },
+    );
+    // The Band works with the free app, so Apple emails its invite, once.
+    check(
+      "band only: Apple emails the free app's invite",
+      waitingPage.includes("Apple is emailing your invite") &&
+        JSON.stringify(await beta("band-only@buyer.test")) ===
+          JSON.stringify({ inGroup: true, emails: 1 }),
+    );
+    await fetch(`${SITE}/early-access/welcome?session_id=${sessionId}`);
+    check(
+      "band only: once, however often the page opens",
+      (await beta("band-only@buyer.test")).emails === 1,
     );
 
     // What live Stripe says to the card that paid for the Band: it was never
@@ -516,8 +568,9 @@ async function main() {
     );
     check("band only: the order still says no AI", orderAfter[0]?.with_ai === 0, orderAfter);
     check(
-      "band only: still one order email",
-      (await emailsTo("band-only@buyer.test")).length === 1,
+      "band only: still one order email, and one invite email across the Band and its free days",
+      (await emailsTo("band-only@buyer.test")).length === 1 &&
+        (await beta("band-only@buyer.test")).emails === 1,
     );
 
     // The member view: no card to charge, so no yearly or Pro switch, and the
@@ -614,6 +667,8 @@ async function main() {
       bandKeepsWorking: page.includes("Your Band keeps working with the free OVOA app"),
       notDeadEnd: !page.includes("You can start a new one anytime"),
       appSteps: page.includes("Install TestFlight") && page.includes("Join the OVOA beta"),
+      // Still in the beta from its order page: nobody leaves it when a plan ends.
+      invited: page.includes("Apple is emailing your invite"),
       orderLink: page.includes("Copy link"),
       plans: page.includes("Want the assistant too?"),
       billing: page.includes("Manage billing"),
@@ -647,6 +702,52 @@ async function main() {
       results.base,
     );
     results.baseSub = s.subscription.id ?? s.subscription;
+    const tf = await beta("base@buyer.test");
+    check("base monthly: invited to the beta", tf.inGroup && tf.emails === 1, tf);
+  }
+
+  // ---- 3b. Base yearly, paid inside /early-access (embedded) ----
+  {
+    const { sessionId, params } = await embedded({ plan: "base_annual" });
+    check(
+      "embedded plan: subscription that returns to the welcome page",
+      params.ui_mode === "embedded" &&
+        params.mode === "subscription" &&
+        !params.success_url &&
+        !params.cancel_url &&
+        String(params.return_url).endsWith(
+          "/early-access/welcome?session_id={CHECKOUT_SESSION_ID}",
+        ) &&
+        !params.shipping_address_collection,
+      params,
+    );
+    await pay(sessionId, "embedded@buyer.test");
+    const member = await membership("embedded@buyer.test");
+    check(
+      "embedded plan: membership",
+      member.tier === "base" && member.status === "active" && member.source === "stripe",
+      member,
+    );
+    const bad = await fetch(`${SITE}/api/public/billing/create-checkout-session`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ plan: "gold_monthly" }),
+    });
+    check("embedded plan: an unknown plan is refused", bad.status === 400);
+
+    // The Band's embedded checkout asks for what the hosted one does.
+    const band = (await embedded({ ai: true })).params;
+    check(
+      "embedded band: ships, saves the card, returns to /order-complete",
+      band.ui_mode === "embedded" &&
+        band.mode === "payment" &&
+        band.metadata?.band === "1" &&
+        band.metadata?.plan === "base_monthly" &&
+        band.shipping_address_collection?.allowed_countries?.[0] === "US" &&
+        band.payment_intent_data?.setup_future_usage === "off_session" &&
+        String(band.return_url).includes("/order-complete?session_id="),
+      band,
+    );
   }
 
   // ---- 4. Pro annual (with a partner) ----
@@ -694,6 +795,12 @@ async function main() {
         results.canceled.status === "canceled" &&
         results.canceled.source === "stripe",
       results.canceled,
+    );
+    const row = sql("SELECT testflight_state FROM members WHERE email = 'base@buyer.test'")[0];
+    check(
+      "cancel: keeps the free app (still in the beta)",
+      (await beta("base@buyer.test")).inGroup && row?.testflight_state === "invited",
+      row,
     );
   }
 

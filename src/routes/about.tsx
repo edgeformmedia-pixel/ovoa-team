@@ -11,15 +11,15 @@ import {
   NotebookPen,
   Vibrate,
 } from "lucide-react";
-import bandFront from "@/assets/product/band-front-cutout.png";
-import bandSensors from "@/assets/product/band-sensors-cutout.png";
+import bandFront from "@/assets/product/band-front-cutout.webp";
+import bandSensors from "@/assets/product/band-sensors-cutout.webp";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice } from "@/lib/membership/copy";
+import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
-const PAGE_TITLE = "About Band: the AI wristband you talk to";
+const PAGE_TITLE = "OVOA Band: the AI wristband you talk to";
 const PAGE_DESCRIPTION =
   "The OVOA Band is a woven wristband you talk to. Ask it to do a task, double-tap to save a note word for word, or set a standing rule that keeps running. Heart rate and motion sensing, microphone, vibration motor. Beta hardware.";
 
@@ -35,24 +35,10 @@ export const Route = createFileRoute("/about")({
       { property: "og:description", content: PAGE_DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/about" },
-      { property: "og:image", content: OG_IMAGE },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: OG_IMAGE },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/about" }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Home", item: "https://ovoa.ai/" },
-            { "@type": "ListItem", position: 2, name: "About", item: "https://ovoa.ai/about" },
-          ],
-        }),
-      },
-    ],
+    scripts: [jsonLd(breadcrumbs("About the OVOA Band", "/about"))],
   }),
 });
 
@@ -108,14 +94,14 @@ function AboutPage() {
       <section className="px-6 py-16 sm:px-10 sm:py-24 lg:px-14">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <div className="max-w-xl lg:pr-10">
-            <p className="text-sm font-medium text-landing-muted">About Band</p>
+            <p className="text-sm font-medium text-landing-muted">About the OVOA Band</p>
             <h1 className="mt-3 text-[clamp(2.75rem,6vw,5.5rem)] font-semibold leading-[1] tracking-normal">
               A wristband you talk to.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Band is a woven wristband you talk to. Say or type what you want and it goes and does
-              it: a task, a note kept word for word, or a standing rule that keeps running in the
-              background.
+              The OVOA Band is a woven wristband you talk to. Say or type what you want and it goes
+              and does it: a task, a note kept word for word, or a standing rule that keeps running
+              in the background.
             </p>
           </div>
           <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
@@ -125,7 +111,7 @@ function AboutPage() {
             />
             <img
               src={bandFront}
-              alt="Band, a black woven AI wristband with sensor light and side button"
+              alt="The OVOA Band, a black woven AI wristband with sensor light and side button"
               className="relative size-full object-contain"
             />
           </div>
@@ -196,7 +182,7 @@ function AboutPage() {
           <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
             <img
               src={bandSensors}
-              alt="Underside of Band showing the rear heart rate sensors and clasp"
+              alt="Underside of the OVOA Band showing the rear heart rate sensors and clasp"
               loading="lazy"
               className="size-full object-contain"
             />

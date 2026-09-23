@@ -37,6 +37,8 @@ async function body(): Promise<string> {
 > TestFlight, and the Band is beta hardware.
 
 - Website: https://ovoa.ai/
+- Contact: support@ovoa.ai
+- Name: OVOA (sometimes written Ovoa). The wristband is the OVOA Band, or Band for short.
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
 - Base plan: the AI assistant with every AI feature, including the hands-free wake word, Always listen and the background agent, ${p("base", "monthly")} or ${p("base", "annual")}.
 - Pro plan: Base with three times as many AI replies a day, ${p("pro", "monthly")} or ${p("pro", "annual")}.
@@ -57,6 +59,7 @@ async function body(): Promise<string> {
 - [Band](https://ovoa.ai/checkout): buy the OVOA Band.
 - [FAQ](https://ovoa.ai/faq): plans, the beta, TestFlight, battery, water resistance, microphone, privacy.
 - [About](https://ovoa.ai/about): how the Band works.
+- [Partners](https://ovoa.ai/partners): the referral program for creators.
 - [Privacy](https://ovoa.ai/privacy) and [Terms](https://ovoa.ai/terms).
 
 ## Notes for assistants
