@@ -14,22 +14,23 @@ import OvoaIphoneDemo, { type DemoStep } from "@/components/OvoaIphoneDemo";
 import { HowItWorksDemo } from "@/components/HowItWorksDemo";
 import { ScrollScrubVideo } from "@/components/ScrollScrubVideo";
 import { SiteFooter } from "@/components/SiteFooter";
-import bandFront from "@/assets/product/band-front-cutout.png";
-import bandProfile from "@/assets/product/band-profile-cutout.png";
-import bandSensors from "@/assets/product/band-sensors-cutout.png";
-import cyclingBand from "@/assets/sports/cycling-band.jpg.asset.json";
-import runningBand from "@/assets/sports/running-band.png.asset.json";
-import swimmingBand from "@/assets/sports/swimming-band.png.asset.json";
+import bandFront from "@/assets/product/band-front-cutout.webp";
+import bandProfile from "@/assets/product/band-profile-cutout.webp";
+import bandSensors from "@/assets/product/band-sensors-cutout.webp";
+import cyclingBand from "@/assets/sports/cycling-band.webp";
+import runningBand from "@/assets/sports/running-band.webp";
+import swimmingBand from "@/assets/sports/swimming-band.webp";
 import { HEALTH_SCRIPT, NOTES_SCRIPT, RULES_SCRIPT, TASKS_SCRIPT } from "@/lib/demo-scripts";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
 import type { PlansResult } from "@/lib/membership/plans";
+import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
 const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
 
 function describe(data: PlansResult | undefined) {
-  return `OVOA is a Jarvis in your phone: text or talk and it schedules, remembers and follows through. In beta on iPhone: health and notes are free, the assistant is ${perLabel(planOf(data, "base", "monthly"))}, and the OVOA Band is ${bandPrice(data)}.`;
+  // Kept under ~160 characters so search results show all of it.
+  return `OVOA is an AI assistant for iPhone you text or talk to. It schedules, remembers and follows through. Free for health and notes; the assistant is ${perLabel(planOf(data, "base", "monthly"))}.`;
 }
 
 export const Route = createFileRoute("/")({
@@ -42,23 +43,22 @@ export const Route = createFileRoute("/")({
       { name: "description", content: describe(loaderData) },
       { property: "og:title", content: PAGE_TITLE },
       { property: "og:description", content: describe(loaderData) },
-      { property: "og:type", content: "product" },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/" },
-      { property: "og:image", content: OG_IMAGE },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: OG_IMAGE },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/" }],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(
-          bandProductJsonLd(
-            loaderData,
-            "A woven wristband with one button and heart rate sensing: press it and talk to OVOA. Beta hardware.",
-          ),
+      jsonLd(WEBSITE),
+      jsonLd(ORGANIZATION),
+      jsonLd(appJsonLd(loaderData)),
+      jsonLd(
+        bandProductJsonLd(
+          loaderData,
+          "A woven wristband with one button and heart rate sensing: press it and talk to OVOA. Beta hardware.",
+          [bandFront, bandSensors, bandProfile],
         ),
-      },
+      ),
     ],
   }),
 });
@@ -190,13 +190,13 @@ function Landing() {
               to="/about"
               className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
             >
-              Bands
+              Band
             </Link>
             <Link
-              to="/about"
+              to="/early-access"
               className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
             >
-              Materials
+              Plans
             </Link>
             <Link
               to="/faq"
@@ -383,24 +383,24 @@ function Landing() {
           <div className="grid gap-2 lg:grid-cols-3">
             {[
               {
-                src: cyclingBand.url,
-                alt: "Cyclist wearing Band during an outdoor ride",
+                src: cyclingBand,
+                alt: "Cyclist wearing the OVOA Band during an outdoor ride",
                 title: "Ride farther",
                 copy: "Ask OVOA for your pace mid-climb. Heart rate and motion sensing ride along the whole way.",
                 position: "object-center",
                 zoom: "",
               },
               {
-                src: runningBand.url,
-                alt: "Runner wearing Band on an outdoor track",
+                src: runningBand,
+                alt: "Runner wearing the OVOA Band on an outdoor track",
                 title: "Find your pace",
                 copy: "A light woven fit and a quick buzz when OVOA has news, so your eyes stay on the next stride.",
                 position: "object-[42%_center]",
                 zoom: "",
               },
               {
-                src: swimmingBand.url,
-                alt: "Swimmer wearing Band beside a pool",
+                src: swimmingBand,
+                alt: "Swimmer wearing the OVOA Band beside a pool",
                 title: "Made to move",
                 copy: "Water-resistant and made for all-day wear, from the pool to everything after.",
                 position: "object-[70%_center]",
@@ -416,6 +416,7 @@ function Landing() {
                     src={sport.src}
                     alt={sport.alt}
                     loading="lazy"
+                    decoding="async"
                     className={`size-full object-cover ${sport.position} transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.025]`}
                   />
                 </div>
@@ -439,7 +440,7 @@ function Landing() {
           <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
             <img
               src={bandFront}
-              alt="Black woven Band with its side button and status light"
+              alt="The OVOA Band, a black woven wristband with a side button and status light"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -472,7 +473,7 @@ function Landing() {
           <div className="relative mx-auto aspect-square w-full max-w-[38rem] lg:order-2">
             <img
               src={bandProfile}
-              alt="Side profile of Band showing its single physical button"
+              alt="Side profile of the OVOA Band showing its single button"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -485,7 +486,7 @@ function Landing() {
           <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
             <img
               src={bandSensors}
-              alt="Underside of Band showing the heart rate sensors"
+              alt="Underside of the OVOA Band showing the heart rate sensors"
               loading="lazy"
               className="size-full object-contain"
             />

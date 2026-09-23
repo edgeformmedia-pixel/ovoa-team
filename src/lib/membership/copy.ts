@@ -104,25 +104,37 @@ export function perLabel(plan: PublicPlan) {
   return `${formatMoney(plan.amountCents, plan.currency)}/${plan.interval}`;
 }
 
-// The Band's schema.org Product, from the live price.
+// The Band's schema.org Product, from the live price. `images` are the page's
+// own product photos (site paths). The return policy is the one in the terms
+// (/terms, "The OVOA Band"): 30 days from delivery, US only.
 export function bandProductJsonLd(
   result: Pick<PlansResult, "band"> | undefined,
   description: string,
+  images: string[] = [],
 ) {
   const band = bandOf(result);
   return {
     "@context": "https://schema.org",
     "@type": "Product",
+    "@id": "https://ovoa.ai/#band",
     name: "OVOA Band",
     description,
-    image: "https://ovoa.ai/og-band.jpg",
+    image: ["https://ovoa.ai/og-band.jpg", ...images.map((path) => `https://ovoa.ai${path}`)],
     brand: { "@type": "Brand", name: "OVOA" },
+    url: "https://ovoa.ai/checkout",
     offers: {
       "@type": "Offer",
       price: (band.amountCents / 100).toFixed(2),
       priceCurrency: band.currency.toUpperCase(),
       availability: BAND_AVAILABILITY,
+      itemCondition: "https://schema.org/NewCondition",
       url: "https://ovoa.ai/checkout",
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "US",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 30,
+      },
     },
   };
 }

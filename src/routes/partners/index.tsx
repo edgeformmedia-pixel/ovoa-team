@@ -15,6 +15,7 @@ import {
   formatMoney,
   type PlansResult,
 } from "@/lib/membership/plans";
+import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA Partners: earn from every member you send";
 
@@ -34,9 +35,10 @@ export const Route = createFileRoute("/partners/")({
       { property: "og:description", content: describe(loaderData) },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/partners" },
-      { name: "twitter:card", content: "summary" },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/partners" }],
+    scripts: [jsonLd(breadcrumbs("Partners", "/partners"))],
   }),
 });
 

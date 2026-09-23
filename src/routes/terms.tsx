@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPage } from "@/components/LegalPage";
+import { breadcrumbs, jsonLd } from "@/lib/seo";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/terms")({
       { property: "og:url", content: "https://ovoa.ai/terms" },
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/terms" }],
+    scripts: [jsonLd(breadcrumbs("Terms", "/terms"))],
   }),
 });
 

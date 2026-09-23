@@ -1,0 +1,20 @@
+# Cache rules for files in public/ (the build adds the /assets/* rule).
+# __l5e files live under a per-upload id, so they never change in place.
+/__l5e/*
+  Cache-Control: public, max-age=31536000, immutable
+/audio/*
+  Cache-Control: public, max-age=604800
+/og-band.jpg
+  Cache-Control: public, max-age=86400
+/logo.png
+  Cache-Control: public, max-age=86400
+/favicon.ico
+  Cache-Control: public, max-age=86400
+/favicon.png
+  Cache-Control: public, max-age=86400
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+/icon-192.png
+  Cache-Control: public, max-age=86400
+/icon-512.png
+  Cache-Control: public, max-age=86400

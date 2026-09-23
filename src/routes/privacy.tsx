@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPage } from "@/components/LegalPage";
+import { breadcrumbs, jsonLd } from "@/lib/seo";
 
 // Written from what the app server actually stores (ovoa-app/jarvis/api
 // migrations and the retention jobs in src/index.ts). If a table or a
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:url", content: "https://ovoa.ai/privacy" },
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/privacy" }],
+    scripts: [jsonLd(breadcrumbs("Privacy policy", "/privacy"))],
   }),
 });
 

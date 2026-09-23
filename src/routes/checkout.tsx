@@ -3,24 +3,24 @@ import { Check, ChevronLeft, ChevronRight, Loader2, LockKeyhole } from "lucide-r
 import { useEffect, useRef, useState } from "react";
 import type { StripeEmbeddedCheckout } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
-import bandFront from "@/assets/product/band-front-cutout.png";
-import bandSensors from "@/assets/product/band-sensors-cutout.png";
-import bandFabric from "@/assets/product/band-fabric-original.png.asset.json";
-import bandProfile from "@/assets/product/band-profile-cutout.png";
-import bandCloseup from "@/assets/product/band-closeup-sensors.png.asset.json";
+import bandFront from "@/assets/product/band-front-cutout.webp";
+import bandSensors from "@/assets/product/band-sensors-cutout.webp";
+import bandFabric from "@/assets/product/band-fabric.webp";
+import bandProfile from "@/assets/product/band-profile-cutout.webp";
+import bandCloseup from "@/assets/product/band-closeup-sensors.webp";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
 import type { PlansResult } from "@/lib/membership/plans";
+import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const productPhotos = [
-  { src: bandFront, alt: "Band front and side view" },
-  { src: bandSensors, alt: "Band rear sensor view" },
-  { src: bandCloseup.url, alt: "Close-up of the Band's sensors and woven material", fit: "cover" },
-  { src: bandFabric.url, alt: "Close view of the woven Band material", fit: "cover" },
-  { src: bandProfile, alt: "Band profile view" },
+  { src: bandFront, alt: "OVOA Band, front and side view" },
+  { src: bandSensors, alt: "OVOA Band, rear sensor view" },
+  { src: bandCloseup, alt: "Close-up of the OVOA Band's sensors and woven material", fit: "cover" },
+  { src: bandFabric, alt: "Close view of the OVOA Band's woven material", fit: "cover" },
+  { src: bandProfile, alt: "OVOA Band, profile view" },
 ];
 
-const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
 const PAGE_TITLE = "Buy the OVOA Band (beta)";
 
 function describe(data: PlansResult | undefined) {
@@ -45,16 +45,18 @@ export const Route = createFileRoute("/checkout")({
       { property: "og:description", content: describe(loaderData) },
       { property: "og:type", content: "product" },
       { property: "og:url", content: "https://ovoa.ai/checkout" },
-      { property: "og:image", content: OG_IMAGE },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: OG_IMAGE },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/checkout" }],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(bandProductJsonLd(loaderData, describe(loaderData))),
-      },
+      jsonLd(
+        bandProductJsonLd(
+          loaderData,
+          describe(loaderData),
+          productPhotos.map((photo) => photo.src),
+        ),
+      ),
+      jsonLd(breadcrumbs("OVOA Band", "/checkout")),
     ],
   }),
 });

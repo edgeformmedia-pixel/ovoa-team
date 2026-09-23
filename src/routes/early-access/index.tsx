@@ -24,8 +24,8 @@ import {
   type PaidTier,
   type PlansResult,
 } from "@/lib/membership/plans";
+import { appJsonLd, breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const OG_IMAGE = "https://ovoa.ai/og-band.jpg";
 const PAGE_TITLE = "OVOA plans: free, Base and Pro";
 
 function describe(data: PlansResult | undefined) {
@@ -51,11 +51,10 @@ export const Route = createFileRoute("/early-access/")({
       { property: "og:description", content: describe(loaderData) },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ovoa.ai/early-access" },
-      { property: "og:image", content: OG_IMAGE },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: OG_IMAGE },
+      ...ogImageMeta,
     ],
     links: [{ rel: "canonical", href: "https://ovoa.ai/early-access" }],
+    scripts: [jsonLd(appJsonLd(loaderData)), jsonLd(breadcrumbs("Plans", "/early-access"))],
   }),
 });
 

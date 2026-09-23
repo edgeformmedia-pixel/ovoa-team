@@ -1,0 +1,13 @@
+{
+  "name": "OVOA",
+  "short_name": "OVOA",
+  "description": "The AI assistant you text or talk to, and the OVOA Band that brings it to your wrist.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

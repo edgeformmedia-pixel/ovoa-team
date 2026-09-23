@@ -81,20 +81,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "P0BPvNBVMzDqVoDBu0DGAyoYz-_8lyxQX9q7pl11aVY",
       },
 
-      { title: "Band: the programmable health band" },
+      // Defaults for pages that don't set their own (the 404 page). The site's
+      // name is OVOA everywhere; the Band is the OVOA Band.
+      { title: "OVOA: the AI assistant that gets things done" },
       {
         name: "description",
         content:
-          "Band is a woven health band with heart rate and motion sensing that does what you ask, plus the app that runs it.",
+          "OVOA is an AI assistant for iPhone you text or talk to: it schedules, remembers and follows through. The OVOA Band brings it to your wrist.",
       },
-      { name: "author", content: "Band" },
-      { property: "og:site_name", content: "Band" },
-      { property: "og:title", content: "Band: the programmable health band" },
-      {
-        property: "og:description",
-        content:
-          "A woven health band with heart rate and motion sensing that does what you ask, plus the app that runs it.",
-      },
+      { property: "og:site_name", content: "OVOA" },
+      { property: "og:locale", content: "en_US" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -104,26 +100,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "96x96" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
       {
         rel: "alternate",
         type: "text/plain",
         href: "/llms.txt",
         title: "llms.txt: plain-text summary for AI assistants",
-      },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "Ovoa AI",
-          url: "https://ovoa.ai/",
-          logo: "https://ovoa.ai/favicon.png",
-          brand: { "@type": "Brand", name: "Band" },
-        }),
       },
     ],
   }),
