@@ -10,7 +10,9 @@
 // for Resend), gives the app server and the site each a fresh local D1 with
 // every migration, starts both with `wrangler dev --local`, and then:
 //
-//   - signs up in the "app" first, then signs in on the site with an emailed code
+//   - signs up in the "app" first (proving the address with the code the
+//     sign-up emails, as the app does), then signs in on the site with an
+//     emailed code
 //   - signs up on the site first, then signs in to the "app" with that password
 //   - checks wrong codes, spent tickets, other sites' requests and sign-out
 //   - checks a signed-in checkout is locked to the account's email
@@ -70,6 +72,13 @@ function sh(cmd, cwd = ROOT) {
   if (res.status !== 0) throw new Error(`${cmd}\n${res.stdout}\n${res.stderr}`);
   return res.stdout;
 }
+
+// The app server's local D1, for moving its clock on.
+const apiSql = (command) =>
+  sh(
+    `npx wrangler d1 execute jarvis-db --local --persist-to "${apiPersist}" --json --command "${command.replace(/"/g, '\\"')}"`,
+    API_DIR,
+  );
 
 const siteSql = (command) =>
   sh(
@@ -210,15 +219,38 @@ async function main() {
   check("a checkout signed out asks Stripe for no email", (await checkoutEmail(null)) === null);
 
   // ---- 1. Made in the app first, then signed in on the site ----
-  const ada = "ada@acct.test";
+  // mail.ovoa.ai, not a reserved domain like .test: the app's server won't
+  // mail a code to those once Resend is set (reservedAddress in its
+  // emailauth.ts), and its own tests use this domain. Nothing leaves: every
+  // email goes to the fake Resend.
+  const ada = "ada@mail.ovoa.ai";
   const appSignup = await api("/auth/signup", {
     email: ada,
     password: "app-password-1",
     name: "Ada Lovelace",
   });
   check("the app makes Ada's account", appSignup.status === 201);
+  // The app's server emails a code with the sign-up, and the app asks for it
+  // before anything else (POST /me/email/verify). An account whose address
+  // nobody proved gives way when someone proves it on the site, so Ada proves
+  // hers first. A server without that step (codeSent missing) skips it.
+  if (appSignup.body.codeSent !== undefined) {
+    const { code } = await lastCode(ada);
+    const proven = await api(
+      "/me/email/verify",
+      { code },
+      { authorization: `Bearer ${appSignup.body.token}` },
+    );
+    check(
+      "the app proves Ada's address with the code its sign-up emailed",
+      appSignup.body.codeSent === true && proven.status === 200 && proven.body.emailVerified,
+      proven.body,
+    );
+    // A minute later, when the next code can go (codes are 60 s apart).
+    apiSql(`UPDATE email_codes SET sent_at = sent_at - 60000 WHERE email = '${ada}'`);
+  }
 
-  const sent = await api("/auth/email/code", { email: "  Ada@ACCT.test " });
+  const sent = await api("/auth/email/code", { email: "  Ada@MAIL.ovoa.ai " });
   check("a code is sent", sent.status === 200 && sent.body.expiresInMinutes === 10, sent.body);
   const { email: adaEmail, code: adaCode } = await lastCode(ada);
   check("from no-reply@ovoa.ai", adaEmail?.from === "OVOA <no-reply@ovoa.ai>", adaEmail?.from);
@@ -275,7 +307,7 @@ async function main() {
   );
   check(
     "the page says to open Apple's email",
-    /Open the invite Apple emailed to.*?ada@acct\.test/s.test(adaPage) &&
+    /Open the invite Apple emailed to.*?ada@mail\.ovoa\.ai/s.test(adaPage) &&
       adaPage.includes("send it again"),
   );
   await page("/account", kept.cookie);
@@ -306,7 +338,7 @@ async function main() {
   check("Ada's app password still works", appLogin.status === 200);
 
   // ---- 2. Made on the site first, then signed in to the app ----
-  const bo = "bo@acct.test";
+  const bo = "bo@mail.ovoa.ai";
   await api("/auth/email/code", { email: bo });
   const { email: boEmail, code: boCode } = await lastCode(bo);
   check(
