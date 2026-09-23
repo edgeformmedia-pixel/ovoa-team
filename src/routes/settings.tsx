@@ -179,7 +179,7 @@ function ClaudeSpike() {
                   {r.answer || "(empty answer)"}
                 </span>
               ) : (
-                <span className="mt-1 block text-[12px] text-band-dim">Failed — {r.detail}</span>
+                <span className="mt-1 block text-[12px] text-band-dim">Failed: {r.detail}</span>
               )}
             </li>
           );
@@ -197,13 +197,13 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
   head: () => ({
     meta: [
-      { title: "Your band — settings" },
+      { title: "Your band: settings" },
       {
         name: "description",
         content:
           "Customize the band in plain English: what it can touch, when it buzzes, what it does on its own, and who else can read it.",
       },
-      { property: "og:title", content: "Your band — settings" },
+      { property: "og:title", content: "Your band: settings" },
       {
         property: "og:description",
         content: "Everything about your band in one place. Written in plain English, not toggles.",
@@ -271,7 +271,7 @@ function SettingsPage() {
         <main className="band-page band-stagger flex-1 px-4 pb-10 pt-5">
           <Section
             title="Customize it"
-            hint="Say how the band should behave. Plain English, no settings to hunt for — it follows these."
+            hint="Say how the band should behave. Plain English, no settings to hunt for. It follows these."
           >
             <form
               className="band-composer"
@@ -383,15 +383,15 @@ function SettingsPage() {
           </Section>
 
           <Section
-            title="Connect Claude — live test"
-            hint="Tests whether signing in with your Claude account lets the band use your Claude — your plan, your memory, your connected apps. Your sign-in is saved once, encrypted, and never shown again."
+            title="Connect Claude (live test)"
+            hint="Tests whether signing in with your Claude account lets the band use your Claude: your plan, your memory, your connected apps. Your sign-in is saved once, encrypted, and never shown again."
           >
             <ClaudeSpike />
           </Section>
 
           <Section
             title="Let Claude read the band"
-            hint="The other direction: add this endpoint to Claude, ChatGPT or Cursor and it can read your tasks, notes and signals — and hand the band new tasks."
+            hint="The other direction: add this endpoint to Claude, ChatGPT or Cursor and it can read your tasks, notes and signals, and hand the band new tasks."
           >
             <div className="band-card px-4 py-4">
               <div className="band-composer">
@@ -409,7 +409,7 @@ function SettingsPage() {
 
           <Section
             title="API key"
-            hint="Read access to everything the band sends — heart rate, motion, transcripts, steps, battery, raw frames."
+            hint="Read access to everything the band sends: heart rate, motion, transcripts, steps, battery, raw frames."
           >
             <div className="band-card px-4 py-4">
               <div className="band-composer">
