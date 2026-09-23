@@ -66,7 +66,7 @@ export const PLAN_FEATURES: {
     label: "Daily AI replies",
     free: false,
     base: "Everyday use",
-    pro: "About 3× Base",
+    pro: "Almost 3× Base",
   },
 ];
 

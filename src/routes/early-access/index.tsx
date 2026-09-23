@@ -235,7 +235,7 @@ function EarlyAccess() {
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and about three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
+      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and almost three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
     },
     {
       q: "Is there a free trial?",

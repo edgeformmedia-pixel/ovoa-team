@@ -32,7 +32,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and about three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
+      a: `Everything in Base, plus a hands-free wake word so you don't have to press anything, the background agent that runs jobs on its own and reports back, and almost three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
     },
     {
       q: "Is this finished?",

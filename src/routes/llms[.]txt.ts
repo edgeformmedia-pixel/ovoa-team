@@ -39,7 +39,7 @@ async function body(): Promise<string> {
 - Website: https://ovoa.ai/
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
 - Base plan: the AI assistant, ${p("base", "monthly")} or ${p("base", "annual")}.
-- Pro plan: Base plus a hands-free wake word, a background agent and about 3x the daily AI replies, ${p("pro", "monthly")} or ${p("pro", "annual")}.
+- Pro plan: Base plus a hands-free wake word, a background agent and almost three times the daily AI replies, ${p("pro", "monthly")} or ${p("pro", "annual")}.
 - OVOA Band: ${formatMoney(band.amountCents, band.currency)} one time, includes ${days} days of Base. Ships to US addresses; no delivery date promised during the beta.
 
 ## What OVOA does

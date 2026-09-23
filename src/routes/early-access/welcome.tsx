@@ -472,7 +472,7 @@ function Welcome() {
           {pro && (
             <OfferCard
               title="Go hands-free with Pro."
-              body={`Pro adds the hands-free wake word, the background agent that runs jobs on its own, and about three times the daily replies. ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
+              body={`Pro adds the hands-free wake word, the background agent that runs jobs on its own, and almost three times the daily replies. ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
               cta={`Switch to Pro, ${money(pro)}/${pro.interval}`}
               busy={switching === "pro"}
               onTake={() => void take("pro", pro)}
