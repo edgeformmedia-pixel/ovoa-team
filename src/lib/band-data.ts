@@ -56,7 +56,7 @@ export const SEED_TASKS: Task[] = [
     id: "t1",
     request: "Move my 3pm to 4 and let Sam know",
     status: "done",
-    steps: ["Found 3pm — Design review", "Moved to 4:00pm", "Texted Sam"],
+    steps: ["Found 3pm: Design review", "Moved to 4:00pm", "Texted Sam"],
     result: "Moved to 4:00pm. Sam knows.",
     at: "9:41",
     day: "Today",
