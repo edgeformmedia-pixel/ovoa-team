@@ -68,11 +68,11 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "When does the microphone listen?",
-      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. The hands-free wake word and Always listen are the exception: they're off until you turn them on, and your iPhone itself listens for the name. Nothing leaves the phone until it hears \"OVOA\", and then only the words, never the audio. OVOA never records your day in the background.",
+      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. The hands-free wake word and Always listen are the exception: they're off until you turn them on, and your iPhone itself listens for the name. What it hears stays on the phone unless you say \"OVOA\" (a few words said just before can be included) or keep talking in the few seconds after OVOA answers, and then only the words go, never the audio. OVOA never records your day in the background.",
     },
     {
       q: "What happens to my data?",
-      a: "It's used to run OVOA for you and nothing else. We don't sell it, use it for ads or train AI on it, and the app asks before anything goes to an AI company. After 14 days everything is deleted except a short summary of each day and what you entered or set up yourself, and you can delete your account from the app. The privacy policy has the details.",
+      a: "It's used to run OVOA for you and nothing else. We don't sell it, use it for ads or train AI on it, and the app asks before anything goes to an AI company. Deepgram, which speaks OVOA's replies, may use their text to train its models. After 14 days everything is deleted except a short summary of each day and what you entered or set up yourself, and you can delete your account from the app. The privacy policy has the details.",
     },
   ];
 }

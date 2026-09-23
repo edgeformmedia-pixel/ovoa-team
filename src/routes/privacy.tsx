@@ -11,10 +11,18 @@ import { LegalPage } from "@/components/LegalPage";
 // 2026-09-23: Z.ai's privacy policy and API terms (docs.z.ai/legal-agreement),
 // the Gemini API terms for paid services (ai.google.dev/gemini-api/terms) and
 // Deepgram's terms (deepgram.com/terms). Re-check them before changing a line.
+//
+// Deepgram: the server's /speak call (jarvis/api/src/voice.ts) doesn't send
+// mip_opt_out=true, so Deepgram's terms let it train on the reply text, which
+// can include what OVOA reads out from Gmail, Calendar or Docs. That's why the
+// page says so and makes no Google "Limited Use" claim. Once the server sends
+// mip_opt_out=true, the Deepgram line can say "We tell Deepgram not to use it
+// to train its models.", the short version's Deepgram clause can go, and the
+// Limited Use sentence can come back in the Google section.
 
 const PAGE_TITLE = "Privacy policy · OVOA";
 const PAGE_DESCRIPTION =
-  "What OVOA collects, who gets what, how long it's kept and how to delete it. Your voice is recognised on your iPhone, you agree before anything goes to an AI company, and most data is deleted after 14 days.";
+  "What OVOA collects, who gets what, how long it's kept and how to delete it. Your voice never reaches OVOA or the AI companies, you agree before anything goes to one, and most data is deleted after 14 days.";
 
 export const Route = createFileRoute("/privacy")({
   component: Privacy,
@@ -53,7 +61,8 @@ function Privacy() {
           <li>
             We use your data to run OVOA for you. We don&rsquo;t sell it, use it for ads or train AI
             models on it, and the companies that write OVOA&rsquo;s replies don&rsquo;t train on it
-            either.
+            either. Deepgram, which speaks OVOA&rsquo;s replies, may use their text to train its
+            models (see <a href="#who-gets-what">Who gets what</a>).
           </li>
           <li>
             OVOA never records your day in the background. Your voice is recognised on your iPhone,
@@ -89,12 +98,15 @@ function Privacy() {
         <p>
           The microphone is on when you ask it to be: a tap in the app, a Band press, the record
           button, or the wake word and Always listen, which are off until you turn them on. With
-          those two, your iPhone listens for OVOA&rsquo;s name on the phone itself, and nothing it
-          hears leaves the phone until it hears &ldquo;OVOA&rdquo;. What you say to OVOA is
-          recognised on your iPhone (or by Apple&rsquo;s speech service on iPhones that can&rsquo;t
-          do it themselves), and only the text is sent to OVOA. A Band recording goes from the Band
-          to your iPhone over Bluetooth and is written out the same way. The audio never reaches
-          OVOA or the AI companies.
+          those, or with Clip click and the phone&rsquo;s microphone while an OVOA Band is paired,
+          your iPhone listens on the phone itself. What it hears stays on the phone unless you say
+          &ldquo;OVOA&rdquo; or click the Band (a few words said just before can be included), or
+          you keep talking in the few seconds after OVOA answers. Those words are sent to OVOA as
+          text, and OVOA may ask the AI whether they were meant for it. If they weren&rsquo;t,
+          they&rsquo;re dropped. What you say to OVOA is recognised on your iPhone (or by
+          Apple&rsquo;s speech service on iPhones that can&rsquo;t do it themselves), and only the
+          text is sent to OVOA. A Band recording goes from the Band to your iPhone over Bluetooth
+          and is written out the same way. The audio never reaches OVOA or the AI companies.
         </p>
         <p>
           OVOA keeps your conversations and the words of what you said to it so it can follow up and
@@ -105,12 +117,14 @@ function Privacy() {
 
         <h3>Health and activity</h3>
         <p>
-          If you allow it, OVOA reads your steps, heart rate, sleep and workouts from Apple Health,
-          and heart rate from the Band. The heart rate, daily steps and workouts it reads are synced
-          to OVOA to show your trends and answer your questions, and deleted after 14 days (the day
-          summaries stay). Only the numbers a reply needs go to the AI. We never use health data for
-          ads or marketing, and OVOA doesn&rsquo;t write to Apple Health. This is for your own
-          picture of how you&rsquo;re doing, not a medical record, and OVOA is not a medical device.
+          If you allow it, OVOA reads your steps, heart rate (including resting heart rate and
+          heart-rate variability), active energy, exercise and stand time, sleep and workouts from
+          Apple Health, and heart rate from the Band. The heart rate, daily steps and workouts it
+          reads are synced to OVOA to show your trends and answer your questions, and deleted after
+          14 days (the day summaries stay). Only the numbers a reply needs go to the AI. We never
+          use health data for ads or marketing, and OVOA doesn&rsquo;t write to Apple Health. This
+          is for your own picture of how you&rsquo;re doing, not a medical record, and OVOA is not a
+          medical device.
         </p>
         <p>
           If you use fall or SOS alerts, we keep the emergency contacts you add. When an alert goes
@@ -155,7 +169,11 @@ function Privacy() {
           Places with a name (ones you name, and Home and Work, which OVOA names for you) stay until
           you remove them. Other places are deleted once you haven&rsquo;t been there for 14 days,
           and where you parked is kept for 14 days. When a reply needs to know where you are, like
-          the weather, your phone sends your current location with that request.
+          the weather, your phone sends your current location with that request. For the morning
+          brief&rsquo;s weather, our server sends Open-Meteo your latest location or Home, rounded
+          to about 100 metres. To tell you when to leave for a Google Calendar event, it looks up
+          the event&rsquo;s address with OpenStreetMap and sends that and your current or Home
+          location to the OSRM route service.
         </p>
 
         <h3>Your iPhone&rsquo;s contacts, calendar and reminders</h3>
@@ -170,16 +188,18 @@ function Privacy() {
           If you connect a Google account, OVOA can read and act on your Gmail, Calendar, Tasks and
           Contacts, the files OVOA itself made in your Google Drive, and a Google Doc or Sheet you
           point it to. It can&rsquo;t search the rest of your Drive. It uses these when you ask, and
-          on Base and Pro it also checks them in the background for a few things: getting you ready
-          for a meeting, emails you sent that got no reply, and a weekly look through the last month
-          of mail for bills that are due. With more than one account connected, OVOA learns what
-          each is used for (who you write to, what your events are about) so it picks the right one.
+          on Base and Pro it also checks them in the background for a few things: the morning
+          brief&rsquo;s look at the last day&rsquo;s unread mail, getting you ready for a meeting,
+          emails you sent that got no reply, and a weekly look through the last month of mail for
+          bills that are due. With more than one account connected, OVOA learns what each is used
+          for (who you write to, what your events are about) so it picks the right one.
         </p>
         <p>
           The access tokens are stored encrypted. Risky actions, like sending an email, wait for
           your OK unless you turn that off. You can disconnect in Settings at any time, and we then
-          revoke the tokens. OVOA&rsquo;s use of data from Google follows the Google API Services
-          User Data Policy, including its Limited Use requirements.
+          revoke the tokens. We use data from Google only for the features described here, and we
+          never sell it or use it for ads. When OVOA reads something from Google out loud, like an
+          email, Deepgram gets that text to speak it (see below).
         </p>
 
         <h3>Your phone and the app</h3>
@@ -227,7 +247,7 @@ function Privacy() {
         </p>
       </section>
 
-      <section>
+      <section id="who-gets-what">
         <h2>Who gets what</h2>
         <p>
           We share data only with the services that run OVOA for us, only what each one needs, and
@@ -249,18 +269,30 @@ function Privacy() {
           <li>
             <strong>Google Gemini</strong>: writes replies when Z.ai can&rsquo;t, and runs
             OVOA&rsquo;s web searches. We use Google&rsquo;s paid API, so Google doesn&rsquo;t use
-            what we send to improve its products. It keeps it for a limited time only to catch
-            abuse, and keeps web searches for 30 days to produce the search results.
+            what we send to improve its products. It keeps what we send for a limited time only to
+            catch abuse and meet legal requirements, and keeps web searches for 30 days to produce
+            the search results and to debug and test its search systems.
           </li>
           <li>
             <strong>DuckDuckGo</strong>: when Gemini&rsquo;s search isn&rsquo;t available, the words
             of the search go to DuckDuckGo from our server, not from your phone.
           </li>
           <li>
+            <strong>Open-Meteo</strong>: an approximate location (about 100 metres) of where you
+            are, or of Home, for the morning brief&rsquo;s weather.
+          </li>
+          <li>
+            <strong>OpenStreetMap (Nominatim) and OSRM</strong>: the address of an upcoming Google
+            Calendar event, and your current or Home location, to work out when you need to leave.
+            None of these three get your name or account.
+          </li>
+          <li>
             <strong>Deepgram</strong>: gets the text of OVOA&rsquo;s replies to speak them in
-            OVOA&rsquo;s voice. It never gets your voice or your recordings, and nothing goes to it
-            until you&rsquo;ve agreed. Deepgram&rsquo;s terms let it use the text it receives to
-            improve its voice models.
+            OVOA&rsquo;s voice, including anything a reply reads out to you, like an email or a
+            calendar event. It never gets your voice or your recordings, and nothing goes to it
+            until you&rsquo;ve agreed. Deepgram&rsquo;s terms let it keep and use the text it
+            receives to improve its services, to develop other products, and to train and test its
+            AI models.
           </li>
           <li>
             <strong>Apple</strong>: speech recognition, on your iPhone or, on iPhones that
