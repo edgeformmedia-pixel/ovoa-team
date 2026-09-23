@@ -13,7 +13,7 @@ import {
   REF_PATTERN,
 } from "@/lib/membership/plans";
 
-const PAGE_TITLE = "OVOA Partners — earn from every member you send";
+const PAGE_TITLE = "OVOA Partners: earn from every member you send";
 const PAGE_DESCRIPTION = `Share OVOA and earn ${AFFILIATE_PERCENT}% of every payment your referrals make for ${COMMISSION_MONTHS} months.`;
 
 export const Route = createFileRoute("/partners/")({
