@@ -48,8 +48,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `supabase/migrations/…` | `20260922150000_membership.sql` (members, partners, commissions), `20260922200000_tiers_and_band_orders.sql` (plan tiers, Band orders), `20260923120000_member_app_email.sql` (the app email a plan was moved to) and `20260923180000_partner_cpm.sql` (partner CPM rates and logged views) |
-| `migrations/…` | The same three for the Cloudflare test Worker's D1 database |
+| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -89,7 +88,7 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 ## Before you start
 
-- [ ] **Read the privacy policy and terms.** Apple asks for a privacy policy before strangers can test (Step 7), and Stripe wants one too. Drafts are at `https://ovoa.ai/privacy` and `https://ovoa.ai/terms` once you publish. They were written from what the app server stores, but they're drafts: read them, and have a lawyer look if you can.
+- [ ] **Read the privacy policy and terms.** Apple asks for a privacy policy before strangers can test (Step 7), and Stripe wants one too. Drafts are at `https://ovoa.ai/privacy` and `https://ovoa.ai/terms`. They were written from what the app server stores, but they're drafts: read them, and have a lawyer look if you can.
 - [ ] **A support inbox at support@ovoa.ai.** The pages tell members to email it for refunds and help.
 - [ ] Node installed on your PC (it is, you use it for the app).
 
@@ -99,73 +98,39 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do these in order. Everything stays in Stripe **test mode**. If you're starting fresh, skip this and follow Part A; it has the same steps.
 
-1. **New Stripe prices for ovoa.ai.** From the `ovoa-team` folder, with your `sk_test_` key:
+1. **New Stripe prices for ovoa.ai.** From the `ovoa-team` folder in Git Bash, with your `sk_test_` key:
 
    ```bash
-   node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai --no-keys
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai --no-keys
    ```
 
-   It makes the Base AI, Pro AI and OVOA Band products and their five prices, and leaves your admin and membership keys alone (`--no-keys`). To change a price, add `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` or `--band` with the amount (the old `--monthly`, `--annual` and `--lifetime` are gone).
-2. **The same for the test Worker** (Git Bash):
+   It makes the Base AI, Pro AI and OVOA Band products and their five prices, puts the Stripe secrets on the site, and leaves your admin and membership keys alone (`--no-keys`). To change a price, add `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` or `--band` with the amount (the old `--monthly`, `--annual` and `--lifetime` are gone).
+2. **Archive the old prices.** Stripe → **Product catalog** → the old OVOA membership product → archive the three `ovoa_member_*` prices (monthly, annual, lifetime). Anyone already on them keeps working and counts as Base.
+3. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
+4. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 5.
+5. **Turn on the app's plan check** (Part C): the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
 
-   ```bash
-   node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site.ovoa.workers.dev --cloudflare
-   ```
-
-   Its database already has the new tables.
-3. **Archive the old prices.** Stripe → **Product catalog** → the old OVOA membership product → archive the three `ovoa_member_*` prices (monthly, annual, lifetime). Anyone already on them keeps working and counts as Base.
-4. **The new database tables on Lovable.** In the Lovable chat, send exactly:
-
-   > Apply the database migration in supabase/migrations/20260922200000_tiers_and_band_orders.sql exactly as written. Don't change any code.
-
-   Approve the SQL it shows. Then send:
-
-   > Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
-
-   and approve that too. Then the partner CPM one:
-
-   > Apply the database migration in supabase/migrations/20260923180000_partner_cpm.sql exactly as written. Don't change any code.
-
-   Until it's applied, everything works except **Set CPM** and **Log views** on the admin page.
-5. **Publish.** Lovable → **Publish** → **Update**.
-6. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
-7. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 8.
-8. **Turn on the app's plan check** (Part C): the same `MEMBERSHIP_API_KEY` on Lovable and on the app's Worker.
+The database tables are already there (all four migrations, as of Sept 23).
 
 ---
 
-## Test it first on the Cloudflare Worker (optional, recommended)
+## Where the site runs
 
-Lovable is the real site. There is also a **test copy** of the site on a Cloudflare Worker, **https://ovoa-site.ovoa.workers.dev** (Worker `ovoa-site`), in the admin@ovoa.ai Cloudflare account. It has its own small database (Cloudflare D1, `ovoa-site-db`), so you can buy, cancel and refund with Stripe's **test** cards without touching Lovable.
+ovoa.ai is a Cloudflare Worker, `ovoa-site`, in the **admin@ovoa.ai** Cloudflare account (`wrangler.site.jsonc`). It answers at https://ovoa.ai, https://www.ovoa.ai and https://ovoa-site.ovoa.workers.dev. Cloudflare makes the DNS records and certificates for the two custom domains itself. Members, partners and Band orders are in its Cloudflare D1 database, `ovoa-site-db`.
 
-1. Wrangler needs the **admin@ovoa.ai** Cloudflare account, which is your normal Wrangler login (as of Sept 23). Check with `npx wrangler whoami`; if it shows another account, sign in again and pick **Admin@ovoa.ai's Account**:
+Every command below runs from the `ovoa-team` folder in Git Bash, with the admin@ovoa.ai Wrangler login. `XDG_CONFIG_HOME` picks that login; your plain `npx wrangler` login is a different account.
 
-```bash
-npx wrangler login
-```
+| You want to… | Run |
+| --- | --- |
+| Ship code changes | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy` |
+| Apply a new file in `migrations/` (before deploying) | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run db:migrate` |
+| Set a secret (pasted when asked) | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret put NAME -c wrangler.site.jsonc` |
+| Remove a secret | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret delete NAME -c wrangler.site.jsonc` |
+| See the live logs | `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler tail -c wrangler.site.jsonc` |
 
-2. Do Part A's Steps 1 and 2 below (Stripe account and settings), in test mode.
-3. Load Stripe into the test Worker. From the `ovoa-team` folder, with your `sk_test_` key:
+A secret takes effect as soon as it's set; there's nothing to publish. If that login ever expires: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler login`, and pick **Admin@ovoa.ai's Account**.
 
-```bash
-node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa-site.ovoa.workers.dev --cloudflare
-```
-
-This does Step 3 for the test Worker and uploads the secrets to it; nothing to paste. Keep the printed lines anyway (the admin key opens the admin page).
-
-4. Give it the TestFlight link once you have one (Step 7), pasting the link when asked. Until then its **Join the OVOA beta** button has nowhere to go:
-
-```bash
-npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
-```
-
-5. Run Step 8's checks at https://ovoa-site.ovoa.workers.dev/early-access and `/early-access/admin`.
-
-To ship code changes to the test Worker: `npm run cf:deploy`. If a new file shows up in `migrations/`, run `npm run cf:migrate` first.
-
-(Until Sept 23 the test Worker was `edgeformmedia-pixel-ovoa-team` in the Edgeformmedia account, reached with the separate login in `C:/Users/thoma/.wrangler-edgeformmedia`. That login can't reach the new Worker or its database.)
-
-When it all works, do Part A for real on Lovable. The test Worker's Stripe webhook is separate from Lovable's (each site address gets its own), so they don't interfere.
+Test Stripe end to end with **test** keys (`sk_test_`) on the live site before Step 9. On your PC, `npm run test:billing` and `npm run test:account` run the same flows against a fake Stripe.
 
 ---
 
@@ -192,21 +157,21 @@ In the Stripe dashboard (test mode is fine; these settings are shared):
 ### Step 3. Run the setup script (test mode)
 
 1. In Stripe, open **Developers → API keys** and click **Reveal test key** next to *Secret key*. Copy it (starts with `sk_test_`).
-2. Open a terminal and go to the site repo:
+2. Open Git Bash and go to the site repo:
 
 ```bash
-cd C:\Users\thoma\OneDrive\Documents\GitHub\ovoa-team
+cd /c/Users/thoma/OneDrive/Documents/GitHub/ovoa-team
 ```
 
 3. Run this, pasting your key in place of `sk_test_XXXX`:
 
 ```bash
-node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --site https://ovoa.ai
 ```
 
 It creates three products (Base AI, Pro AI, OVOA Band) and five prices: `ovoa_base_monthly` $9.95, `ovoa_base_annual` $95.99, `ovoa_pro_monthly` $25.95, `ovoa_pro_annual` $195.99 and `ovoa_band` $89.99. To use different prices, add them to the end, for example `--base-monthly 10.95 --pro-annual 199`. The options are `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` and `--band`. You can change prices any time later by running it again; existing members keep the price they signed up at.
 
-4. It prints a block like this. **Copy it into your password manager now.** Stripe only shows the webhook secret once.
+4. It puts the secrets on the site and prints a block like this. **Copy it into your password manager now.** Stripe only shows the webhook secret once.
 
 ```
 STRIPE_SECRET_KEY=sk_test_...
@@ -217,33 +182,23 @@ MEMBERSHIP_API_KEY=9ab2...
 
 (Lost the webhook secret? Run the same command with `--new-webhook` added at the end and it makes a new one.)
 
-### Step 4. Put the secrets into Lovable
+### Step 4. Check the secrets are on the site
 
-1. Open the OVOA project in Lovable.
-2. Open **Cloud → Secrets** and add each line from Step 3 as its own secret: the part before `=` is the name, the part after is the value. Four secrets.
-   - Can't find it? Type into the Lovable chat: *"Add four secrets: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, OVOA_ADMIN_KEY, MEMBERSHIP_API_KEY"* and it shows a secure box for each. Paste the values there, never into the chat itself.
+The script put all four on the site's Worker. To check, list their names:
 
-### Step 5. Create the database tables
+```bash
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret list -c wrangler.site.jsonc
+```
 
-The code is already on GitHub, so Lovable has it. There are three migrations, applied one at a time and in this order. In the Lovable chat, send exactly:
+To set one by hand instead, see [Where the site runs](#where-the-site-runs).
 
-> Apply the database migration in supabase/migrations/20260922150000_membership.sql exactly as written. Don't change any code.
+### Step 5. The database tables
 
-Lovable shows the SQL and an **Approve** button. Approve it. Then send:
+They're already there: `migrations/` holds four files, and all four are applied as of Sept 23. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
 
-> Apply the database migration in supabase/migrations/20260922200000_tiers_and_band_orders.sql exactly as written. Don't change any code.
+### Step 6. Check the site
 
-and approve that too. Then the third:
-
-> Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
-
-(The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it. Nobody can read them from a browser; only the site's server can.)
-
-The Cloudflare test Worker has its own copies in `migrations/`: `npm run cf:migrate` applies any that are missing (all four are applied as of Sept 23).
-
-### Step 6. Publish
-
-In Lovable, click **Publish** (top right), then **Update**. Wait for it to finish, then open https://ovoa.ai/early-access. The plan buttons should say "Get Base" and "Get Pro", and https://ovoa.ai/checkout should say "Continue to payment". If they say "Opening soon", Stripe isn't connected: re-check the `STRIPE_SECRET_KEY` secret and publish again.
+Open https://ovoa.ai/early-access. The plan buttons should say "Get Base" and "Get Pro", and https://ovoa.ai/checkout should say "Continue to payment". If they say "Opening soon", Stripe isn't connected: check the `STRIPE_SECRET_KEY` secret (Step 4).
 
 ### Step 7. Open TestFlight to people outside your team
 
@@ -261,7 +216,11 @@ Right now OVOA is only on your *internal* TestFlight group (team members only). 
 4. Open the `Members` group → **Builds** → **+** → pick your newest build → write a line in *What to Test* → **Submit for Review**.
 5. Wait for the email saying the build is approved (usually within a day or two).
 6. Open the `Members` group again → **Public Link** → **Enable Public Link** → copy the link (looks like `https://testflight.apple.com/join/AbCd1234`).
-7. Back in Lovable → **Cloud → Secrets**, add `TESTFLIGHT_PUBLIC_URL` with that link. Publish → Update again.
+7. Put the link on the site as the secret `TESTFLIGHT_PUBLIC_URL`, pasting it when asked:
+
+   ```bash
+   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret put TESTFLIGHT_PUBLIC_URL -c wrangler.site.jsonc
+   ```
 
 From now on the welcome page shows a **Join the OVOA beta** button that opens this link.
 
@@ -303,13 +262,12 @@ Bookmark the admin page. It's your control room.
 4. Run the script again with the live key:
 
 ```bash
-node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys
+XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys
 ```
 
-(`--no-keys` stops it making new admin/app keys; keep the ones you already set.)
+(`--no-keys` stops it making new admin/app keys; keep the ones you already set.) It replaces `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` on the site with the live ones.
 
-5. In Lovable → **Cloud → Secrets**, replace `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` with the two new live values. Publish → Update.
-6. Buy Base monthly yourself with a real card, check the welcome page and admin page, then cancel it from Manage billing and refund yourself in Stripe (plans have no free days, so this one is charged).
+5. Buy Base monthly yourself with a real card, check the welcome page and admin page, then cancel it from Manage billing and refund yourself in Stripe (plans have no free days, so this one is charged).
 
 **You're taking real money now.** Share https://ovoa.ai/early-access.
 
@@ -321,13 +279,17 @@ With only the public link, anyone who gets the link can install the beta, paid o
 
 1. App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys** → **+**. Name it `OVOA website`, access **App Manager**. Click **Generate**.
 2. **Download API Key** (a `.p8` file; Apple only lets you download it once). Note the **Key ID** next to it and the **Issuer ID** at the top of the page.
-3. In Lovable → **Cloud → Secrets** add:
+3. Put them on the site ([Where the site runs](#where-the-site-runs) has the full command; paste each value when asked):
    - `ASC_KEY_ID`: the Key ID
    - `ASC_ISSUER_ID`: the Issuer ID
-   - `ASC_PRIVATE_KEY`: open the `.p8` file in Notepad and paste all of it, including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines
-4. Publish → Update. Open the admin page → **Find my TestFlight group ids**. Copy the id next to `Members` (it must say *External*).
-5. Add the secret `TESTFLIGHT_GROUP_ID` with that id. Publish → Update.
-6. In App Store Connect, open the `Members` group → **Public Link** → **Disable**, and delete the `TESTFLIGHT_PUBLIC_URL` secret in Lovable. (Keep it if you'd rather have a backup link; the welcome page then offers it under "No email?")
+   - `ASC_PRIVATE_KEY`: the whole `.p8` file, including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines. Feed it the file so the line breaks survive:
+
+     ```bash
+     XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npx wrangler secret put ASC_PRIVATE_KEY -c wrangler.site.jsonc < ~/Downloads/AuthKey_XXXXXXXXXX.p8
+     ```
+4. Open the admin page → **Find my TestFlight group ids**. Copy the id next to `Members` (it must say *External*).
+5. Set the secret `TESTFLIGHT_GROUP_ID` to that id.
+6. In App Store Connect, open the `Members` group → **Public Link** → **Disable**, and delete the site's `TESTFLIGHT_PUBLIC_URL` secret. (Keep it if you'd rather have a backup link; the welcome page then offers it under "No email?")
 7. Test: on the admin page, **Give free access** to a second email of yours. Its TestFlight column should say `invited`, and Apple's email should arrive within minutes. If it says `failed`, the reason is right under it; fix it and press **Retry invite**.
 
 ---
@@ -347,10 +309,10 @@ It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the
 
 **Until the key is set on the app's Worker, everyone is treated as Pro**, so nothing is locked yet. To turn it on, in this order:
 
-- [ ] Lovable has the migrations and is published (the "Already did the first setup?" steps 4 and 5). Check it: https://ovoa.ai/api/public/membership should answer `{"error":"unauthorized"}`, not a "Page not found" page. (Since Sept 23 the Worker keeps each person's last answer when the site answers 404 or nonsense, so an unpublished site can't turn paying members Free. Anyone it has never heard about is Free until it can ask.)
+- [ ] The site answers: https://ovoa.ai/api/public/membership should say `{"error":"unauthorized"}`, not a "Page not found" page. (Since Sept 23 the app's Worker keeps each person's last answer when the site answers 404 or nonsense, so a site that's down can't turn paying members Free. Anyone it has never heard about is Free until it can ask.)
 - [ ] Give Apple's review login (Step 7) **Pro** free access on the admin page, or App Review sees only the free app.
 - [ ] Give yourself and your team free access too (Pro for anyone who tests the wake word or the agent).
-- [ ] `MEMBERSHIP_API_KEY` is in Lovable's secrets (Step 4). Use **the same value** on the Worker, from the `ovoa-app\jarvis\api` folder in Git Bash, pasting it when asked:
+- [ ] `MEMBERSHIP_API_KEY` is on the site (Step 4). Use **the same value** on the app's Worker, from the `ovoa-app\jarvis\api` folder in Git Bash, pasting it when asked:
 
   ```bash
   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put MEMBERSHIP_API_KEY
@@ -387,7 +349,7 @@ Band buyers get two emails from `no-reply@ovoa.ai`: the order email right after 
 1. Sign up at https://resend.com.
 2. **Domains → Add Domain** → `ovoa.ai`. Resend shows a few DNS records (an MX and TXT records for SPF and DKIM). Add them where the DNS for ovoa.ai is managed, then click **Verify** in Resend. It usually takes minutes, sometimes a few hours. It must say *Verified*, or Resend can't send as no-reply@ovoa.ai.
 3. **API Keys → Create API Key**, permission *Sending access*, domain `ovoa.ai`. Copy it (starts with `re_`).
-4. In Lovable → **Cloud → Secrets**, add `RESEND_API_KEY` with it. Publish → Update. For the Cloudflare test Worker: `npx wrangler secret put RESEND_API_KEY -c wrangler.site.jsonc` (already set as of Sept 23).
+4. Set it on the site as the secret `RESEND_API_KEY` ([Where the site runs](#where-the-site-runs)). Already set as of Sept 23.
 5. The admin page's *Setup* list shows **Emails from no-reply@ovoa.ai** in green.
 
 Want a different sender? Add the secret `EMAIL_FROM`, e.g. `OVOA <hello@ovoa.ai>`.
@@ -434,22 +396,16 @@ The site keeps the session in a cookie for 30 days; the app's "sign out everywhe
    ```
 
 3. **Deploy the app's server:** `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run deploy`, same folder.
-4. **Publish the site** (Lovable → Publish → Update). No new secret is needed: the site finds the app's server at `https://jarvis-api.edgeformmedia.workers.dev` (set `OVOA_API_URL` to use another). For the test Worker: `npm run cf:deploy`.
+4. **Deploy the site** (`npm run deploy`, see [Where the site runs](#where-the-site-runs)). No new secret is needed: the site finds the app's server at `https://jarvis-api.edgeformmedia.workers.dev` (set `OVOA_API_URL` to use another).
 5. Open https://ovoa.ai/account, type your email, and check the code arrives from no-reply@ovoa.ai. It signs you in to your app account.
 
-**Continue with Google (later).** Until it's set up, the button shows switched off with "Google sign-in opens soon".
+**Continue with Google** (set up Sept 23). Without the client secret, the button shows switched off with "Google sign-in opens soon".
 
-1. https://console.cloud.google.com → **APIs & Services → Credentials**. Either open the Web client the app already uses for Gmail and Calendar (`736336639952-r4qk…`), or **Create credentials → OAuth client ID → Web application** for the site.
-2. Under **Authorized redirect URIs**, add `https://ovoa.ai/api/public/account/google-callback` (and `https://ovoa-site.ovoa.workers.dev/api/public/account/google-callback` for the test Worker). Save.
-3. **OAuth consent screen:** app name `OVOA`, support email, and `https://ovoa.ai/privacy` as the privacy policy. Sign-in only asks for name and email (`openid email profile`), which Google doesn't need to review. While it's in *Testing*, only the test users you list can sign in: **Publish app** to open it to everyone.
-4. In Lovable → **Cloud → Secrets**, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from that client. Publish → Update.
-5. **Only if you made a new client in step 1:** the app's server has to accept its sign-ins. From `ovoa-app\jarvis\api`, paste the new client ID when asked:
-
-   ```bash
-   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npx wrangler secret put GOOGLE_SIGNIN_CLIENT_IDS
-   ```
-
-   (Reusing the app's client needs nothing here: its ID is already accepted.)
+- **The client:** Google Cloud project **OVOA** (`ovoa-509511`, owned by admin@ovoa.ai) → **Google Auth Platform → Clients** → the Web client `OVOA`, `681579233268-eegju2n5…`. It's shared with the app, which uses it to connect Gmail, Calendar and the rest. Its ID and secret are kept in `google/.env` (gitignored).
+- **Redirect URIs on it:** `https://ovoa.ai/api/public/account/google-callback` and `https://ovoa-site.ovoa.workers.dev/api/public/account/google-callback` for the site, plus `https://api.ovoa.ai/google/callback` for the app.
+- **On the site:** `GOOGLE_CLIENT_ID` is in `wrangler.site.jsonc` (it isn't secret), and `GOOGLE_CLIENT_SECRET` is a secret on the Worker.
+- **On the app's server:** `GOOGLE_SIGNIN_CLIENT_IDS` accepts this client's sign-ins until the app's server moves to the new client itself (`ovoa-app/docs/release-v1-prompt.md`).
+- **Sign-in only asks for name and email** (`openid email profile`), which Google doesn't need to review. While the Google app is in *Testing*, only the test users listed under **Audience** can sign in: **Publish app** there to open it to everyone.
 
 Google sign-ins are checked by the app's server with Google itself, and matched to accounts by email, exactly like a code. Someone new picks a name (Google's is filled in) and a password for the app.
 
@@ -491,10 +447,11 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 
 | Symptom | Fix |
 | --- | --- |
-| Buttons say "Opening soon" | `STRIPE_SECRET_KEY` missing or wrong, or Step 3 wasn't run with that same key. Fix and publish. |
-| Admin page: "The members table isn't there yet" | Step 5 wasn't approved. |
-| Admin page: "Wrong admin key" | Paste the exact `OVOA_ADMIN_KEY` value from Lovable. |
-| Stripe webhooks show `400 Bad signature` | `STRIPE_WEBHOOK_SECRET` doesn't match the endpoint. Run the script with `--new-webhook`, update the secret, publish. |
+| Buttons say "Opening soon" | `STRIPE_SECRET_KEY` missing or wrong, or Step 3 wasn't run with that same key. Run the script again (it sets the secret). |
+| Admin page: "The members table isn't there yet" | Run `npm run db:migrate` ([Where the site runs](#where-the-site-runs)). |
+| Admin page: "Wrong admin key" | Paste the exact `OVOA_ADMIN_KEY` value from `stripe/.env` or your password manager. |
+| Stripe webhooks show `400 Bad signature` | `STRIPE_WEBHOOK_SECRET` doesn't match the endpoint. Run the script with `--new-webhook`; it sets the new secret. |
+| ovoa.ai doesn't load at all | The Worker's custom domains: Cloudflare → Workers & Pages → `ovoa-site` → **Domains & Routes** should list `ovoa.ai` and `www.ovoa.ai`. `npm run deploy` adds them back. |
 | Stripe webhooks show `500` | Usually the database step. The admin *Setup* list shows which part is missing. Stripe retries for 3 days, so fixing it catches up automatically. |
 | Welcome page stuck on "Finishing your checkout…" | The payment didn't complete (e.g. a bank check still pending). It fills in once Stripe confirms. |
 | TestFlight column says `failed` | Read the reason under it. Common ones: the group is internal (make an external one), no approved build in the group yet, or a mistyped `ASC_*` secret. Fix it, then **Retry invite**. |
@@ -504,6 +461,8 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 
 ## All the secrets
 
+All of them live on the site's Worker; [Where the site runs](#where-the-site-runs) shows how to set, list and remove them.
+
 | Name | Required | Where it comes from |
 | --- | --- | --- |
 | `STRIPE_SECRET_KEY` | Yes | Stripe → Developers → API keys (the script prints it back) |
@@ -511,10 +470,10 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 | `OVOA_ADMIN_KEY` | Yes | Printed by the script; opens `/early-access/admin` |
 | `TESTFLIGHT_PUBLIC_URL` | Yes, unless you do Part B | TestFlight → Members group → Public Link |
 | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY`, `TESTFLIGHT_GROUP_ID` | Part B | App Store Connect → Integrations, and the admin page's group finder |
-| `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** Lovable and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C) |
+| `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** the site and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C) |
 | `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends the Band emails from no-reply@ovoa.ai |
 | `EMAIL_FROM` | No | A different sender than `OVOA <no-reply@ovoa.ai>` |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | For "Continue with Google" | Google Cloud → Credentials (Part F) |
+| `GOOGLE_CLIENT_SECRET` | For "Continue with Google" | `google/.env` (Part F). `GOOGLE_CLIENT_ID` is in `wrangler.site.jsonc` |
 | `OVOA_API_URL` | No | The app's server for accounts, if not `https://jarvis-api.edgeformmedia.workers.dev` |
 
-On the app's server (`ovoa-app/jarvis/api`, not Lovable): `RESEND_API_KEY` sends the sign-in codes, and `GOOGLE_SIGNIN_CLIENT_IDS` accepts a separate Google client for the site (Part F).
+On the app's server (`ovoa-app/jarvis/api`, a different Worker): `RESEND_API_KEY` sends the sign-in codes, and `GOOGLE_SIGNIN_CLIENT_IDS` accepts a separate Google client for the site (Part F).

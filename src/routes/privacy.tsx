@@ -28,7 +28,7 @@ function Privacy() {
   return (
     <LegalPage
       title="Privacy policy"
-      updated="September 22, 2026"
+      updated="September 23, 2026"
       intro={
         <p>
           This covers the OVOA iPhone app, the OVOA Band and ovoa.ai. OVOA is in beta, so we keep
@@ -113,6 +113,10 @@ function Privacy() {
 
         <h3>Google, if you connect it</h3>
         <p>
+          If you sign in or create your account with Google, we get only your name and email address
+          from Google.
+        </p>
+        <p>
           If you connect a Google account, OVOA can read and act on your Gmail, Calendar, Contacts,
           Tasks, Docs and Sheets when you ask it to. The access tokens are stored encrypted. Risky
           actions, like sending an email, wait for your OK unless you turn that off. You can
@@ -146,7 +150,8 @@ function Privacy() {
         </p>
         <ul>
           <li>
-            <strong>Cloudflare</strong>: hosting, our database, and some AI models.
+            <strong>Cloudflare</strong>: hosting (the app and ovoa.ai), our databases, member
+            records, and some AI models.
           </li>
           <li>
             <strong>AI model providers</strong>: currently Google (Gemini), DeepSeek and Zhipu AI
@@ -165,8 +170,7 @@ function Privacy() {
             <strong>Google and DuckDuckGo</strong>: web searches OVOA runs to answer a question.
           </li>
           <li>
-            <strong>Stripe</strong>: payments. <strong>Lovable and Supabase</strong>: the ovoa.ai
-            website and its member records.
+            <strong>Stripe</strong>: payments.
           </li>
         </ul>
         <p>

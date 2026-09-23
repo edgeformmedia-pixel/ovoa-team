@@ -1,5 +1,5 @@
 // Email to buyers from no-reply@ovoa.ai, sent through Resend (resend.com): one
-// HTTPS call, so it runs on Lovable and on the Cloudflare Worker alike.
+// HTTPS call from the Worker.
 // Replies go to support@ovoa.ai.
 //
 //   RESEND_API_KEY   turns sending on (Resend → API Keys, with ovoa.ai verified

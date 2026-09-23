@@ -42,10 +42,6 @@ function d1(): D1 {
   return db;
 }
 
-export function databaseConnected(): boolean {
-  return Boolean(workerEnv()?.SITE_DB);
-}
-
 type Arg = string | number | boolean | null | undefined;
 
 // D1 takes null, numbers and strings only.

@@ -20,7 +20,6 @@ import { Route as OrderCompleteRouteImport } from './routes/order-complete'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
@@ -37,7 +36,6 @@ import { Route as ApiPublicBillingPortalRouteImport } from './routes/api/public/
 import { Route as ApiPublicBillingSessionStatusRouteImport } from './routes/api/public/billing/session-status'
 import { Route as ApiPublicBillingStartTrialRouteImport } from './routes/api/public/billing/start-trial'
 import { Route as ApiPublicBillingWebhookRouteImport } from './routes/api/public/billing/webhook'
-import { Route as ApiPublicHooksRunTasksRouteImport } from './routes/api/public/hooks/run-tasks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,12 +92,6 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const EarlyAccessIndexRoute = EarlyAccessIndexRouteImport.update({
   id: '/early-access/',
   path: '/early-access/',
@@ -185,11 +177,6 @@ const ApiPublicBillingWebhookRoute = ApiPublicBillingWebhookRouteImport.update({
   path: '/api/public/billing/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksRunTasksRoute = ApiPublicHooksRunTasksRouteImport.update({
-  id: '/api/public/hooks/run-tasks',
-  path: '/api/public/hooks/run-tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -203,7 +190,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/partners/dashboard': typeof PartnersDashboardRoute
@@ -220,7 +206,6 @@ export interface FileRoutesByFullPath {
   '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
   '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
-  '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -234,7 +219,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/partners/dashboard': typeof PartnersDashboardRoute
@@ -251,7 +235,6 @@ export interface FileRoutesByTo {
   '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
   '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
-  '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -266,7 +249,6 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/partners/dashboard': typeof PartnersDashboardRoute
@@ -283,7 +265,6 @@ export interface FileRoutesById {
   '/api/public/billing/session-status': typeof ApiPublicBillingSessionStatusRoute
   '/api/public/billing/start-trial': typeof ApiPublicBillingStartTrialRoute
   '/api/public/billing/webhook': typeof ApiPublicBillingWebhookRoute
-  '/api/public/hooks/run-tasks': typeof ApiPublicHooksRunTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -299,7 +280,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
-    | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/partners/dashboard'
@@ -316,7 +296,6 @@ export interface FileRouteTypes {
     | '/api/public/billing/session-status'
     | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
-    | '/api/public/hooks/run-tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -330,7 +309,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
-    | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/partners/dashboard'
@@ -347,7 +325,6 @@ export interface FileRouteTypes {
     | '/api/public/billing/session-status'
     | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
-    | '/api/public/hooks/run-tasks'
   id:
     | '__root__'
     | '/'
@@ -361,7 +338,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
-    | '/.well-known/oauth-protected-resource'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/partners/dashboard'
@@ -378,7 +354,6 @@ export interface FileRouteTypes {
     | '/api/public/billing/session-status'
     | '/api/public/billing/start-trial'
     | '/api/public/billing/webhook'
-    | '/api/public/hooks/run-tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -393,7 +368,6 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
-  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
   PartnersDashboardRoute: typeof PartnersDashboardRoute
@@ -410,7 +384,6 @@ export interface RootRouteChildren {
   ApiPublicBillingSessionStatusRoute: typeof ApiPublicBillingSessionStatusRoute
   ApiPublicBillingStartTrialRoute: typeof ApiPublicBillingStartTrialRoute
   ApiPublicBillingWebhookRoute: typeof ApiPublicBillingWebhookRoute
-  ApiPublicHooksRunTasksRoute: typeof ApiPublicHooksRunTasksRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -490,13 +463,6 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/early-access/': {
@@ -611,13 +577,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBillingWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/run-tasks': {
-      id: '/api/public/hooks/run-tasks'
-      path: '/api/public/hooks/run-tasks'
-      fullPath: '/api/public/hooks/run-tasks'
-      preLoaderRoute: typeof ApiPublicHooksRunTasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -633,8 +592,6 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
-  Char91DotwellKnownChar93OauthProtectedResourceRoute:
-    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
   PartnersDashboardRoute: PartnersDashboardRoute,
@@ -652,7 +609,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBillingSessionStatusRoute: ApiPublicBillingSessionStatusRoute,
   ApiPublicBillingStartTrialRoute: ApiPublicBillingStartTrialRoute,
   ApiPublicBillingWebhookRoute: ApiPublicBillingWebhookRoute,
-  ApiPublicHooksRunTasksRoute: ApiPublicHooksRunTasksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

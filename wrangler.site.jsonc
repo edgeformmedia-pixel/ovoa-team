@@ -1,21 +1,26 @@
-// The Cloudflare TEST Worker for this site. Lovable stays the real site;
-// this copy exists to try paid early access end to end in Stripe test mode.
+// ovoa.ai: this site, as a Cloudflare Worker on admin@ovoa.ai's account.
 //
-//   npm run cf:deploy    build and deploy
-//   npm run cf:migrate   create/update the D1 tables (migrations/)
+//   npm run deploy       build and deploy (ovoa.ai, www.ovoa.ai, ovoa-site.ovoa.workers.dev)
+//   npm run db:migrate   create/update the D1 tables (migrations/); run it before deploy
 //
-// It runs the same build Lovable does (.output from `vite build`), plus its own
-// D1 database for members, since Lovable's Supabase service key only exists
-// inside Lovable. Secrets are set with `npx wrangler secret put NAME -c wrangler.site.jsonc`
-// (scripts/stripe-setup.mjs --cloudflare sets the Stripe ones for you).
+// Run both with the admin@ovoa.ai wrangler profile:
+//   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa npm run deploy
+// Secrets are set with `npx wrangler secret put NAME -c wrangler.site.jsonc`
+// (setup.md lists them; scripts/stripe-setup.mjs sets the Stripe ones for you).
 {
   "name": "ovoa-site",
+  "account_id": "e58b0ec5305410f9d3cd70f461f39cb6",
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
   "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
   "assets": { "binding": "ASSETS", "directory": ".output/public" },
+  // Custom domains: Cloudflare makes the DNS records and certificates itself.
+  "routes": [
+    { "pattern": "ovoa.ai", "custom_domain": true },
+    { "pattern": "www.ovoa.ai", "custom_domain": true }
+  ],
   "workers_dev": true,
   "d1_databases": [
     {
@@ -25,10 +30,10 @@
       "migrations_dir": "migrations"
     }
   ],
-  // Public values (the same ones in .env); the site's sign-in pages use them.
   "vars": {
-    "SUPABASE_URL": "https://uteidkbevflbdnrczkqs.supabase.co",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RuvJ-6sHrZi7505MXp_1WA_6BXWhHJa"
+    // "Continue with Google" on /account: the Web client in Google Cloud project
+    // ovoa-509511 (admin@ovoa.ai). GOOGLE_CLIENT_SECRET is a secret.
+    "GOOGLE_CLIENT_ID": "681579233268-eegju2n5qcpg6ja35np11vpl9fic51pf.apps.googleusercontent.com"
   },
   "observability": { "enabled": true }
 }

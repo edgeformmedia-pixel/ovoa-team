@@ -2,7 +2,7 @@
 -- Stripe, the partners who refer them, and what each partner is owed.
 -- Only the site's Worker reads or writes these tables.
 --
--- Apply: npm run cf:migrate
+-- Apply: npm run db:migrate
 
 CREATE TABLE members (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
