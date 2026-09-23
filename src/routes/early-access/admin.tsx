@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import {
   endCompAccess,
+  setMemberAppEmail,
   getAdminOverview,
   grantAccess,
   listTestflightGroups,
@@ -112,6 +113,7 @@ function Admin() {
   const findGroups = useServerFn(listTestflightGroups);
   const giveAccess = useServerFn(grantAccess);
   const endAccess = useServerFn(endCompAccess);
+  const setAppEmail = useServerFn(setMemberAppEmail);
   const setBandStatus = useServerFn(setBandOrderStatus);
 
   const refresh = useCallback(
@@ -642,6 +644,11 @@ function Admin() {
                     <tr key={m.id} className="align-top">
                       <td className="px-4 py-2.5">
                         <span className="font-medium">{m.email}</span>
+                        {m.appEmail && (
+                          <span className="block text-xs text-landing-muted">
+                            App account: {m.appEmail}
+                          </span>
+                        )}
                         {(m.name || m.note) && (
                           <span className="block text-xs text-landing-muted">
                             {[m.name, m.note].filter(Boolean).join(" · ")}
@@ -663,6 +670,24 @@ function Admin() {
                             Copy welcome link
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className="mt-1 block text-xs font-semibold text-landing-action"
+                          title="When they sign in to the app with a different email than they paid with"
+                          disabled={busy === m.id}
+                          onClick={() => {
+                            const appEmail = window.prompt(
+                              `The email ${m.email} signs in to the OVOA app with (empty: ${m.email} itself)`,
+                              m.appEmail ?? "",
+                            );
+                            if (appEmail === null) return;
+                            void act(m.id, () =>
+                              setAppEmail({ data: { key, id: m.id, appEmail } }),
+                            );
+                          }}
+                        >
+                          {m.appEmail ? "Change app email" : "Set app email"}
+                        </button>
                       </td>
                       <td className="px-4 py-2.5">
                         {PLAN_NAMES[m.tier]}

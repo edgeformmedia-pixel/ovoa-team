@@ -327,6 +327,19 @@ async function main() {
       comm?.amount_cents === 19599 && comm.commission_cents === 3920,
       comm,
     );
+
+    // Signs in to the app with another email: the welcome page moves the plan.
+    sql("UPDATE members SET app_email = 'pro-app@buyer.test' WHERE email = 'pro@buyer.test'");
+    const moved = await membership("pro-app@buyer.test");
+    const payer = await membership("pro@buyer.test");
+    check(
+      "app email: the plan goes to the app account, not the paying email",
+      moved.tier === "pro" && moved.status === "active" && payer.tier === "free",
+      { moved, payer },
+    );
+    sql("UPDATE members SET app_email = NULL WHERE email = 'pro@buyer.test'");
+    const back = await membership("pro@buyer.test");
+    check("app email: cleared, back on the paying email", back.tier === "pro", back);
   }
 
   // ---- 5. Cancel ----

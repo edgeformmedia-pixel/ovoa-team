@@ -73,6 +73,8 @@ export type WelcomeData =
       state: "ready";
       firstName: string | null;
       email: string;
+      // The OVOA app account the plan unlocks: `email` unless moved.
+      appEmail: string;
       plan: MemberPlan;
       tier: PaidTier;
       status: string;
@@ -189,6 +191,7 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
     state: "ready",
     firstName: member.name?.split(/\s+/)[0] ?? null,
     email: member.email,
+    appEmail: member.app_email ?? member.email,
     plan: member.plan,
     tier: member.tier,
     status: member.status,
@@ -275,6 +278,28 @@ export const changePlan = createServerFn({ method: "POST" })
             };
     await stripe("POST", `/subscriptions/${member.stripe_subscription_id}`, body);
     await sync.syncSubscription(member.stripe_subscription_id);
+    return welcomeFor(data.sessionId);
+  });
+
+// The welcome page's "use a different email in the app": moves the plan to the
+// OVOA app account with that email. The paying email's account stops getting
+// it; the paying email back (or an empty box) undoes it. Only this checkout's
+// buyer has the link, so it needs nothing more than the session.
+export const setAppEmail = createServerFn({ method: "POST" })
+  .inputValidator((input: { sessionId?: unknown; appEmail?: unknown }) => {
+    const appEmail = typeof input?.appEmail === "string" ? input.appEmail.trim().toLowerCase() : "";
+    if (appEmail && (appEmail.length > 254 || !EMAIL.test(appEmail))) {
+      throw new Error("That email doesn't look right. Check it for a typo.");
+    }
+    return { ...sessionInput(input), appEmail };
+  })
+  .handler(async ({ data }): Promise<WelcomeData> => {
+    const sync = await import("./sync.server");
+    const { store } = await import("./store.server");
+    const member = (await sync.syncCheckoutSession(data.sessionId))?.member;
+    if (!member) throw new Error("There's no plan on this checkout to move.");
+    const appEmail = !data.appEmail || data.appEmail === member.email ? null : data.appEmail;
+    await store().updateMember(member.id, { app_email: appEmail });
     return welcomeFor(data.sessionId);
   });
 
@@ -418,6 +443,8 @@ function adminInput<T extends object>(extra: (input: Record<string, unknown>) =>
 export type AdminMember = {
   id: string;
   email: string;
+  // The app account the plan goes to, when it isn't `email`.
+  appEmail: string | null;
   name: string | null;
   plan: string;
   tier: PaidTier;
@@ -611,6 +638,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
       members: members.slice(0, 500).map((m) => ({
         id: m.id,
         email: m.email,
+        appEmail: m.app_email ?? null,
         name: m.name,
         plan: m.plan,
         tier: m.tier,
@@ -770,5 +798,29 @@ export const endCompAccess = createServerFn({ method: "POST" })
       canceled_at: new Date().toISOString(),
     });
     await sync.syncTestflight(ended);
+    return { ok: true };
+  });
+
+// Support's version of the welcome page's "use a different email in the app":
+// someone paid with one email and signs in to the app with another.
+export const setMemberAppEmail = createServerFn({ method: "POST" })
+  .inputValidator(
+    adminInput((input) => ({
+      id: String(input["id"] ?? ""),
+      appEmail: String(input["appEmail"] ?? "")
+        .trim()
+        .toLowerCase(),
+    })),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin(data.key);
+    if (data.appEmail && (data.appEmail.length > 254 || !EMAIL.test(data.appEmail))) {
+      throw new Error("That email doesn't look right.");
+    }
+    const { store } = await import("./store.server");
+    const row = await store().findMember("id", data.id);
+    if (!row) throw new Error("No such member.");
+    const appEmail = !data.appEmail || data.appEmail === row.email ? null : data.appEmail;
+    await store().updateMember(row.id, { app_email: appEmail });
     return { ok: true };
   });

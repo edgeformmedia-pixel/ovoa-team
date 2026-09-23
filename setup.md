@@ -23,6 +23,8 @@ ovoa.ai/checkout (the Band)   →  Stripe Checkout: Band + Base monthly with 7 f
         →  the app's server asks ovoa.ai which plan that email is on, and unlocks that much
 ```
 
+The app account has to use the email they paid with. When it doesn't (Apple Pay or Link filled in another address, or they already had an app account), the welcome page has **Use a different email in the app**: the plan moves to that app account, and the paying email goes back to the free app. You can do the same for someone on the admin page (**Set app email** under their email).
+
 **What was built** (all in this repo):
 
 | Page / endpoint | What it does |
@@ -38,8 +40,8 @@ ovoa.ai/checkout (the Band)   →  Stripe Checkout: Band + Base monthly with 7 f
 | `/api/public/billing/portal` | Stripe's billing page (cancel, change card, invoices) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `supabase/migrations/…` | `20260922150000_membership.sql` (members, partners, commissions) and `20260922200000_tiers_and_band_orders.sql` (plan tiers, Band orders) |
-| `migrations/…` | The same two for the Cloudflare test Worker's D1 database |
+| `supabase/migrations/…` | `20260922150000_membership.sql` (members, partners, commissions), `20260922200000_tiers_and_band_orders.sql` (plan tiers, Band orders) and `20260923120000_member_app_email.sql` (the app email a plan was moved to) |
+| `migrations/…` | The same three for the Cloudflare test Worker's D1 database |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -108,7 +110,11 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 
    > Apply the database migration in supabase/migrations/20260922200000_tiers_and_band_orders.sql exactly as written. Don't change any code.
 
-   Approve the SQL it shows.
+   Approve the SQL it shows. Then send:
+
+   > Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
+
+   and approve that too.
 5. **Publish.** Lovable → **Publish** → **Update**.
 6. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
 7. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 8.
@@ -205,7 +211,7 @@ MEMBERSHIP_API_KEY=9ab2...
 
 ### Step 5. Create the database tables
 
-The code is already on GitHub, so Lovable has it. There are two migrations, applied one at a time and in this order. In the Lovable chat, send exactly:
+The code is already on GitHub, so Lovable has it. There are three migrations, applied one at a time and in this order. In the Lovable chat, send exactly:
 
 > Apply the database migration in supabase/migrations/20260922150000_membership.sql exactly as written. Don't change any code.
 
@@ -213,9 +219,13 @@ Lovable shows the SQL and an **Approve** button. Approve it. Then send:
 
 > Apply the database migration in supabase/migrations/20260922200000_tiers_and_band_orders.sql exactly as written. Don't change any code.
 
-and approve that too. (The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table. Nobody can read them from a browser; only the site's server can.)
+and approve that too. Then the third:
 
-The Cloudflare test Worker has its own copies in `migrations/`: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run cf:migrate` applies any that are missing (both are applied as of Sept 22).
+> Apply the database migration in supabase/migrations/20260923120000_member_app_email.sql exactly as written. Don't change any code.
+
+(The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to. Nobody can read them from a browser; only the site's server can.)
+
+The Cloudflare test Worker has its own copies in `migrations/`: `XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-edgeformmedia npm run cf:migrate` applies any that are missing (all three are applied as of Sept 23).
 
 ### Step 6. Publish
 
@@ -260,10 +270,11 @@ From now on the welcome page shows a **Join the OVOA beta** button that opens th
    - [ ] **Join the OVOA beta** opens TestFlight.
    - [ ] The **Pay yearly** offer works (nothing is charged today; Stripe now shows the yearly price starting after the free days).
    - [ ] **Manage billing** opens Stripe's page, where you can cancel.
+   - [ ] Under step 3, **Use a different email in the app** saves an address, and the step then names that address.
 4. Open https://ovoa.ai/early-access/admin, paste your `OVOA_ADMIN_KEY`. You should see yourself under *Everyone*, status `trialing`, the Band under *Band orders*, and green dots in *Setup* for Stripe key, webhook, database and public link.
 5. In Stripe → **Developers → Webhooks**, open the `ovoa.ai` endpoint. Recent deliveries should all show `200`.
 6. Buy **Pro yearly** on https://ovoa.ai/early-access with a second email: no free days, charged today. Then refund the Band in Stripe (**Payments** → the payment → **Refund**). On the admin page the Band order changes to `refunded`.
-7. If the app's plan check is on (Part C): sign in to the app with each email and pull to refresh on Settings → Your plan. The Band email says Base (trial), the Pro one says Pro. Cancel one in Manage billing, refresh, and it says Free: health and notes still work, the assistant says it's part of a plan.
+7. If the app's plan check is on (Part C): sign in to the app with each email and pull to refresh on Settings → Your plan. The Band email says Base (trial), the Pro one says Pro. Cancel one in Manage billing, refresh, and it says Free: health and notes still work, the assistant says it's part of a plan. On the Pro email's welcome page, move the plan to a third email you have an app account for: after Refresh, that account says Pro and the Pro email says Free.
 
 The same run happens automatically on your PC with a fake Stripe: `npm run build && npm run test:billing`.
 
@@ -317,11 +328,11 @@ Authorization: Bearer <MEMBERSHIP_API_KEY>
     "trialEndsAt": "..." | null, "renewsAt": "..." | null, "source": "stripe" | "band_trial" | "comp" | "none" }
 ```
 
-It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the last answer for a day before treating the person as free. Free people get health and notes; anything else answers "part of a plan" in the app. Base gets the assistant (20 replies a day), Pro adds the wake word and the background agent (55 a day). The app shows no prices or buy buttons during TestFlight (Apple's rule); it says the plan is managed at ovoa.ai and has a Refresh button. Members must sign up in the app with the same email they paid with; the welcome page tells them so.
+It keeps the answer for 10 minutes, and if ovoa.ai can't be reached it keeps the last answer for a day before treating the person as free. Free people get health and notes; anything else answers "part of a plan" in the app. Base gets the assistant (20 replies a day), Pro adds the wake word and the background agent (55 a day). The app shows no prices or buy buttons during TestFlight (Apple's rule); it says the plan is managed at ovoa.ai and has a Refresh button. Members sign up in the app with the same email they paid with; the welcome page tells them so, and lets them move the plan to a different app email if theirs doesn't match (the membership API answers for the app email, `members.app_email`, when one is set).
 
 **Until the key is set on the app's Worker, everyone is treated as Pro**, so nothing is locked yet. To turn it on, in this order:
 
-- [ ] Lovable has the tiers migration and is published (the "Already did the first setup?" steps 4 and 5). If the Worker asks the old site, it can't read the answer and everyone ends up Free.
+- [ ] Lovable has the migrations and is published (the "Already did the first setup?" steps 4 and 5). Check it: https://ovoa.ai/api/public/membership should answer `{"error":"unauthorized"}`, not a "Page not found" page. (Since Sept 23 the Worker keeps each person's last answer when the site answers 404 or nonsense, so an unpublished site can't turn paying members Free. Anyone it has never heard about is Free until it can ask.)
 - [ ] Give Apple's review login (Step 7) **Pro** free access on the admin page, or App Review sees only the free app.
 - [ ] Give yourself and your team free access too (Pro for anyone who tests the wake word or the agent).
 - [ ] `MEMBERSHIP_API_KEY` is in Lovable's secrets (Step 4). Use **the same value** on the Worker, from the `ovoa-app\jarvis\api` folder in Git Bash, pasting it when asked:
@@ -357,6 +368,7 @@ How it pays out: when someone arrives through `?ref=maria` and buys within 90 da
 | Cancel someone | Stripe → **Customers** → them → the subscription → **Cancel**. They keep access until the end of what they paid for. |
 | Ship a Band | Admin page → *Band orders* → the address is there → **Mark shipped** |
 | Give someone free access | Admin page → **Give free access**, and pick Base or Pro (reviewers, friends, creators) |
+| Someone paid but the app says Free | Usually the app account uses another email. Admin page → *Everyone* → **Set app email** under their email → the email they sign in to the app with. They tap Refresh on Settings → Your plan. |
 | Change prices | Re-run `node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys --base-monthly 10.95` (or `--base-annual`, `--pro-monthly`, `--pro-annual`, `--band`). The site shows new prices within 5 minutes; existing members keep theirs. |
 | Offer a discount code | Stripe → **Products → Coupons** → create a coupon and a *promotion code* (e.g. `LAUNCH20`). Checkout already has a "Add promotion code" box. |
 | Change the Band's free days | `BAND_TRIAL_DAYS` in `src/lib/membership/plans.ts` (plans bought alone have none: `NO_BAND_TRIAL_DAYS`) |

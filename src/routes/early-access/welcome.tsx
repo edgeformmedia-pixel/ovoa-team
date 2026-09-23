@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Copy, Loader2, Package } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import {
   changePlan,
   getWelcome,
+  setAppEmail,
   type WelcomeBand,
   type WelcomeData,
   type WelcomeOffer,
@@ -97,6 +98,90 @@ const primaryButton =
   "mt-4 inline-flex h-11 items-center justify-center rounded-full bg-landing-action px-6 text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5 active:translate-y-0";
 const secondaryButton =
   "inline-flex h-11 items-center justify-center rounded-full border border-landing-line px-6 text-sm font-semibold text-landing-ink transition-colors hover:border-landing-muted";
+const field =
+  "h-11 w-full rounded-xl border border-landing-line bg-landing-canvas px-4 text-[15px] text-landing-ink outline-none transition-colors placeholder:text-landing-muted focus:border-landing-action focus:ring-2 focus:ring-landing-action/15";
+
+// Members only: the app account the plan goes to, and a way to move it when
+// the app account uses another email (Apple Pay or Link filled in a different
+// one, or they signed up in the app before paying).
+type AppLink = {
+  paidWith: string;
+  appEmail: string;
+  save: (appEmail: string) => Promise<string | null>;
+};
+
+function AppEmailSwitch({ link }: { link: AppLink }) {
+  const moved = link.appEmail !== link.paidWith;
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(moved ? link.appEmail : "");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    const error = await link.save(value);
+    setBusy(false);
+    if (error) setMessage(error);
+    else {
+      setOpen(false);
+      setMessage("Saved. In the app, open Settings, then Your plan, and tap Refresh.");
+    }
+  }
+
+  return (
+    <div className="mt-3 text-sm">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="font-semibold text-landing-action"
+        >
+          {moved ? "Change the app email" : "Use a different email in the app"}
+        </button>
+      ) : (
+        <form onSubmit={submit} className="grid gap-2">
+          <label className="grid gap-1.5 font-medium text-landing-ink">
+            The email you sign in to OVOA with
+            <input
+              className={field}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder={link.paidWith}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          </label>
+          <p>
+            Your plan moves to that account; {link.paidWith} goes back to the free app. Leave it
+            empty to keep it on {link.paidWith}.
+          </p>
+          <div className="flex gap-3">
+            <button type="submit" disabled={busy} className={`${primaryButton} mt-1`}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className={`${secondaryButton} mt-1`}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+      {message && (
+        <p role="status" className="mt-2">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
 
 // Install TestFlight → join the beta → sign up. Same for members and for
 // people who bought a Band on its own (they get the free app).
@@ -104,11 +189,14 @@ function AppSteps({
   email,
   tf,
   signUpNote,
+  link,
 }: {
   email: string;
   tf: WelcomeTestflight;
   signUpNote: string;
+  link?: AppLink | undefined;
 }) {
+  const appEmail = link?.appEmail ?? email;
   const invited = tf.mode === "invite" && tf.state === "invited";
   return (
     <section className="mt-10 rounded-[1.75rem] bg-landing-control/70 px-6 sm:px-8">
@@ -171,9 +259,11 @@ function AppSteps({
 
         <Step n={3} title="Open OVOA and sign up">
           <p>
-            Create your account with <strong className="text-landing-ink">{email}</strong>, the
-            email you paid with. {signUpNote}
+            Create your account with <strong className="text-landing-ink">{appEmail}</strong>
+            {appEmail === email ? ", the email you paid with" : ""}, or sign in if you already have
+            one. {signUpNote}
           </p>
+          {link && <AppEmailSwitch link={link} />}
         </Step>
       </ol>
     </section>
@@ -248,6 +338,7 @@ function Welcome() {
   const [switching, setSwitching] = useState<"annual" | "pro" | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const doChange = useServerFn(changePlan);
+  const doSetAppEmail = useServerFn(setAppEmail);
 
   useEffect(() => setWelcome(data), [data]);
 
@@ -449,6 +540,22 @@ function Welcome() {
           email={w.email}
           tf={w.testflight}
           signUpNote={`That's how OVOA knows you're on ${planName}.`}
+          link={
+            sessionId
+              ? {
+                  paidWith: w.email,
+                  appEmail: w.appEmail,
+                  save: async (appEmail) => {
+                    try {
+                      setWelcome(await doSetAppEmail({ data: { sessionId, appEmail } }));
+                      return null;
+                    } catch (err) {
+                      return err instanceof Error ? err.message : "That didn't save. Try again.";
+                    }
+                  },
+                }
+              : undefined
+          }
         />
       )}
 

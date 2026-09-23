@@ -1,8 +1,8 @@
 // Where members, partners and commissions are kept. Two backends, same shape:
 //
 //   - Lovable (the real site): Lovable Cloud's Supabase, tables from
-//     supabase/migrations/20260922150000_membership.sql and
-//     20260922200000_tiers_and_band_orders.sql
+//     supabase/migrations/20260922150000_membership.sql,
+//     20260922200000_tiers_and_band_orders.sql and 20260923120000_member_app_email.sql
 //   - The Cloudflare test Worker: D1 bound as SITE_DB, tables from
 //     migrations/ (Lovable's Supabase service key can't be used outside Lovable)
 //
@@ -24,6 +24,8 @@ import {
 export type Member = {
   id: string;
   email: string;
+  // The OVOA app account this membership unlocks, when it isn't `email`.
+  app_email: string | null;
   name: string | null;
   plan: MemberPlan;
   tier: PaidTier;
@@ -123,6 +125,9 @@ export interface Store {
   insertMember(patch: MemberPatch): Promise<Member>;
   updateMember(id: string, patch: MemberPatch): Promise<Member>;
   membersByEmail(email: string): Promise<Member[]>;
+  // The memberships that unlock the app account with this email: its own
+  // (unless moved to another app account) and any moved to it.
+  membersForApp(email: string): Promise<Member[]>;
   membersByRef(code: string): Promise<Member[]>;
   lifetimeByPaymentIntent(paymentIntentId: string): Promise<Member[]>;
   listMembers(limit: number): Promise<Member[]>;
@@ -153,6 +158,7 @@ export function store(): Store {
 
 const MEMBER_COLUMNS = new Set([
   "email",
+  "app_email",
   "name",
   "plan",
   "tier",
@@ -263,6 +269,16 @@ const d1Store: Store = {
       (
         await all<Record<string, unknown>>(
           "SELECT * FROM members WHERE email = ? ORDER BY created_at DESC",
+          email,
+        )
+      ).map(toMember),
+    ),
+  membersForApp: (email) =>
+    d1(async () =>
+      (
+        await all<Record<string, unknown>>(
+          "SELECT * FROM members WHERE app_email = ? OR (email = ? AND app_email IS NULL) ORDER BY created_at DESC",
+          email,
           email,
         )
       ).map(toMember),
@@ -480,6 +496,24 @@ const supabaseStore: Store = {
           .order("created_at", { ascending: false }),
       )
     ).map(toMember);
+  },
+  async membersForApp(email) {
+    let found: Record<string, unknown>[][];
+    try {
+      found = await Promise.all([
+        rows(sb().from("members").select("*").eq("app_email", email)),
+        rows(sb().from("members").select("*").eq("email", email).is("app_email", null)),
+      ]);
+    } catch (error) {
+      // Published before the app_email migration was applied: nobody has moved
+      // a membership yet, so the paying email is the whole answer.
+      if (error instanceof StoreNotReadyError) return supabaseStore.membersByEmail(email);
+      throw error;
+    }
+    const [moved, own] = found;
+    return [...moved!, ...own!]
+      .map(toMember)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   },
   async membersByRef(code) {
     return (await rows(sb().from("members").select("*").eq("ref_code", code).limit(10000))).map(

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// For the OVOA app's server: which AI tier does this email have?
+// For the OVOA app's server: which AI tier does the app account with this
+// email have? That is the memberships paid with it, less any moved to another
+// app account from the welcome page, plus any moved to it (members.app_email).
 //
 //   GET /api/public/membership?email=someone@example.com
 //   Authorization: Bearer <MEMBERSHIP_API_KEY>
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/api/public/membership")({
         const { store } = await import("@/lib/membership/store.server");
         const { resolveMembership } = await import("@/lib/membership/resolve");
         try {
-          return Response.json(resolveMembership(await store().membersByEmail(email)));
+          return Response.json(resolveMembership(await store().membersForApp(email)));
         } catch (error) {
           console.error("[membership] lookup", error);
           return Response.json({ error: "lookup failed" }, { status: 500 });
