@@ -25,7 +25,7 @@ export const Route = createFileRoute("/early-access/admin")({
   ssr: false,
   staticData: { sitemap: false },
   head: () => ({
-    meta: [{ title: "Members admin — OVOA" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [{ title: "Members admin | OVOA" }, { name: "robots", content: "noindex, nofollow" }],
   }),
 });
 
@@ -37,7 +37,7 @@ const withYear = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 const date = (v: string | null) => {
-  if (!v) return "—";
+  if (!v) return "-";
   const d = new Date(v);
   return (d.getFullYear() === new Date().getFullYear() ? shortDate : withYear).format(d);
 };
@@ -307,7 +307,7 @@ function Admin() {
                   {groups.map((g) => (
                     <tr key={g.id}>
                       <td className="px-4 py-2.5 font-medium">{g.name}</td>
-                      <td className="px-4 py-2.5">{g.app ?? "—"}</td>
+                      <td className="px-4 py-2.5">{g.app ?? "-"}</td>
                       <td className="px-4 py-2.5">
                         {g.internal ? "Internal (can't use)" : "External"}
                       </td>
@@ -421,7 +421,7 @@ function Admin() {
                       <td className="px-4 py-2.5">
                         <address className="text-xs not-italic leading-5">
                           {b.shipTo.length === 0
-                            ? "—"
+                            ? "-"
                             : b.shipTo.map((line) => (
                                 <span key={line} className="block">
                                   {line}
@@ -685,7 +685,7 @@ function Admin() {
                       <td className="px-4 py-2.5">
                         {m.status === "trialing" ? date(m.trialEndsAt) : date(m.renewsAt)}
                       </td>
-                      <td className="px-4 py-2.5">{m.ref ?? "—"}</td>
+                      <td className="px-4 py-2.5">{m.ref ?? "-"}</td>
                       <td className="px-4 py-2.5">
                         <span className={m.testflight === "failed" ? "font-semibold" : ""}>
                           {m.testflight}
