@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, LockKeyhole } from "lucide-react";
-import { useState } from "react";
+import { Check, Loader2, LockKeyhole } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { StripeEmbeddedCheckout } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
 import bandFront from "@/assets/product/band-front-cutout.png";
 import bandSensors from "@/assets/product/band-sensors-cutout.png";
@@ -102,11 +103,75 @@ function Choice({
   );
 }
 
+// Stripe's embedded Checkout, mounted in #checkout. The session is made for
+// the choice on screen; to change it, the buyer goes back and picks again.
+function EmbeddedBandCheckout({ withAi, onCancel }: { withAi: boolean; onCancel: () => void }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+
+  useEffect(() => {
+    let checkout: StripeEmbeddedCheckout | null = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/billing/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ai: withAi }),
+        });
+        const json = (await res.json()) as { clientSecret?: string; publishableKey?: string };
+        if (!res.ok || !json.clientSecret || !json.publishableKey) throw new Error("session");
+        const { loadStripe } = await import("@stripe/stripe-js");
+        const stripe = await loadStripe(json.publishableKey);
+        if (!stripe || cancelled) return;
+        checkout = await stripe.createEmbeddedCheckoutPage({
+          fetchClientSecret: async () => json.clientSecret!,
+        });
+        if (cancelled || !mountRef.current) return checkout.destroy();
+        checkout.mount(mountRef.current);
+        setState("ready");
+      } catch (error) {
+        console.error("[checkout]", error);
+        if (!cancelled) setState("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      checkout?.destroy();
+    };
+  }, [withAi]);
+
+  return (
+    <div>
+      {state === "loading" && (
+        <p className="flex items-center justify-center gap-2 py-10 text-sm text-landing-muted">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Loading secure checkout
+        </p>
+      )}
+      {state === "error" && (
+        <p role="status" className="rounded-lg bg-landing-control px-4 py-3 text-sm font-medium">
+          Checkout didn&rsquo;t load. Please try again, or email support@ovoa.ai.
+        </p>
+      )}
+      <div id="checkout" ref={mountRef} className="overflow-hidden rounded-lg" />
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mt-3 w-full text-center text-[11px] text-landing-muted hover:text-landing-ink"
+      >
+        Change my choice
+      </button>
+    </div>
+  );
+}
+
 function Checkout() {
   const data = Route.useLoaderData();
   const { error, canceled } = Route.useSearch();
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [withAi, setWithAi] = useState(true);
+  const [paying, setPaying] = useState(false);
 
   const activePhoto = productPhotos[selectedPhoto];
   const band = bandPrice(data);
@@ -208,7 +273,7 @@ function Checkout() {
             >
               <Choice
                 selected={withAi}
-                onSelect={() => setWithAi(true)}
+                onSelect={() => !paying && setWithAi(true)}
                 title={`Band + ${days} days of OVOA Base`}
                 price={band}
               >
@@ -217,7 +282,7 @@ function Checkout() {
               </Choice>
               <Choice
                 selected={!withAi}
-                onSelect={() => setWithAi(false)}
+                onSelect={() => !paying && setWithAi(false)}
                 title="Band only"
                 price={band}
               >
@@ -248,21 +313,24 @@ function Checkout() {
               </p>
             </div>
 
-            <form method="post" action="/api/public/billing/checkout">
-              <input type="hidden" name="band" value="1" />
-              <input type="hidden" name="ai" value={withAi ? "1" : "0"} />
-              <Button
-                type="submit"
-                disabled={!enabled}
-                className="h-12 w-full rounded-lg bg-landing-action text-sm font-semibold text-landing-action-foreground shadow-none hover:bg-landing-action/90"
-              >
-                {enabled ? "Continue to payment" : "Opening soon"}
-              </Button>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] leading-5 text-landing-muted">
-                <LockKeyhole className="size-3" aria-hidden="true" />
-                Shipping address and payment on the next page, by Stripe. Card or Apple Pay.
-              </p>
-            </form>
+            {paying ? (
+              <EmbeddedBandCheckout withAi={withAi} onCancel={() => setPaying(false)} />
+            ) : (
+              <div>
+                <Button
+                  type="button"
+                  disabled={!enabled}
+                  onClick={() => setPaying(true)}
+                  className="h-12 w-full rounded-lg bg-landing-action text-sm font-semibold text-landing-action-foreground shadow-none hover:bg-landing-action/90"
+                >
+                  {enabled ? "Buy now" : "Opening soon"}
+                </Button>
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] leading-5 text-landing-muted">
+                  <LockKeyhole className="size-3" aria-hidden="true" />
+                  Pay right here, secured by Stripe. Card or Apple Pay.
+                </p>
+              </div>
+            )}
 
             <div className="mt-8 rounded-lg border border-landing-line p-4 text-[12px] leading-5 text-landing-muted">
               <p className="font-semibold text-landing-ink">About shipping</p>

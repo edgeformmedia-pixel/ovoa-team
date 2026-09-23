@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "cf:deploy": "vite build && npx wrangler deploy -c wrangler.site.jsonc",
-    "cf:migrate": "npx wrangler d1 migrations apply ovoa-site-test-db --remote -c wrangler.site.jsonc",
+    "cf:migrate": "npx wrangler d1 migrations apply ovoa-site-db --remote -c wrangler.site.jsonc",
     "cf:dev": "vite build && npx wrangler dev -c wrangler.site.jsonc --local",
     "test:billing": "vite build && node scripts/billing-smoke.mjs"
   },
@@ -49,6 +49,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@stripe/stripe-js": "^9.17.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
