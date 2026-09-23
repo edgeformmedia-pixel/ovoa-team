@@ -105,7 +105,15 @@ function Choice({
 
 // Stripe's embedded Checkout, mounted in #checkout. The session is made for
 // the choice on screen; to change it, the buyer goes back and picks again.
-function EmbeddedBandCheckout({ withAi, onCancel }: { withAi: boolean; onCancel: () => void }) {
+function EmbeddedBandCheckout({
+  withAi,
+  days,
+  onCancel,
+}: {
+  withAi: boolean;
+  days: number;
+  onCancel: () => void;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
 
@@ -143,6 +151,9 @@ function EmbeddedBandCheckout({ withAi, onCancel }: { withAi: boolean; onCancel:
 
   return (
     <div>
+      <p className="mb-3 text-sm font-semibold">
+        {withAi ? `OVOA Band + ${days} days of OVOA Base` : "OVOA Band"}
+      </p>
       {state === "loading" && (
         <p className="flex items-center justify-center gap-2 py-10 text-sm text-landing-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -243,84 +254,91 @@ function Checkout() {
 
         <section className="px-5 pb-12 pt-8 sm:px-8 lg:px-0 lg:pb-16 lg:pt-12">
           <div className="mx-auto max-w-[430px]">
-            <div className="mb-8">
-              <p className="mb-3">
-                <span className="inline-flex items-center rounded-full border border-landing-action/40 bg-landing-action/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-landing-action">
-                  Beta
-                </span>
-              </p>
-              <h1 className="text-[30px] font-semibold leading-[1.08] text-landing-ink sm:text-[36px]">
-                OVOA Band.
-                <span className="block text-landing-muted">Press it and talk.</span>
-              </h1>
-              <p className="mt-5 text-2xl font-semibold text-landing-ink">{band}</p>
-              <p className="mt-1 text-sm text-landing-muted">One Band, paid once.</p>
-            </div>
+            {!paying && (
+              <>
+                <div className="mb-8">
+                  <p className="mb-3">
+                    <span className="inline-flex items-center rounded-full border border-landing-action/40 bg-landing-action/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-landing-action">
+                      Beta
+                    </span>
+                  </p>
+                  <h1 className="text-[30px] font-semibold leading-[1.08] text-landing-ink sm:text-[36px]">
+                    OVOA Band.
+                    <span className="block text-landing-muted">Press it and talk.</span>
+                  </h1>
+                  <p className="mt-5 text-2xl font-semibold text-landing-ink">{band}</p>
+                  <p className="mt-1 text-sm text-landing-muted">One Band, paid once.</p>
+                </div>
 
-            {banner && (
-              <p
-                role="status"
-                className="mb-6 rounded-lg bg-landing-control px-4 py-3 text-sm font-medium"
-              >
-                {banner}
-              </p>
+                {banner && (
+                  <p
+                    role="status"
+                    className="mb-6 rounded-lg bg-landing-control px-4 py-3 text-sm font-medium"
+                  >
+                    {banner}
+                  </p>
+                )}
+
+                <div
+                  role="radiogroup"
+                  aria-label="Choose what comes with it"
+                  className="mb-8 space-y-3"
+                >
+                  <Choice
+                    selected={withAi}
+                    onSelect={() => !paying && setWithAi(true)}
+                    title={`Band + ${days} days of OVOA Base`}
+                    price={band}
+                  >
+                    Includes {days} days of OVOA Base, then {base}; cancel anytime. Base is the OVOA
+                    assistant: press the Band, ask, and hear the answer.
+                  </Choice>
+                  <Choice
+                    selected={!withAi}
+                    onSelect={() => !paying && setWithAi(false)}
+                    title="Band only"
+                    price={band}
+                  >
+                    No subscription. The free app covers health tracking and notes, and you can add
+                    the assistant any time.
+                  </Choice>
+                </div>
+
+                <div className="mb-8 rounded-lg bg-landing-control p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-landing-muted">OVOA Band</span>
+                    <span className="font-semibold">{band}</span>
+                  </div>
+                  {withAi && (
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="text-landing-muted">OVOA Base, first {days} days</span>
+                      <span className="font-semibold">Free</span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex items-center justify-between border-t border-landing-line pt-3 text-sm font-semibold">
+                    <span>Due today</span>
+                    <span>{band}</span>
+                  </div>
+                  <p className="mt-3 text-[11px] leading-5 text-landing-muted">
+                    {withAi
+                      ? `Then ${base} for OVOA Base, starting ${days} days from today, until you cancel. Cancel before then and you pay nothing more. The Band is a one-time charge. Prices in US dollars.`
+                      : "A one-time charge, no subscription. Prices in US dollars."}
+                  </p>
+                </div>
+              </>
             )}
 
-            <div
-              role="radiogroup"
-              aria-label="Choose what comes with it"
-              className="mb-8 space-y-3"
-            >
-              <Choice
-                selected={withAi}
-                onSelect={() => !paying && setWithAi(true)}
-                title={`Band + ${days} days of OVOA Base`}
-                price={band}
-              >
-                Includes {days} days of OVOA Base, then {base}; cancel anytime. Base is the OVOA
-                assistant: press the Band, ask, and hear the answer.
-              </Choice>
-              <Choice
-                selected={!withAi}
-                onSelect={() => !paying && setWithAi(false)}
-                title="Band only"
-                price={band}
-              >
-                No subscription. The free app covers health tracking and notes, and you can add the
-                assistant any time.
-              </Choice>
-            </div>
-
-            <div className="mb-8 rounded-lg bg-landing-control p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-landing-muted">OVOA Band</span>
-                <span className="font-semibold">{band}</span>
-              </div>
-              {withAi && (
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-landing-muted">OVOA Base, first {days} days</span>
-                  <span className="font-semibold">Free</span>
-                </div>
-              )}
-              <div className="mt-3 flex items-center justify-between border-t border-landing-line pt-3 text-sm font-semibold">
-                <span>Due today</span>
-                <span>{band}</span>
-              </div>
-              <p className="mt-3 text-[11px] leading-5 text-landing-muted">
-                {withAi
-                  ? `Then ${base} for OVOA Base, starting ${days} days from today, until you cancel. Cancel before then and you pay nothing more. The Band is a one-time charge. Prices in US dollars.`
-                  : "A one-time charge, no subscription. Prices in US dollars."}
-              </p>
-            </div>
-
             {paying ? (
-              <EmbeddedBandCheckout withAi={withAi} onCancel={() => setPaying(false)} />
+              <EmbeddedBandCheckout withAi={withAi} days={days} onCancel={() => setPaying(false)} />
             ) : (
               <div>
                 <Button
                   type="button"
                   disabled={!enabled}
-                  onClick={() => setPaying(true)}
+                  onClick={() => {
+                    setPaying(true);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                   className="h-12 w-full rounded-lg bg-landing-action text-sm font-semibold text-landing-action-foreground shadow-none hover:bg-landing-action/90"
                 >
                   {enabled ? "Buy now" : "Opening soon"}
