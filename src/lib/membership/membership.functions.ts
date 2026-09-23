@@ -16,6 +16,7 @@ import {
   type PlansResult,
 } from "./plans";
 import type { TrialOffer } from "./email.server";
+import type { AdminInvite } from "./invites.server";
 import type { CommissionKind } from "./store.server";
 
 // Server-only modules are imported inside each handler: this file also ships
@@ -163,12 +164,25 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
 
   if (!member) {
     if (!bandOrder) return { state: "pending" };
+    // The Band works with the free app, so its buyer gets Apple's invite too.
+    const { ensureInvite } = await import("./invites.server");
+    const invite =
+      bandOrder.status === "refunded"
+        ? { state: "off" as const }
+        : await ensureInvite(bandOrder.email, bandOrder.name, "band").catch((error: unknown) => {
+            console.error("[membership] band invite", error);
+            return { state: "failed" as const };
+          });
     return {
       state: "band",
       firstName: sync.firstNameOf(bandOrder),
       email: bandOrder.email,
       band: bandSummary(bandOrder),
-      testflight: { mode: publicUrl ? "link" : "manual", state: "off", publicUrl },
+      testflight: {
+        mode: invite.state !== "off" ? "invite" : publicUrl ? "link" : "manual",
+        state: invite.state,
+        publicUrl,
+      },
       trial: waitingTrial ? await sync.trialOffer(waitingTrial) : null,
       emailed: emailConfigured(),
     };
@@ -544,6 +558,9 @@ export type AdminOverview = {
   members: AdminMember[];
   bandOrders: AdminBandOrder[];
   affiliates: AdminAffiliate[];
+  // TestFlight invites for the free app (accounts and Band buyers); null
+  // without the app_invites table.
+  appInvites: AdminInvite[] | null;
 };
 
 const EMPTY_STATS: AdminOverview["stats"] = {
@@ -569,6 +586,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
     const { envVar } = await import("./db.server");
     const { emailConfigured } = await import("./email.server");
     const { store, StoreNotReadyError } = await import("./store.server");
+    const { listInvites } = await import("./invites.server");
 
     const config = {
       stripe: sync.stripeConfigured(),
@@ -596,8 +614,13 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         members: [],
         bandOrders: [],
         affiliates: [],
+        appInvites: null,
       };
     }
+    const appInvites = await listInvites(1000).catch((error: unknown) => {
+      console.error("[membership] invites", error);
+      return null;
+    });
     const [members, affiliateRows, commissions, bands] = loaded;
     const memberOfCheckout = new Map(
       members.filter((m) => m.checkout_session_id).map((m) => [m.checkout_session_id, m]),
@@ -709,6 +732,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         createdAt: b.created_at,
       })),
       affiliates,
+      appInvites,
     };
   });
 
@@ -795,6 +819,15 @@ export const retryTestflight = createServerFn({ method: "POST" })
     if (!row) throw new Error("No such member.");
     const member = await sync.syncTestflight(row, { force: true });
     return { state: member.testflight_state, error: member.testflight_error };
+  });
+
+// A free-app invite that failed: ask Apple again now.
+export const retryAppInvite = createServerFn({ method: "POST" })
+  .inputValidator(adminInput((input) => ({ email: String(input["email"] ?? "") })))
+  .handler(async ({ data }) => {
+    await requireAdmin(data.key);
+    const { retryInvite } = await import("./invites.server");
+    return retryInvite(data.email);
   });
 
 export const listTestflightGroups = createServerFn({ method: "POST" })
@@ -885,15 +918,14 @@ export const endCompAccess = createServerFn({ method: "POST" })
   .inputValidator(adminInput((input) => ({ id: String(input["id"] ?? "") })))
   .handler(async ({ data }) => {
     await requireAdmin(data.key);
-    const sync = await import("./sync.server");
     const { store } = await import("./store.server");
     const row = await store().findMember("id", data.id);
     if (!row || row.plan !== "comp") throw new Error("Only free access can be ended here.");
-    const ended = await store().updateMember(row.id, {
+    // They go back to the free app, which stays on their phone.
+    await store().updateMember(row.id, {
       status: "canceled",
       canceled_at: new Date().toISOString(),
     });
-    await sync.syncTestflight(ended);
     return { ok: true };
   });
 

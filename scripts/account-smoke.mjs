@@ -15,8 +15,11 @@
 //   - checks wrong codes, spent tickets, other sites' requests and sign-out
 //   - checks a signed-in checkout is locked to the account's email
 //   - checks the account page shows the plan, and Manage billing opens
+//   - checks signing in has Apple (the fake one) email the TestFlight invite
+//     once, and not to someone already in the beta group
 
 import { spawn, spawnSync } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -50,6 +53,10 @@ globalThis.fetch = async (url, init) => {
 };
 
 const env = { ...process.env, STRIPE_API_BASE: `${STRIPE}/v1`, FAKE_WEBHOOK_SECRET: WHSEC };
+// An App Store Connect key of our own: the fake Apple only checks it's an ES256 token.
+const ascKey = generateKeyPairSync("ec", { namedCurve: "P-256" })
+  .privateKey.export({ type: "pkcs8", format: "der" })
+  .toString("base64");
 
 function check(label, ok, detail) {
   if (!ok) failures++;
@@ -131,6 +138,8 @@ async function keepSession(token, origin) {
   return { status: res.status, cookie: cookie ? `ovoa_session=${cookie}` : null };
 }
 
+const ascState = async () => (await fetch(`${STRIPE}/__asc`)).json();
+
 const page = async (path, cookie) =>
   (await fetch(`${SITE}${path}`, { headers: cookie ? { cookie } : {} })).text();
 
@@ -178,6 +187,8 @@ async function main() {
       `npx wrangler dev -c wrangler.site.jsonc --local --port ${SITE_PORT} --persist-to "${sitePersist}"`,
       `--var STRIPE_API_BASE:${STRIPE}/v1 --var STRIPE_SECRET_KEY:sk_test_fake`,
       `--var STRIPE_WEBHOOK_SECRET:${WHSEC} --var OVOA_API_URL:${API}`,
+      `--var ASC_API_BASE:${STRIPE}/asc/v1 --var ASC_KEY_ID:FAKEKEY1 --var ASC_ISSUER_ID:fake-issuer`,
+      `--var ASC_PRIVATE_KEY:${ascKey} --var TESTFLIGHT_GROUP_ID:grp_members`,
     ].join(" "),
     "Ready on",
   );
@@ -247,6 +258,38 @@ async function main() {
   check("/account greets Ada", adaPage.includes("Hi, Ada.") && adaPage.includes(ada));
   check("on the free plan", /Plan.*?Free/s.test(adaPage) && adaPage.includes("See plans"));
   check("with no billing to manage", !adaPage.includes("Manage billing"));
+
+  // ---- The free app's TestFlight invite ----
+  let asc = await ascState();
+  check(
+    "signing in puts Ada in the beta group",
+    asc.testers.some((t) => t.email === ada && t.groups.includes("grp_members")),
+    asc.testers,
+  );
+  check(
+    "and Apple emails her the invite once",
+    asc.emails.filter((e) => e.email === ada).length === 1,
+    asc.emails,
+  );
+  check(
+    "the page says to open Apple's email",
+    /Open the invite Apple emailed to.*?ada@acct\.test/s.test(adaPage) &&
+      adaPage.includes("send it again"),
+  );
+  await page("/account", kept.cookie);
+  asc = await ascState();
+  check(
+    "coming back doesn't email her again",
+    asc.emails.filter((e) => e.email === ada).length === 1,
+  );
+  const adaRow = JSON.parse(
+    siteSql(`SELECT state, sends, source FROM app_invites WHERE email = '${ada}'`),
+  )[0].results[0];
+  check(
+    "the invite is kept",
+    adaRow?.state === "invited" && adaRow.sends === 1 && adaRow.source === "account",
+    adaRow,
+  );
   check(
     "a checkout signed in is locked to Ada's email",
     (await checkoutEmail(kept.cookie)) === ada,
@@ -314,6 +357,11 @@ async function main() {
   });
   check("the app won't make a second Bo", boSignupInApp.status === 409);
 
+  // Bo was put in the beta group earlier (say a plan he bought): no second email.
+  await fetch(`${STRIPE}/__asc/tester`, {
+    method: "POST",
+    body: JSON.stringify({ email: bo, groups: ["grp_members"] }),
+  });
   const boKept = await keepSession(made.body.token);
   siteSql(
     `INSERT INTO members (email, plan, tier, status, stripe_customer_id) VALUES ('${bo}', 'monthly', 'base', 'active', 'cus_fake_bo')`,
@@ -322,6 +370,11 @@ async function main() {
   check(
     "Bo's page shows Base and Manage billing",
     /Plan.*?Base/s.test(boPage) && boPage.includes("Manage billing"),
+  );
+  check(
+    "someone already in the beta isn't emailed again",
+    boPage.includes("Open the invite Apple emailed") &&
+      !(await ascState()).emails.some((e) => e.email === bo),
   );
   const billing = await fetch(`${SITE}/api/public/account/billing`, {
     method: "POST",

@@ -184,13 +184,15 @@ function PlanColumnCard({
 
       <div className="mt-auto pt-8">
         {column === "free" ? (
+          // Without a public link, an account is the way in: Apple emails its
+          // TestFlight invite (or, invites off, /account says to ask support).
           <a
-            href={data.betaUrl ?? "mailto:support@ovoa.ai?subject=Join%20the%20OVOA%20beta"}
+            href={data.betaUrl ?? "/account"}
             target={data.betaUrl ? "_blank" : undefined}
             rel={data.betaUrl ? "noreferrer" : undefined}
             className="flex h-12 w-full items-center justify-center rounded-full bg-landing-ink text-sm font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5 active:translate-y-0"
           >
-            {data.betaUrl ? "Join the free beta" : "Email us to join"}
+            {data.betaUrl ? "Join the free beta" : "Get the free app"}
           </a>
         ) : (
           <form method="post" action="/api/public/billing/checkout">

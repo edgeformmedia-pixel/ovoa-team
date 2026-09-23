@@ -1,14 +1,16 @@
 // Automatic TestFlight invites through the App Store Connect API.
 //
 // Optional. With ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY and
-// TESTFLIGHT_GROUP_ID set, every new member is added to that external beta
-// group (Apple emails them the invite) and taken out again when their
-// membership ends. Without them, the welcome page shows TESTFLIGHT_PUBLIC_URL
-// instead.
+// TESTFLIGHT_GROUP_ID set, everyone who gets the app is added to that external
+// beta group and Apple emails them the invite: members (sync.server.ts), and
+// free accounts and Band buyers (invites.server.ts). The app is free, so
+// nobody is taken out again when a plan ends; the app checks the plan itself.
+// Without them, the pages show TESTFLIGHT_PUBLIC_URL instead.
 
 import { envVar } from "./db.server";
 
-const ASC_API = "https://api.appstoreconnect.apple.com/v1";
+// ASC_API_BASE exists only so a local test run can point at a fake Apple.
+const ascApi = () => envVar("ASC_API_BASE") ?? "https://api.appstoreconnect.apple.com/v1";
 
 export function testflightInvitesConfigured(): boolean {
   return ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_PRIVATE_KEY", "TESTFLIGHT_GROUP_ID"].every((name) =>
@@ -97,13 +99,14 @@ async function asc<T = { data?: unknown }>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${ASC_API}${path}`, {
+  const res = await fetch(`${ascApi()}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${await token()}`,
       ...(body ? { "Content-Type": "application/json" } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
+    signal: AbortSignal.timeout(10_000),
   });
   if (res.status === 204) return {} as T;
   const json = (await res.json().catch(() => ({}))) as {
@@ -125,10 +128,11 @@ function groupId(): string {
   return id;
 }
 
-async function findTester(email: string): Promise<string | null> {
+async function findTester(email: string, inGroup = false): Promise<string | null> {
+  const group = inGroup ? `&filter[betaGroups]=${encodeURIComponent(groupId())}` : "";
   const res = await asc<{ data: { id: string }[] }>(
     "GET",
-    `/betaTesters?filter[email]=${encodeURIComponent(email)}&limit=1`,
+    `/betaTesters?filter[email]=${encodeURIComponent(email)}${group}&limit=1`,
   );
   return res.data[0]?.id ?? null;
 }
@@ -138,9 +142,22 @@ function splitName(name: string | null | undefined) {
   return { firstName: parts[0] ?? "OVOA", lastName: parts.slice(1).join(" ") || "Member" };
 }
 
-// Adds the person to the beta group. Apple sends the invite email.
-export async function inviteTester(email: string, name?: string | null): Promise<string> {
+export type Invited = { testerId: string; emailed: boolean };
+
+// Puts the person in the beta group; Apple emails the invite. Someone already
+// in it (a free account who then bought a plan, say) isn't emailed again
+// unless `resend` asks for it.
+export async function inviteTester(
+  email: string,
+  name?: string | null,
+  { resend = false } = {},
+): Promise<Invited> {
   const group = groupId();
+  const already = await findTester(email, true);
+  if (already) {
+    if (resend) await resendInvite(already);
+    return { testerId: already, emailed: resend };
+  }
   try {
     const created = await asc<{ data: { id: string } }>("POST", "/betaTesters", {
       data: {
@@ -149,7 +166,7 @@ export async function inviteTester(email: string, name?: string | null): Promise
         relationships: { betaGroups: { data: [{ type: "betaGroups", id: group }] } },
       },
     });
-    return created.data.id;
+    return { testerId: created.data.id, emailed: true };
   } catch (error) {
     // Already a tester of this team (another group, or removed earlier):
     // find them and put them back in the group.
@@ -160,7 +177,7 @@ export async function inviteTester(email: string, name?: string | null): Promise
       data: [{ type: "betaTesters", id: existing }],
     });
     await resendInvite(existing).catch(() => undefined);
-    return existing;
+    return { testerId: existing, emailed: true };
   }
 }
 
@@ -174,16 +191,6 @@ async function resendInvite(testerId: string) {
         betaTester: { data: { type: "betaTesters", id: testerId } },
       },
     },
-  });
-}
-
-// Takes the person out of the paid group only. Their other groups (for
-// example the owner's own internal group) are left alone.
-export async function removeTester(testerId: string | null, email: string): Promise<void> {
-  const id = testerId ?? (await findTester(email));
-  if (!id) return;
-  await asc("DELETE", `/betaGroups/${groupId()}/relationships/betaTesters`, {
-    data: [{ type: "betaTesters", id }],
   });
 }
 

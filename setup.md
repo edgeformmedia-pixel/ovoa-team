@@ -48,7 +48,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views |
+| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B) |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -110,7 +110,7 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
 4. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 5.
 5. **Turn on the app's plan check** (Part C): the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
 
-The database tables are already there (all four migrations, as of Sept 23).
+The database tables are already there (migrations `0001` to `0004`, as of Sept 23). `0005` (the free app's TestFlight invites) is new: apply it with `npm run db:migrate` before deploying.
 
 ---
 
@@ -194,7 +194,7 @@ To set one by hand instead, see [Where the site runs](#where-the-site-runs).
 
 ### Step 5. The database tables
 
-They're already there: `migrations/` holds four files, and all four are applied as of Sept 23. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
+`migrations/` holds five files. The first four are applied as of Sept 23; the fifth (`0005`, the free app's TestFlight invites, Part B) needs `npm run db:migrate`. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and Band buyers. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
 
 ### Step 6. Check the site
 
@@ -273,9 +273,21 @@ XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --ke
 
 ---
 
-## Part B: automatic, personal TestFlight invites (optional)
+## Part B: Apple emails everyone their TestFlight invite
 
-With only the public link, anyone who gets the link can install the beta, paid or not, and cancelling doesn't take it away. Part B fixes that: each member is added to the `Members` group by email (Apple emails them their own invite), and removed when their membership ends or is refunded.
+The app is free, so everyone who wants it should get it without asking. With Part B set up, the site adds each person to the `Members` group by email and **Apple emails them their own TestFlight invite**, by itself:
+
+| Who | When |
+| --- | --- |
+| Anyone with an OVOA account | The first time they're signed in on https://ovoa.ai/account: made there (the emailed code proves the address), or made in the app and signed in on the site. The free plan's **Get the free app** button and the home page's **Get the app** both lead there. |
+| Band buyers (Band only, or with Base) | When their order page opens after checkout |
+| Members, and **Give free access** | When the plan starts |
+
+Each email is invited once: someone already in the group (a free account who then buys Base, say) isn't emailed again. The account page says to open Apple's email and has **send it again** (at most every 10 minutes, 5 in all). A plan ending doesn't take anyone out of the beta: they're back on the free app, which the app works out from the plan check (Part C). That's also what Apple's rule 2.2 asks: TestFlight isn't something anyone pays for.
+
+The admin page lists the free-app invites under **Free app invites**, with **Retry invite** on any that failed. They're kept in the `app_invites` table (`migrations/0005_app_invites.sql`). Without it, invites still go out and Apple's own tester list is the record, but there's no list and no "send it again".
+
+Apple only sends the email once the group has a build that passed beta review (Step 7). People added before that get theirs when the first build is approved.
 
 1. App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys** → **+**. Name it `OVOA website`, access **App Manager**. Click **Generate**.
 2. **Download API Key** (a `.p8` file; Apple only lets you download it once). Note the **Key ID** next to it and the **Issuer ID** at the top of the page.
@@ -290,7 +302,7 @@ With only the public link, anyone who gets the link can install the beta, paid o
 4. Open the admin page → **Find my TestFlight group ids**. Copy the id next to `Members` (it must say *External*).
 5. Set the secret `TESTFLIGHT_GROUP_ID` to that id.
 6. In App Store Connect, open the `Members` group → **Public Link** → **Disable**, and delete the site's `TESTFLIGHT_PUBLIC_URL` secret. (Keep it if you'd rather have a backup link; the welcome page then offers it under "No email?")
-7. Test: on the admin page, **Give free access** to a second email of yours. Its TestFlight column should say `invited`, and Apple's email should arrive within minutes. If it says `failed`, the reason is right under it; fix it and press **Retry invite**.
+7. Test: sign in on https://ovoa.ai/account with a second email of yours (or create an account with it). The page should say to open the invite Apple emailed, and Apple's email should arrive within minutes. On the admin page, it's under **Free app invites** as `invited`. If it says `failed`, the reason is right under it; fix it and press **Retry invite**.
 
 ---
 
@@ -455,7 +467,7 @@ Roll's growth engine is short videos of the product doing its thing, pushed by c
 | Stripe webhooks show `500` | Usually the database step. The admin *Setup* list shows which part is missing. Stripe retries for 3 days, so fixing it catches up automatically. |
 | Welcome page stuck on "Finishing your checkout…" | The payment didn't complete (e.g. a bank check still pending). It fills in once Stripe confirms. |
 | TestFlight column says `failed` | Read the reason under it. Common ones: the group is internal (make an external one), no approved build in the group yet, or a mistyped `ASC_*` secret. Fix it, then **Retry invite**. |
-| Member says the invite never came | Check spam. Otherwise send them the public link, or Retry invite from the admin page. |
+| Someone says the invite never came | Check spam. They can press **send it again** on https://ovoa.ai/account. Otherwise Retry invite from the admin page, or send them the public link. |
 
 ---
 
