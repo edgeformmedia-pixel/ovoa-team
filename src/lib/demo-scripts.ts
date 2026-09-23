@@ -22,7 +22,7 @@ export const RULES_SCRIPT: DemoStep[] = [
   { who: "me", wait: 3.2, dur: 0.9, text: "Perfect 🙌" },
   {
     who: "ovoa", wait: 0.6, dur: 1.6,
-    text: "Saved as a standing rule. It runs every weekday — pause or change it anytime.",
+    text: "Saved as a standing rule. It runs every weekday. Pause or change it anytime.",
   },
 ];
 
