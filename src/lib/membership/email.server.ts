@@ -141,6 +141,21 @@ export function trialWaitingEmail(input: {
   ]);
 }
 
+// Right after someone applies on ovoa.ai/affiliates. The approval, with their
+// link and dashboard, comes from the affiliate inbox on admin.ovoa.ai.
+export function affiliateAppliedEmail(input: {
+  to: string;
+  firstName: string | null;
+  code: string;
+}): Email {
+  return compose(input.to, "We got your OVOA affiliate application", [
+    hello(input.firstName),
+    "Thanks for applying to the OVOA affiliate program. We read every application and reply within a day.",
+    `Once you're approved, we'll email you your link, ovoa.ai/?ref=${input.code}, and your private dashboard, where you can watch your clicks, sign-ups and what you're owed.`,
+    SIGN_OFF,
+  ]);
+}
+
 // When a Band is marked shipped. With free days still waiting, it's the
 // reminder to start them once the Band arrives.
 export function bandShippedEmail(input: {

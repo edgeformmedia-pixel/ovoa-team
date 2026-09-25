@@ -19,7 +19,13 @@ import {
   type AdminOverview,
 } from "@/lib/membership/membership.functions";
 import { PLAN_NAMES } from "@/lib/membership/copy";
-import { formatMoney, type PaidTier } from "@/lib/membership/plans";
+import {
+  AFFILIATE_PLATFORMS,
+  AUDIENCE_SIZES,
+  formatMoney,
+  labelOf,
+  type PaidTier,
+} from "@/lib/membership/plans";
 
 // Owner-only. Unlocked with OVOA_ADMIN_KEY, which stays in this tab's
 // session storage and is sent with each request.
@@ -259,7 +265,7 @@ function Admin() {
             sub={`${formatMoney(stats.bandCents)} in Band sales`}
           />
           <Tile label="Free access" value={stats.comp} />
-          <Tile label="Owed to partners" value={formatMoney(stats.owedCents)} />
+          <Tile label="Owed to affiliates" value={formatMoney(stats.owedCents)} />
         </div>
 
         <Section title="Setup">
@@ -556,7 +562,7 @@ function Admin() {
         </Section>
 
         {pending.length > 0 && (
-          <Section title={`Partner applications (${pending.length})`}>
+          <Section title={`Affiliate applications (${pending.length})`}>
             <div className="grid gap-3 md:grid-cols-2">
               {pending.map((a) => (
                 <article key={a.id} className="rounded-2xl border border-landing-line p-5 text-sm">
@@ -564,6 +570,21 @@ function Admin() {
                     {a.name} <span className="font-normal text-landing-muted">· {a.code}</span>
                   </p>
                   <p className="text-landing-muted">{a.email}</p>
+                  {(a.platform || a.audienceSize) && (
+                    <p className="mt-2 font-medium">
+                      {[
+                        labelOf(AFFILIATE_PLATFORMS, a.platform),
+                        labelOf(AUDIENCE_SIZES, a.audienceSize),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {a.links && (
+                    <p className="mt-1 whitespace-pre-wrap break-all text-landing-muted">
+                      {a.links}
+                    </p>
+                  )}
                   {a.audience && <p className="mt-2 whitespace-pre-wrap">{a.audience}</p>}
                   <div className="mt-4 flex gap-2">
                     <button
@@ -597,17 +618,18 @@ function Admin() {
           </Section>
         )}
 
-        <Section title={`Partners (${approved.length})`}>
+        <Section title={`Affiliates (${approved.length})`}>
           {approved.length === 0 ? (
             <p className="text-sm text-landing-muted">
-              No approved partners yet. Applications from /partners show up above.
+              No approved affiliates yet. Applications from /affiliates show up above, and in the
+              affiliate inbox on admin.ovoa.ai.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-landing-line">
               <table className="w-full min-w-[1100px] text-left text-sm">
                 <thead className="bg-landing-control/60 text-landing-muted">
                   <tr>
-                    <th className="px-4 py-2.5 font-medium">Partner</th>
+                    <th className="px-4 py-2.5 font-medium">Affiliate</th>
                     <th className="px-4 py-2.5 font-medium">CPM</th>
                     <th className="px-4 py-2.5 font-medium">Clicks</th>
                     <th className="px-4 py-2.5 font-medium">Sign-ups</th>
@@ -644,7 +666,7 @@ function Admin() {
                             onClick={() =>
                               void navigator.clipboard
                                 .writeText(
-                                  `${origin}/partners/dashboard?code=${a.code}&key=${a.dashboardKey}`,
+                                  `${origin}/affiliates/dashboard?code=${a.code}&key=${a.dashboardKey}`,
                                 )
                                 .catch(() => undefined)
                             }
@@ -739,7 +761,7 @@ function Admin() {
                     <th className="px-4 py-2.5 font-medium">Plan</th>
                     <th className="px-4 py-2.5 font-medium">Status</th>
                     <th className="px-4 py-2.5 font-medium">Trial ends / renews</th>
-                    <th className="px-4 py-2.5 font-medium">Partner</th>
+                    <th className="px-4 py-2.5 font-medium">Affiliate</th>
                     <th className="px-4 py-2.5 font-medium">TestFlight</th>
                     <th className="px-4 py-2.5 font-medium">Joined</th>
                   </tr>

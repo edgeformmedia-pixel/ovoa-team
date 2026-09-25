@@ -20,11 +20,11 @@ import { Route as OrderCompleteRouteImport } from './routes/order-complete'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AffiliatesIndexRouteImport } from './routes/affiliates/index'
+import { Route as AffiliatesDashboardRouteImport } from './routes/affiliates/dashboard'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
-import { Route as PartnersIndexRouteImport } from './routes/partners/index'
-import { Route as PartnersDashboardRouteImport } from './routes/partners/dashboard'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
 import { Route as ApiPublicAccountBillingRouteImport } from './routes/api/public/account/billing'
 import { Route as ApiPublicAccountGoogleRouteImport } from './routes/api/public/account/google'
@@ -92,6 +92,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliatesIndexRoute = AffiliatesIndexRouteImport.update({
+  id: '/affiliates/',
+  path: '/affiliates/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliatesDashboardRoute = AffiliatesDashboardRouteImport.update({
+  id: '/affiliates/dashboard',
+  path: '/affiliates/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EarlyAccessIndexRoute = EarlyAccessIndexRouteImport.update({
   id: '/early-access/',
   path: '/early-access/',
@@ -105,16 +115,6 @@ const EarlyAccessAdminRoute = EarlyAccessAdminRouteImport.update({
 const EarlyAccessWelcomeRoute = EarlyAccessWelcomeRouteImport.update({
   id: '/early-access/welcome',
   path: '/early-access/welcome',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartnersIndexRoute = PartnersIndexRouteImport.update({
-  id: '/partners/',
-  path: '/partners/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartnersDashboardRoute = PartnersDashboardRouteImport.update({
-  id: '/partners/dashboard',
-  path: '/partners/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
@@ -190,11 +190,11 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
-  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
-  '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
@@ -219,11 +219,11 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
-  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/affiliates': typeof AffiliatesIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
-  '/partners': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
@@ -249,11 +249,11 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
-  '/partners/dashboard': typeof PartnersDashboardRoute
+  '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
-  '/partners/': typeof PartnersIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
@@ -280,11 +280,11 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
-    | '/partners/dashboard'
+    | '/affiliates/'
     | '/early-access/'
-    | '/partners/'
     | '/api/public/membership'
     | '/api/public/account/billing'
     | '/api/public/account/google'
@@ -309,11 +309,11 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
-    | '/partners/dashboard'
+    | '/affiliates'
     | '/early-access'
-    | '/partners'
     | '/api/public/membership'
     | '/api/public/account/billing'
     | '/api/public/account/google'
@@ -338,11 +338,11 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
-    | '/partners/dashboard'
+    | '/affiliates/'
     | '/early-access/'
-    | '/partners/'
     | '/api/public/membership'
     | '/api/public/account/billing'
     | '/api/public/account/google'
@@ -368,11 +368,11 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  AffiliatesDashboardRoute: typeof AffiliatesDashboardRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
-  PartnersDashboardRoute: typeof PartnersDashboardRoute
+  AffiliatesIndexRoute: typeof AffiliatesIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
-  PartnersIndexRoute: typeof PartnersIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
   ApiPublicAccountBillingRoute: typeof ApiPublicAccountBillingRoute
   ApiPublicAccountGoogleRoute: typeof ApiPublicAccountGoogleRoute
@@ -465,6 +465,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliates/': {
+      id: '/affiliates/'
+      path: '/affiliates'
+      fullPath: '/affiliates/'
+      preLoaderRoute: typeof AffiliatesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliates/dashboard': {
+      id: '/affiliates/dashboard'
+      path: '/affiliates/dashboard'
+      fullPath: '/affiliates/dashboard'
+      preLoaderRoute: typeof AffiliatesDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/early-access/': {
       id: '/early-access/'
       path: '/early-access'
@@ -484,20 +498,6 @@ declare module '@tanstack/react-router' {
       path: '/early-access/welcome'
       fullPath: '/early-access/welcome'
       preLoaderRoute: typeof EarlyAccessWelcomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partners/': {
-      id: '/partners/'
-      path: '/partners'
-      fullPath: '/partners/'
-      preLoaderRoute: typeof PartnersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partners/dashboard': {
-      id: '/partners/dashboard'
-      path: '/partners/dashboard'
-      fullPath: '/partners/dashboard'
-      preLoaderRoute: typeof PartnersDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/membership': {
@@ -592,11 +592,11 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  AffiliatesDashboardRoute: AffiliatesDashboardRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
-  PartnersDashboardRoute: PartnersDashboardRoute,
+  AffiliatesIndexRoute: AffiliatesIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
-  PartnersIndexRoute: PartnersIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
   ApiPublicAccountBillingRoute: ApiPublicAccountBillingRoute,
   ApiPublicAccountGoogleRoute: ApiPublicAccountGoogleRoute,

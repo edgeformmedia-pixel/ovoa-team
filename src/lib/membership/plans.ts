@@ -93,6 +93,36 @@ export const BAND_COMMISSION_PERCENT = 11.11;
 export const REF_COOKIE_DAYS = 90;
 export const PAYOUT_MINIMUM_USD = 50;
 
+// The affiliate application's choices (ovoa.ai/affiliates), kept as ids in
+// affiliates.platform and affiliates.audience_size. The affiliate inbox on
+// admin.ovoa.ai labels the same ids, so add new ones there too.
+export const AFFILIATE_PLATFORMS = [
+  { id: "youtube", label: "YouTube" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "instagram", label: "Instagram" },
+  { id: "x", label: "X" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "newsletter", label: "Newsletter" },
+  { id: "podcast", label: "Podcast" },
+  { id: "website", label: "Blog or website" },
+  { id: "community", label: "Community or group" },
+  { id: "other", label: "Somewhere else" },
+] as const;
+
+export const AUDIENCE_SIZES = [
+  { id: "under-1k", label: "Under 1,000" },
+  { id: "1k-10k", label: "1,000 to 10,000" },
+  { id: "10k-100k", label: "10,000 to 100,000" },
+  { id: "100k-1m", label: "100,000 to 1 million" },
+  { id: "over-1m", label: "Over 1 million" },
+] as const;
+
+export type AffiliatePlatform = (typeof AFFILIATE_PLATFORMS)[number]["id"];
+export type AudienceSize = (typeof AUDIENCE_SIZES)[number]["id"];
+
+export const labelOf = (list: readonly { id: string; label: string }[], id: string | null) =>
+  list.find((o) => o.id === id)?.label ?? null;
+
 // Statuses that mean the person has their tier.
 export const ENTITLED_STATUSES = ["trialing", "active", "past_due", "lifetime", "comp"] as const;
 

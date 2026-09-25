@@ -43,7 +43,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | `/account` | Sign in or create an OVOA account, the same one the app uses: an emailed code or Google. Shows the plan, Manage billing and the TestFlight steps (Part F) |
 | `/early-access/admin` | Your dashboard: revenue, trials, every member, Band orders (Mark shipped), partner payouts, give free Base or Pro |
 | `/privacy`, `/terms` | Drafts written from what the app server actually stores. Read them before going live. |
-| `/partners` + `/partners/dashboard` | Affiliate program: apply, then each partner gets a private stats page |
+| `/affiliates` + `/affiliates/dashboard` | Affiliate program (linked from the bottom of the home page as "Affiliate? Work with us"): apply, then each affiliate gets a private stats page. `/partners` redirects here |
 | `/api/public/billing/checkout` | Starts a Stripe Checkout. Plain links work: `?plan=base_monthly` (or `base_annual`, `pro_monthly`, `pro_annual`), `?band=1`, `?band=1&ai=0` |
 | `/api/public/billing/webhook` | Stripe tells the site about payments, renewals, cancellations, refunds |
 | `/api/public/billing/portal` | Stripe's billing page (cancel, change card, invoices) |
@@ -51,7 +51,7 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B) |
+| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B); `0006` the affiliate application's audience questions |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -210,7 +210,7 @@ To set one by hand instead, see [Where the site runs](#where-the-site-runs).
 
 ### Step 5. The database tables
 
-`migrations/` holds five files. The first four are applied as of Sept 23; the fifth (`0005`, the free app's TestFlight invites, Part B) needs `npm run db:migrate`. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and Band buyers. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
+`migrations/` holds six files, all applied as of Sept 25. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and Band buyers; the sixth adds the affiliate application's platform, links and audience size, and when each one was reviewed. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
 
 ### Step 6. Check the site
 
@@ -353,20 +353,20 @@ To undo it quickly, delete the secret on the Worker (`npx wrangler secret delete
 
 ---
 
-## Part D: running the partner program
+## Part D: running the affiliate program
 
-1. Point creators to https://ovoa.ai/partners. They apply with their name, email, a code (e.g. `maria`) and a PayPal email.
-2. Applications appear at the top of the admin page. Click **Approve** (or Reject).
-3. In the *Partners* table, click **Copy dashboard link** and email it to them with their share link, `https://ovoa.ai/?ref=maria`. The dashboard shows their clicks, sign-ups, paying members and what they're owed.
-4. On the 1st of each month, for everyone owed $50 or more: send the amount through PayPal to their *Pay to* email, then click **Mark paid**.
+1. Creators find it at the bottom of the home page (**Affiliate? Work with us**) or at https://ovoa.ai/affiliates. They apply with their name, email, where their audience is and a link to it, roughly how many people follow them, a code (e.g. `maria`) and a PayPal email. They get an email saying it arrived.
+2. Applications land in the **Affiliate inbox** on admin.ovoa.ai (the sidebar count is how many wait for review). That Worker reads them straight from this site's D1 database (`ovoa-site-db`, bound there as `SITE_DB`).
+3. Open one and click **Approve**: set their commission and CPM, and send the approval email, which has their share link (`https://ovoa.ai/?ref=maria`) and their private dashboard link. Their link starts counting as soon as they're approved. **Decline** can send a polite no. Notes, emails and changes stay in the application's history, and approved affiliates become CRM contacts tagged `affiliate`, so a campaign can reach all of them.
+4. On the 1st of each month, for everyone owed $50 or more: send the amount through PayPal to their PayPal email, then click **Mark paid** on their page in the inbox.
 
 How it pays out: when someone arrives through `?ref=maria` and buys within 90 days, Maria earns:
 
 - 15% of each of their plan payments (monthly or yearly) for 6 months.
 - 11.11% of each Band they buy, which is $10 on an $89.99 Band.
-- Her CPM on views of her OVOA posts. Set her rate with **Set CPM** in the *Partners* table (dollars per 1,000 views). When she sends you her view counts, check them and click **Log views**: the payout is added to what she's owed. Each click adds a new line, so log each batch of views once.
+- Her CPM on views of her OVOA posts. Set her rate in the inbox (dollars per 1,000 views). When she sends you her view counts, check them and use **Log views**: the payout is added to what she's owed. Each one adds a new line, so log each batch of views once.
 
-Nothing is earned during a free trial ($0), and refunded payments (Bands included) are voided automatically. Partners don't earn on their own purchases. The percentages, months, window and payout minimum are at the top of `src/lib/membership/plans.ts`; to give one partner a different plan rate, change their `percent` in the `affiliates` table.
+Nothing is earned during a free trial ($0), and refunded payments (Bands included) are voided automatically. Affiliates earn only while they're approved, and never on their own purchases. The percentages, months, window and payout minimum are at the top of `src/lib/membership/plans.ts` (the inbox's approval email repeats them, from admin.ovoa.ai's `src/lib/types.ts`). The members admin page (`/early-access/admin`) still lists affiliates and can approve and pay them too, but it sends no emails.
 
 ---
 
@@ -464,7 +464,7 @@ Google sign-ins are checked by the app's server with Google itself, and matched 
 Roll's growth engine is short videos of the product doing its thing, pushed by creators on commission. For OVOA:
 
 1. **Record 5 short clips** of OVOA handling a real, relatable errand ("I'm running late, tell my 3pm", "remind me to call mom when I leave work"). Screen recording plus your voice. Post them on TikTok, Instagram Reels and YouTube Shorts with `ovoa.ai/early-access` in the bio.
-2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/partners`, and approve them. 15% for 6 months, $10 a Band and a CPM is a strong offer at that size.
+2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/affiliates`, and approve them in the affiliate inbox on admin.ovoa.ai. 15% for 6 months, $10 a Band and a CPM is a strong offer at that size.
 3. **Lead with Annual.** It's the highlighted card and the one-click upsell after checkout; each annual member is cash up front and far less churn.
 4. **Email your Band buyers** a few days after their Band ships if their free days still say *Not started* on the admin page ("did it arrive? tap Start when you're ready"), and on day 6 of their free days ("they end tomorrow, here's what people use it for"). Their emails are on the admin page. Trial-to-paid conversion is the number that matters most; the admin page shows *In free trial* next to *Paying* so you can watch it.
 5. **Lean on the free app.** Health and notes are free with no time limit, so "try it free" is an honest pitch. The upgrade happens when someone wants to talk to it.

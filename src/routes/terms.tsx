@@ -31,7 +31,7 @@ function Terms() {
   return (
     <LegalPage
       title="Terms"
-      updated="September 23, 2026"
+      updated="September 25, 2026"
       intro={
         <p>
           These terms cover the OVOA app, the OVOA assistant, the OVOA Band and ovoa.ai. By using
@@ -139,10 +139,10 @@ function Terms() {
       </section>
 
       <section>
-        <h2>Partners</h2>
+        <h2>Affiliates</h2>
         <p>
-          How partners earn and get paid is set out on the{" "}
-          <Link to="/partners">partner program</Link> page.
+          How affiliates earn and get paid is set out on the{" "}
+          <Link to="/affiliates">affiliate program</Link> page.
         </p>
       </section>
 

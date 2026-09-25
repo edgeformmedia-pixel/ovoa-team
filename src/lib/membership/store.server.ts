@@ -39,6 +39,11 @@ export type Affiliate = {
   name: string;
   email: string;
   audience: string | null;
+  // From the application (migration 0006): where their audience is, links to
+  // it, and roughly how big it is. Null on older rows.
+  platform: string | null;
+  links: string | null;
+  audience_size: string | null;
   payout_email: string | null;
   status: string;
   percent: number;
@@ -46,12 +51,21 @@ export type Affiliate = {
   cpm_cents: number;
   dashboard_key: string;
   clicks: number;
+  reviewed_at: string | null;
   created_at: string;
 };
 
 export type NewAffiliate = Pick<
   Affiliate,
-  "code" | "name" | "email" | "audience" | "payout_email" | "percent"
+  | "code"
+  | "name"
+  | "email"
+  | "audience"
+  | "platform"
+  | "links"
+  | "audience_size"
+  | "payout_email"
+  | "percent"
 >;
 
 export type Commission = {
@@ -129,6 +143,8 @@ export interface Store {
   lifetimeByPaymentIntent(paymentIntentId: string): Promise<Member[]>;
   listMembers(limit: number): Promise<Member[]>;
   getAffiliate(code: string): Promise<Affiliate | null>;
+  affiliatesByEmail(email: string): Promise<Affiliate[]>;
+  affiliatesSince(iso: string): Promise<number>;
   insertAffiliate(row: NewAffiliate): Promise<void>;
   setAffiliateStatus(id: string, status: "approved" | "rejected"): Promise<void>;
   setAffiliateCpm(id: string, cpmCents: number): Promise<void>;
@@ -317,21 +333,47 @@ const d1Store: Store = {
       );
       return row ? toAffiliate(row) : null;
     }),
+  affiliatesByEmail: (email) =>
+    d1(async () =>
+      (
+        await all<Record<string, unknown>>(
+          "SELECT * FROM affiliates WHERE email = ? ORDER BY created_at DESC",
+          email,
+        )
+      ).map(toAffiliate),
+    ),
+  affiliatesSince: (iso) =>
+    d1(async () => {
+      const row = await one<{ n: number }>(
+        "SELECT COUNT(*) AS n FROM affiliates WHERE created_at >= ?",
+        iso,
+      );
+      return Number(row?.n ?? 0);
+    }),
   insertAffiliate: (row) =>
     d1(async () => {
       await run(
-        "INSERT INTO affiliates (code, name, email, audience, payout_email, percent) VALUES (?, ?, ?, ?, ?, ?)",
+        `INSERT INTO affiliates (code, name, email, audience, platform, links, audience_size, payout_email, percent)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         row.code,
         row.name,
         row.email,
         row.audience,
+        row.platform,
+        row.links,
+        row.audience_size,
         row.payout_email,
         row.percent,
       );
     }),
   setAffiliateStatus: (id, status) =>
     d1(async () => {
-      await run("UPDATE affiliates SET status = ? WHERE id = ?", status, id);
+      await run(
+        "UPDATE affiliates SET status = ?, reviewed_at = ? WHERE id = ?",
+        status,
+        now(),
+        id,
+      );
     }),
   setAffiliateCpm: (id, cpmCents) =>
     d1(async () => {

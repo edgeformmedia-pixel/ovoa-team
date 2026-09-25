@@ -14,10 +14,10 @@ import {
   formatMoney,
 } from "@/lib/membership/plans";
 
-// Each partner's private page: /partners/dashboard?code=<code>&key=<dashboard_key>.
-// The admin page gives you this link to send them.
+// Each affiliate's private page: /affiliates/dashboard?code=<code>&key=<dashboard_key>.
+// The approval email from the affiliate inbox on admin.ovoa.ai links to it.
 
-export const Route = createFileRoute("/partners/dashboard")({
+export const Route = createFileRoute("/affiliates/dashboard")({
   component: Dashboard,
   staticData: { sitemap: false },
   validateSearch: (
@@ -40,7 +40,10 @@ export const Route = createFileRoute("/partners/dashboard")({
     }
   },
   head: () => ({
-    meta: [{ title: "Partner dashboard | OVOA" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [
+      { title: "Affiliate dashboard | OVOA" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
 });
 
@@ -78,8 +81,8 @@ function Dashboard() {
           <p className="mt-3 text-landing-muted">
             Use the full link from your approval email. Lost it? Email support@ovoa.ai.
           </p>
-          <Link to="/partners" className="mt-6 inline-block font-semibold text-landing-action">
-            About the partner program
+          <Link to="/affiliates" className="mt-6 inline-block font-semibold text-landing-action">
+            About the affiliate program
           </Link>
         </div>
       </main>
@@ -92,7 +95,7 @@ function Dashboard() {
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
       <MembershipHeader>
-        <span className="text-xs text-landing-muted">Partner dashboard</span>
+        <span className="text-xs text-landing-muted">Affiliate dashboard</span>
       </MembershipHeader>
       <div className="mx-auto max-w-[1000px] px-5 pb-24 pt-12">
         <h1 className="text-[clamp(2rem,5vw,3rem)] font-semibold leading-tight">
@@ -102,7 +105,7 @@ function Dashboard() {
           <p className="mt-3 text-landing-muted">
             {stats.status === "pending"
               ? "Your application is being reviewed. Your link starts counting once it's approved."
-              : "This partnership isn't active."}
+              : "This affiliate account isn't active."}
           </p>
         ) : (
           <p className="mt-3 text-landing-muted">

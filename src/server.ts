@@ -66,7 +66,12 @@ const PATH_ALIASES: Record<string, string> = {
   "/sign-in": "/account",
   "/signup": "/account",
   "/sign-up": "/account",
-  "/affiliates": "/partners",
+  // The affiliate program was /partners until September 2026; dashboard links
+  // keep their ?code=&key= through the redirect.
+  "/partners": "/affiliates",
+  "/partners/dashboard": "/affiliates/dashboard",
+  "/partner": "/affiliates",
+  "/affiliate": "/affiliates",
 };
 
 function canonicalRedirect(request: Request): Response | null {

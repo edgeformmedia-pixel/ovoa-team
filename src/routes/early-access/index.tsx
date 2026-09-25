@@ -363,10 +363,10 @@ function EarlyAccess() {
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
       <MembershipHeader>
         <Link
-          to="/partners"
+          to="/affiliates"
           className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
         >
-          Partners
+          Affiliates
         </Link>
         <Link
           to="/account"

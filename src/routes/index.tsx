@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  ArrowRight,
   Bell,
   Brain,
   CalendarCheck,
@@ -23,7 +24,13 @@ import swimmingBand from "@/assets/sports/swimming-band.webp";
 import { HEALTH_SCRIPT, NOTES_SCRIPT, RULES_SCRIPT, TASKS_SCRIPT } from "@/lib/demo-scripts";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
-import type { PlansResult } from "@/lib/membership/plans";
+import {
+  AFFILIATE_PERCENT,
+  COMMISSION_MONTHS,
+  bandCommissionCents,
+  formatMoney,
+  type PlansResult,
+} from "@/lib/membership/plans";
 import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
@@ -542,6 +549,28 @@ function Landing() {
           >
             Get the Band
           </Link>
+        </div>
+      </section>
+
+      <section className="border-t border-landing-line bg-landing-control/55 px-6 py-14 text-center sm:py-16">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-medium text-landing-muted">
+            For creators, coaches and newsletter writers
+          </p>
+          <Link
+            to="/affiliates"
+            className="group mt-3 inline-flex items-center gap-3 text-[clamp(1.5rem,4vw,2.75rem)] font-semibold leading-tight tracking-normal text-landing-ink transition-colors hover:text-landing-action focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-landing-action"
+          >
+            Affiliate? Work with us
+            <ArrowRight
+              aria-hidden="true"
+              className="size-[0.8em] shrink-0 transition-transform group-hover:translate-x-1"
+            />
+          </Link>
+          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-landing-muted sm:text-lg">
+            Earn {AFFILIATE_PERCENT}% of what the people you send pay for {COMMISSION_MONTHS}{" "}
+            months, plus {formatMoney(bandCommissionCents(data.band))} on every Band.
+          </p>
         </div>
       </section>
 

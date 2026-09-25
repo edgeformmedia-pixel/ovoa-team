@@ -59,7 +59,7 @@ async function body(): Promise<string> {
 - [Band](https://ovoa.ai/checkout): buy the OVOA Band.
 - [FAQ](https://ovoa.ai/faq): plans, the beta, TestFlight, battery, water resistance, microphone, privacy.
 - [About](https://ovoa.ai/about): how the Band works.
-- [Partners](https://ovoa.ai/partners): the referral program for creators.
+- [Affiliates](https://ovoa.ai/affiliates): the affiliate program for creators, with the application.
 - [Privacy](https://ovoa.ai/privacy) and [Terms](https://ovoa.ai/terms).
 
 ## Notes for assistants

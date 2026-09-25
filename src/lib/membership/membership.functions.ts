@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
+  AFFILIATE_PLATFORMS,
+  AUDIENCE_SIZES,
   BAND_TRIAL_DAYS,
   CHECKOUT_SESSION_PATTERN,
   FALLBACK_BAND,
@@ -391,23 +393,47 @@ export const recordReferralClick = createServerFn({ method: "POST" })
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Across everyone: more than this in an hour is a flood, not creators.
+const AFFILIATE_APPLICATIONS_PER_HOUR = 20;
+
+// The application on ovoa.ai/affiliates. It lands in the affiliate inbox on
+// admin.ovoa.ai (which reads this database), and the applicant gets an email
+// saying it arrived.
 export const applyAffiliate = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
       name?: unknown;
       email?: unknown;
+      platform?: unknown;
+      links?: unknown;
+      audienceSize?: unknown;
       audience?: unknown;
       code?: unknown;
       payoutEmail?: unknown;
+      company?: unknown;
     }) => {
       const text = (v: unknown, max: number) =>
         typeof v === "string" ? v.trim().slice(0, max) : "";
       const name = text(input?.name, 80);
       const email = text(input?.email, 200).toLowerCase();
+      const platform = text(input?.platform, 20);
+      const links = text(input?.links, 600)
+        .split(/\s*\n\s*/)
+        .filter(Boolean)
+        .slice(0, 5)
+        .join("\n");
+      const audienceSize = text(input?.audienceSize, 12);
       const code = text(input?.code, 24).toLowerCase();
       const payoutEmail = text(input?.payoutEmail, 200).toLowerCase();
       if (!name) throw new Error("Add your name.");
       if (!EMAIL.test(email)) throw new Error("That email doesn't look right.");
+      if (!AFFILIATE_PLATFORMS.some((p) => p.id === platform)) {
+        throw new Error("Pick where your audience is.");
+      }
+      if (!links) throw new Error("Add a link to your channel, profile or site.");
+      if (!AUDIENCE_SIZES.some((s) => s.id === audienceSize)) {
+        throw new Error("Pick roughly how many people follow you.");
+      }
       if (!REF_PATTERN.test(code)) {
         throw new Error("Your code needs 3–24 lowercase letters, numbers or dashes.");
       }
@@ -416,21 +442,50 @@ export const applyAffiliate = createServerFn({ method: "POST" })
       return {
         name,
         email,
+        platform,
+        links,
+        audienceSize,
         code,
-        audience: text(input?.audience, 400),
+        audience: text(input?.audience, 1000),
         payoutEmail: payoutEmail || email,
+        // A field people can't see: only bots fill it in.
+        trap: text(input?.company, 200),
       };
     },
   )
   .handler(async ({ data }): Promise<{ ok: true } | { ok: false; message: string }> => {
+    if (data.trap) return { ok: true };
     const { store, DuplicateError } = await import("./store.server");
     const { AFFILIATE_PERCENT } = await import("./plans");
     try {
+      // One application at a time per email. The same answer whether it's
+      // waiting or approved, so the form can't be used to look people up.
+      const earlier = await store().affiliatesByEmail(data.email);
+      if (earlier.some((a) => a.status === "pending" || a.status === "approved")) {
+        return {
+          ok: false,
+          message:
+            "You've already applied with this email. Once you're approved, your link and dashboard are in our email; can't find it? Write to support@ovoa.ai.",
+        };
+      }
+      // Each application emails the address it gives, so a flood of them is
+      // stopped here rather than sent.
+      const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+      if ((await store().affiliatesSince(hourAgo)) >= AFFILIATE_APPLICATIONS_PER_HOUR) {
+        return {
+          ok: false,
+          message:
+            "We're getting a lot of applications right now. Try again in an hour, or write to support@ovoa.ai.",
+        };
+      }
       await store().insertAffiliate({
         code: data.code,
         name: data.name,
         email: data.email,
         audience: data.audience || null,
+        platform: data.platform,
+        links: data.links,
+        audience_size: data.audienceSize,
         payout_email: data.payoutEmail,
         percent: AFFILIATE_PERCENT,
       });
@@ -441,6 +496,15 @@ export const applyAffiliate = createServerFn({ method: "POST" })
       console.error("[membership] apply", error);
       return { ok: false, message: "That didn't go through. Try again in a minute." };
     }
+    const { sendEmail, affiliateAppliedEmail } = await import("./email.server");
+    await sendEmail(
+      affiliateAppliedEmail({
+        to: data.email,
+        firstName: data.name.split(/\s+/)[0] ?? null,
+        code: data.code,
+      }),
+      `affiliate-applied:${data.code}`,
+    );
     return { ok: true };
   });
 
@@ -550,6 +614,9 @@ export type AdminAffiliate = {
   email: string;
   payoutEmail: string | null;
   audience: string | null;
+  platform: string | null;
+  links: string | null;
+  audienceSize: string | null;
   status: string;
   percent: number;
   cpmCents: number;
@@ -724,6 +791,9 @@ export const getAdminOverview = createServerFn({ method: "POST" })
         email: a.email,
         payoutEmail: a.payout_email,
         audience: a.audience,
+        platform: a.platform ?? null,
+        links: a.links ?? null,
+        audienceSize: a.audience_size ?? null,
         status: a.status,
         percent: a.percent,
         cpmCents: a.cpm_cents,

@@ -45,7 +45,7 @@ function Privacy() {
   return (
     <LegalPage
       title="Privacy policy"
-      updated="September 23, 2026"
+      updated="September 25, 2026"
       intro={
         <p>
           This covers the OVOA iPhone app, the OVOA Band and ovoa.ai. OVOA is in beta, so this page
@@ -217,16 +217,18 @@ function Privacy() {
         <p>
           Stripe handles payment, and we never see your card number. We keep your email, name, plan
           and its status, the app email you move a plan to, and for a Band order the shipping
-          address and phone number so we can send it. If you came through a partner&rsquo;s link, a
-          cookie remembers their code for 90 days so they can be paid. Signing in on ovoa.ai sets a
-          cookie that keeps you signed in, and Stripe&rsquo;s checkout sets its own cookies to
+          address and phone number so we can send it. If you came through an affiliate&rsquo;s link,
+          a cookie remembers their code for 90 days so they can be paid. Signing in on ovoa.ai sets
+          a cookie that keeps you signed in, and Stripe&rsquo;s checkout sets its own cookies to
           prevent fraud. We don&rsquo;t use ad or tracking cookies.
         </p>
 
-        <h3>Partners</h3>
+        <h3>Affiliates</h3>
         <p>
-          If you apply to the <Link to="/partners">partner program</Link>, we keep your name, email,
-          code, what you told us about your audience, and the PayPal email we pay you at.
+          If you apply to the <Link to="/affiliates">affiliate program</Link>, we keep your name,
+          email, code, where your audience is, the links you give us, roughly how many people follow
+          you, what you tell us about them, and the PayPal email we pay you at. We email you that
+          your application arrived, and whether it&rsquo;s approved.
         </p>
       </section>
 
@@ -258,8 +260,8 @@ function Privacy() {
         <ul>
           <li>
             <strong>Cloudflare</strong>: runs OVOA&rsquo;s server and ovoa.ai, and the databases
-            that hold everything the app sends us and the plan, order, partner and TestFlight invite
-            records from ovoa.ai.
+            that hold everything the app sends us and the plan, order, affiliate and TestFlight
+            invite records from ovoa.ai.
           </li>
           <li>
             <strong>Z.ai</strong> (the GLM models, from Zhipu AI): writes OVOA&rsquo;s replies.
@@ -321,7 +323,7 @@ function Privacy() {
             ovoa.ai, if you use it.
           </li>
           <li>
-            <strong>PayPal</strong>: partner payouts only.
+            <strong>PayPal</strong>: affiliate payouts only.
           </li>
         </ul>
         <p>
@@ -359,7 +361,7 @@ function Privacy() {
           the markers that stop OVOA repeating a reminder or warning within a month or pay cycle.
         </p>
         <p>
-          On ovoa.ai, your plan, orders and partner records stay while you&rsquo;re a member, the
+          On ovoa.ai, your plan, orders and affiliate records stay while you&rsquo;re a member, the
           record of your TestFlight invite until you ask us to delete it, and payment records as
           long as tax and accounting law requires.
         </p>
