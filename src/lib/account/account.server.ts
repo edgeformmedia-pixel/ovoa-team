@@ -25,6 +25,13 @@ export const accountApiUrl = () => (envVar("OVOA_API_URL") ?? DEFAULT_API_URL).r
 
 export const SESSION_COOKIE = "ovoa_session";
 export const GOOGLE_STATE_COOKIE = "ovoa_google_state";
+export const APPLE_STATE_COOKIE = "ovoa_apple_state";
+// Where a Google or Apple sign-in lands after: /account unless it started on
+// one of these pages.
+export const NEXT_COOKIE = "ovoa_next";
+const NEXT_PAGES = ["/account", "/text"] as const;
+export const nextPage = (value: string | null | undefined): string =>
+  NEXT_PAGES.find((p) => p === value) ?? "/account";
 // The app's server ends a site session after 30 days (auth.ts SESSION_TTL_MS).
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 
@@ -52,6 +59,13 @@ export const setCookie = (request: Request, name: string, value: string, maxAge:
   `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure(request)}`;
 
 export const clearCookie = (request: Request, name: string) => setCookie(request, name, "", 0);
+
+// Apple posts its answer back from appleid.apple.com, a cross-site POST that a
+// Lax cookie doesn't ride along with. Only the short-lived Apple state uses this.
+export const crossSiteCookie = (request: Request, name: string, value: string, maxAge: number) =>
+  secure(request)
+    ? `${name}=${encodeURIComponent(value)}; Path=/api/public/account; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}`
+    : setCookie(request, name, value, maxAge);
 
 export const sessionCookie = (request: Request, token: string) =>
   setCookie(request, SESSION_COOKIE, token, SESSION_MAX_AGE);
@@ -201,6 +215,73 @@ export async function signInWithGoogle(idToken: string): Promise<Proven | null> 
     return null;
   } catch (error) {
     console.error("[account] /auth/google", error);
+    return null;
+  }
+}
+
+// ---------- Apple ----------
+//
+//   APPLE_SERVICE_ID   "Continue with Apple": a Services ID (ai.ovoa.web) with
+//                      Sign in with Apple on, domain ovoa.ai, return URL
+//                      <site>/api/public/account/apple-callback. The app's
+//                      server only accepts tokens for that audience
+//                      (signin.ts APPLE_WEB_AUDIENCE). Unset: the button is off.
+
+export const appleConfigured = (): boolean => Boolean(envVar("APPLE_SERVICE_ID"));
+
+export const appleRedirectUri = (origin: string) => `${origin}/api/public/account/apple-callback`;
+
+/** A nonce from the app's server, good once, that Apple signs into its token. */
+export async function appleNonce(): Promise<string | null> {
+  try {
+    const res = await fetch(`${accountApiUrl()}/auth/apple/start`, {
+      method: "POST",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { nonce?: unknown };
+    return typeof body.nonce === "string" ? body.nonce : null;
+  } catch (error) {
+    console.error("[account] /auth/apple/start", error);
+    return null;
+  }
+}
+
+export function appleAuthUrl(origin: string, state: string, nonce: string): string {
+  const url = new URL("https://appleid.apple.com/auth/authorize");
+  url.search = new URLSearchParams({
+    client_id: envVar("APPLE_SERVICE_ID") ?? "",
+    redirect_uri: appleRedirectUri(origin),
+    response_type: "code id_token",
+    response_mode: "form_post",
+    scope: "name email",
+    state,
+    nonce,
+  }).toString();
+  return url.toString();
+}
+
+/** Apple always makes an account (or finds one), so it ends with a session. */
+export async function signInWithApple(
+  identityToken: string,
+  nonce: string,
+  name: string | null,
+): Promise<string | null> {
+  try {
+    const res = await fetch(`${accountApiUrl()}/auth/apple/web`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ identityToken, nonce, name }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) {
+      console.error("[account] /auth/apple/web", res.status, (await res.text()).slice(0, 300));
+      return null;
+    }
+    const body = (await res.json()) as { token?: unknown };
+    return isToken(body.token) ? body.token : null;
+  } catch (error) {
+    console.error("[account] /auth/apple/web", error);
     return null;
   }
 }

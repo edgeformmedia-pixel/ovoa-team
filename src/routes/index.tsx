@@ -221,10 +221,10 @@ function Landing() {
               Account
             </Link>
             <Link
-              to="/early-access"
+              to="/text"
               className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
             >
-              Get the app
+              Text OVOA
             </Link>
             <Link
               to="/about"
@@ -262,6 +262,15 @@ function Landing() {
             Text it or talk to it like a person. OVOA plans, schedules, remembers and follows
             through, then lets you know when it’s done, or when it needs you.
           </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/text"
+              className="inline-flex h-12 items-center rounded-full bg-landing-action px-7 text-[15px] font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+            >
+              Text OVOA now
+            </Link>
+            <p className="text-sm text-landing-muted">Free to try. Just iMessage, no app needed.</p>
+          </div>
         </div>
       </section>
 

@@ -7,22 +7,21 @@ export const Route = createFileRoute("/api/public/account/google")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const { GOOGLE_STATE_COOKIE, googleAuthUrl, googleConfigured, setCookie } =
+        const { GOOGLE_STATE_COOKIE, NEXT_COOKIE, googleAuthUrl, googleConfigured, nextPage, setCookie } =
           await import("@/lib/account/account.server");
-        const origin = new URL(request.url).origin;
+        const url = new URL(request.url);
+        const origin = url.origin;
+        const next = nextPage(url.searchParams.get("next"));
         if (!googleConfigured())
-          return Response.redirect(`${origin}/account?error=google-off`, 303);
+          return Response.redirect(`${origin}${next}?error=google-off`, 303);
 
         const state = [...crypto.getRandomValues(new Uint8Array(16))]
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
-        return new Response(null, {
-          status: 302,
-          headers: {
-            location: googleAuthUrl(origin, state),
-            "set-cookie": setCookie(request, GOOGLE_STATE_COOKIE, state, 10 * 60),
-          },
-        });
+        const headers = new Headers({ location: googleAuthUrl(origin, state) });
+        headers.append("set-cookie", setCookie(request, GOOGLE_STATE_COOKIE, state, 10 * 60));
+        headers.append("set-cookie", setCookie(request, NEXT_COOKIE, next, 10 * 60));
+        return new Response(null, { status: 302, headers });
       },
     },
   },

@@ -133,7 +133,11 @@ async function lastCode(to) {
     e.to.includes(to),
   );
   const email = sent.at(-1);
-  return { email, code: /^(\d{6}) is your OVOA code$/.exec(email?.subject ?? "")?.[1] ?? null };
+  return { email, code:
+      // "123456 is your OVOA code", or a sign-up's "Confirm your email for OVOA (code 123456)".
+      /^(\d{6}) is your OVOA code$|\(code (\d{6})\)$/.exec(email?.subject ?? "")?.slice(1).find(Boolean) ??
+      null,
+  };
 }
 
 // The site keeps the session the browser got: POST /api/public/account/session.

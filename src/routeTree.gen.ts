@@ -20,12 +20,15 @@ import { Route as OrderCompleteRouteImport } from './routes/order-complete'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TextRouteImport } from './routes/text'
 import { Route as AffiliatesIndexRouteImport } from './routes/affiliates/index'
 import { Route as AffiliatesDashboardRouteImport } from './routes/affiliates/dashboard'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
+import { Route as ApiPublicAccountAppleRouteImport } from './routes/api/public/account/apple'
+import { Route as ApiPublicAccountAppleCallbackRouteImport } from './routes/api/public/account/apple-callback'
 import { Route as ApiPublicAccountBillingRouteImport } from './routes/api/public/account/billing'
 import { Route as ApiPublicAccountGoogleRouteImport } from './routes/api/public/account/google'
 import { Route as ApiPublicAccountGoogleCallbackRouteImport } from './routes/api/public/account/google-callback'
@@ -92,6 +95,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TextRoute = TextRouteImport.update({
+  id: '/text',
+  path: '/text',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffiliatesIndexRoute = AffiliatesIndexRouteImport.update({
   id: '/affiliates/',
   path: '/affiliates/',
@@ -122,6 +130,17 @@ const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
   path: '/api/public/membership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAccountAppleRoute = ApiPublicAccountAppleRouteImport.update({
+  id: '/api/public/account/apple',
+  path: '/api/public/account/apple',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAccountAppleCallbackRoute =
+  ApiPublicAccountAppleCallbackRouteImport.update({
+    id: '/api/public/account/apple-callback',
+    path: '/api/public/account/apple-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAccountBillingRoute = ApiPublicAccountBillingRouteImport.update({
   id: '/api/public/account/billing',
   path: '/api/public/account/billing',
@@ -190,12 +209,15 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/text': typeof TextRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
+  '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
@@ -219,12 +241,15 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/text': typeof TextRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/affiliates': typeof AffiliatesIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
+  '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
@@ -249,12 +274,15 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/text': typeof TextRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
+  '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
@@ -280,12 +308,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/text'
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/account/apple'
+    | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
@@ -309,12 +340,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/text'
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/affiliates'
     | '/early-access'
     | '/api/public/membership'
+    | '/api/public/account/apple'
+    | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
@@ -338,12 +372,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sitemap.xml'
     | '/terms'
+    | '/text'
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/account/apple'
+    | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
@@ -368,12 +405,15 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  TextRoute: typeof TextRoute
   AffiliatesDashboardRoute: typeof AffiliatesDashboardRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
+  ApiPublicAccountAppleRoute: typeof ApiPublicAccountAppleRoute
+  ApiPublicAccountAppleCallbackRoute: typeof ApiPublicAccountAppleCallbackRoute
   ApiPublicAccountBillingRoute: typeof ApiPublicAccountBillingRoute
   ApiPublicAccountGoogleRoute: typeof ApiPublicAccountGoogleRoute
   ApiPublicAccountGoogleCallbackRoute: typeof ApiPublicAccountGoogleCallbackRoute
@@ -465,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/text': {
+      id: '/text'
+      path: '/text'
+      fullPath: '/text'
+      preLoaderRoute: typeof TextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affiliates/': {
       id: '/affiliates/'
       path: '/affiliates'
@@ -505,6 +552,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/membership'
       fullPath: '/api/public/membership'
       preLoaderRoute: typeof ApiPublicMembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/account/apple': {
+      id: '/api/public/account/apple'
+      path: '/api/public/account/apple'
+      fullPath: '/api/public/account/apple'
+      preLoaderRoute: typeof ApiPublicAccountAppleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/account/apple-callback': {
+      id: '/api/public/account/apple-callback'
+      path: '/api/public/account/apple-callback'
+      fullPath: '/api/public/account/apple-callback'
+      preLoaderRoute: typeof ApiPublicAccountAppleCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/account/billing': {
@@ -592,12 +653,15 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  TextRoute: TextRoute,
   AffiliatesDashboardRoute: AffiliatesDashboardRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
   AffiliatesIndexRoute: AffiliatesIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
+  ApiPublicAccountAppleRoute: ApiPublicAccountAppleRoute,
+  ApiPublicAccountAppleCallbackRoute: ApiPublicAccountAppleCallbackRoute,
   ApiPublicAccountBillingRoute: ApiPublicAccountBillingRoute,
   ApiPublicAccountGoogleRoute: ApiPublicAccountGoogleRoute,
   ApiPublicAccountGoogleCallbackRoute: ApiPublicAccountGoogleCallbackRoute,

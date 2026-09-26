@@ -13,7 +13,9 @@ export const Route = createFileRoute("/api/public/account/google-callback")({
       GET: async ({ request }) => {
         const {
           GOOGLE_STATE_COOKIE,
+          NEXT_COOKIE,
           clearCookie,
+          nextPage,
           googleIdToken,
           readCookie,
           sessionCookie,
@@ -21,10 +23,13 @@ export const Route = createFileRoute("/api/public/account/google-callback")({
         } = await import("@/lib/account/account.server");
 
         const url = new URL(request.url);
-        const account = `${url.origin}/account`;
+        const next = nextPage(readCookie(request, NEXT_COOKIE));
+        // Errors and a finished sign-in go back where it started (/account or /text).
+        const account = `${url.origin}${next}`;
         const go = (location: string, cookie?: string) => {
           const headers = new Headers({ location });
           headers.append("set-cookie", clearCookie(request, GOOGLE_STATE_COOKIE));
+          headers.append("set-cookie", clearCookie(request, NEXT_COOKIE));
           if (cookie) headers.append("set-cookie", cookie);
           return new Response(null, { status: 303, headers });
         };
@@ -46,8 +51,10 @@ export const Route = createFileRoute("/api/public/account/google-callback")({
           finish: proven.ticket,
           email: proven.email,
           ...(proven.name ? { name: proven.name } : {}),
+          ...(next !== "/account" ? { next } : {}),
         });
-        return go(`${account}#${finish.toString()}`);
+        // A new account is finished on /account, which then goes on to `next`.
+        return go(`${url.origin}/account#${finish.toString()}`);
       },
     },
   },
