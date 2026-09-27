@@ -30,6 +30,14 @@
       "database_name": "ovoa-site-db",
       "database_id": "faf7c32b-f51b-4b67-afd6-2c3cde11d1d0",
       "migrations_dir": "migrations"
+    },
+    {
+      // Session replays (src/lib/analytics/replay.ts), kept apart so the
+      // recordings never crowd the site's own tables. admin.ovoa.ai binds it too.
+      "binding": "REPLAY_DB",
+      "database_name": "ovoa-replay-db",
+      "database_id": "edeb9c1b-e4c2-4fb3-a882-5f1cd4467127",
+      "migrations_dir": "migrations-replay"
     }
   ],
   "vars": {

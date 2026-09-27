@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { startReplay } from "./replay";
 
 // First-party site analytics: page views, clicks (what and where), scroll
 // depth, time on page and rage clicks, sent in batches to /api/public/t
-// (collect.server.ts) and read on admin.ovoa.ai's Analytics page. Nothing
+// (collect.server.ts) and read on admin.ovoa.ai's Analytics page (the session
+// replay is replay.ts). Nothing
 // typed into a field is ever recorded. Browsers that send Global Privacy
 // Control are left alone.
 
@@ -172,6 +174,7 @@ export function useAnalytics() {
     if (!state) {
       state = { ...session(), hello: true, queue: [], path: "", pageAt: Date.now(), depth: 0, marks: new Set(), ready: false, clicks: [] };
     }
+    void startReplay(state.sid).catch(() => undefined);
     addEventListener("click", onClick, { capture: true, passive: true });
     addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("visibilitychange", onHide);

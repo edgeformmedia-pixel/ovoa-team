@@ -29,6 +29,7 @@ import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admi
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
 import { Route as TextLinkRouteImport } from './routes/text_.link'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
+import { Route as ApiPublicReplayRouteImport } from './routes/api/public/replay'
 import { Route as ApiPublicTRouteImport } from './routes/api/public/t'
 import { Route as ApiPublicAccountAppleRouteImport } from './routes/api/public/account/apple'
 import { Route as ApiPublicAccountAppleCallbackRouteImport } from './routes/api/public/account/apple-callback'
@@ -143,6 +144,11 @@ const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
   path: '/api/public/membership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicReplayRoute = ApiPublicReplayRouteImport.update({
+  id: '/api/public/replay',
+  path: '/api/public/replay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTRoute = ApiPublicTRouteImport.update({
   id: '/api/public/t',
   path: '/api/public/t',
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/replay': typeof ApiPublicReplayRoute
   '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/affiliates': typeof AffiliatesIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/replay': typeof ApiPublicReplayRoute
   '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
@@ -307,6 +315,7 @@ export interface FileRoutesById {
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/replay': typeof ApiPublicReplayRoute
   '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/replay'
     | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
@@ -379,6 +389,7 @@ export interface FileRouteTypes {
     | '/affiliates'
     | '/early-access'
     | '/api/public/membership'
+    | '/api/public/replay'
     | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/replay'
     | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
@@ -450,6 +462,7 @@ export interface RootRouteChildren {
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
+  ApiPublicReplayRoute: typeof ApiPublicReplayRoute
   ApiPublicTRoute: typeof ApiPublicTRoute
   ApiPublicAccountAppleRoute: typeof ApiPublicAccountAppleRoute
   ApiPublicAccountAppleCallbackRoute: typeof ApiPublicAccountAppleCallbackRoute
@@ -607,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMembershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/replay': {
+      id: '/api/public/replay'
+      path: '/api/public/replay'
+      fullPath: '/api/public/replay'
+      preLoaderRoute: typeof ApiPublicReplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/t': {
       id: '/api/public/t'
       path: '/api/public/t'
@@ -722,6 +742,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliatesIndexRoute: AffiliatesIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
+  ApiPublicReplayRoute: ApiPublicReplayRoute,
   ApiPublicTRoute: ApiPublicTRoute,
   ApiPublicAccountAppleRoute: ApiPublicAccountAppleRoute,
   ApiPublicAccountAppleCallbackRoute: ApiPublicAccountAppleCallbackRoute,
