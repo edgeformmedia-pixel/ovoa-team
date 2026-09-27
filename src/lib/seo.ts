@@ -11,6 +11,12 @@ export const SITE_NAME = "OVOA";
 
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 
+// OVOA's own listings elsewhere. Google uses sameAs to tie them to ovoa.ai as
+// one brand, so searches for "ovoa" can show them together. Add each new
+// official profile (LinkedIn, YouTube, X, Instagram, TikTok) here as it goes live.
+export const APP_STORE_URL = "https://apps.apple.com/us/app/ovoa/id6812987246";
+export const SAME_AS: string[] = [APP_STORE_URL];
+
 export const OG_IMAGE = `${SITE_URL}/og-band.jpg`;
 const OG_IMAGE_ALT = "The OVOA Band: a black woven wristband with one button and a status light";
 
@@ -50,7 +56,7 @@ export const WEBSITE = {
   "@type": "WebSite",
   "@id": `${SITE_URL}/#website`,
   name: SITE_NAME,
-  alternateName: ["ovoa.ai", "OVOA AI"],
+  alternateName: ["Ovoa", "ovoa.ai", "OVOA AI"],
   url: `${SITE_URL}/`,
   inLanguage: "en-US",
   publisher: { "@id": ORGANIZATION_ID },
@@ -61,8 +67,11 @@ export const ORGANIZATION = {
   "@type": "Organization",
   "@id": ORGANIZATION_ID,
   name: SITE_NAME,
-  alternateName: "Ovoa AI",
+  alternateName: ["Ovoa", "Ovoa AI", "ovoa.ai"],
+  description:
+    "OVOA makes an AI assistant you text or talk to, and the OVOA Band, a woven wristband that brings it to your wrist.",
   url: `${SITE_URL}/`,
+  sameAs: SAME_AS,
   logo: {
     "@type": "ImageObject",
     url: `${SITE_URL}/logo.png`,
@@ -128,6 +137,44 @@ export function appJsonLd(data: PlansResult | undefined) {
       subscription("base", "annual"),
       subscription("pro", "monthly"),
       subscription("pro", "annual"),
+    ],
+  };
+}
+
+// A blog post, for its route's head().
+export function articleJsonLd(post: {
+  title: string;
+  description: string;
+  path: string;
+  published: string;
+  updated?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    url: `${SITE_URL}${post.path}`,
+    mainEntityOfPage: `${SITE_URL}${post.path}`,
+    image: OG_IMAGE,
+    datePublished: post.published,
+    dateModified: post.updated ?? post.published,
+    inLanguage: "en-US",
+    author: { "@id": ORGANIZATION_ID },
+    publisher: { "@id": ORGANIZATION_ID },
+    about: { "@id": ORGANIZATION_ID },
+  };
+}
+
+// Home > section > page.
+export function breadcrumbs3(section: string, sectionPath: string, name: string, path: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: section, item: `${SITE_URL}${sectionPath}` },
+      { "@type": "ListItem", position: 3, name, item: `${SITE_URL}${path}` },
     ],
   };
 }
