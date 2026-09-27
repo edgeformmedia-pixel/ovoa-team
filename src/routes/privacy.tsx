@@ -223,6 +223,16 @@ function Privacy() {
           prevent fraud. We don&rsquo;t use ad or tracking cookies.
         </p>
 
+        <h3>How people use ovoa.ai</h3>
+        <p>
+          To improve the website, ovoa.ai records which pages you visit, what you click, how far you
+          scroll and how long you stay, with your browser type, device, country and the site that
+          sent you (and your email if you&rsquo;re signed in). It never records what you type. A
+          random id in your browser&rsquo;s storage ties your visits together. This stays with OVOA,
+          no analytics company sees it. If your browser sends Global Privacy Control, none of it is
+          recorded.
+        </p>
+
         <h3>Affiliates</h3>
         <p>
           If you apply to the <Link to="/affiliates">affiliate program</Link>, we keep your name,

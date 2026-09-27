@@ -29,6 +29,7 @@ import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admi
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
 import { Route as TextLinkRouteImport } from './routes/text_.link'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
+import { Route as ApiPublicTRouteImport } from './routes/api/public/t'
 import { Route as ApiPublicAccountAppleRouteImport } from './routes/api/public/account/apple'
 import { Route as ApiPublicAccountAppleCallbackRouteImport } from './routes/api/public/account/apple-callback'
 import { Route as ApiPublicAccountBillingRouteImport } from './routes/api/public/account/billing'
@@ -142,6 +143,11 @@ const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
   path: '/api/public/membership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTRoute = ApiPublicTRouteImport.update({
+  id: '/api/public/t',
+  path: '/api/public/t',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAccountAppleRoute = ApiPublicAccountAppleRouteImport.update({
   id: '/api/public/account/apple',
   path: '/api/public/account/apple',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/affiliates': typeof AffiliatesIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
+  '/api/public/t': typeof ApiPublicTRoute
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
@@ -335,6 +344,7 @@ export interface FileRouteTypes {
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/affiliates'
     | '/early-access'
     | '/api/public/membership'
+    | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
+    | '/api/public/t'
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
@@ -438,6 +450,7 @@ export interface RootRouteChildren {
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
+  ApiPublicTRoute: typeof ApiPublicTRoute
   ApiPublicAccountAppleRoute: typeof ApiPublicAccountAppleRoute
   ApiPublicAccountAppleCallbackRoute: typeof ApiPublicAccountAppleCallbackRoute
   ApiPublicAccountBillingRoute: typeof ApiPublicAccountBillingRoute
@@ -594,6 +607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMembershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/t': {
+      id: '/api/public/t'
+      path: '/api/public/t'
+      fullPath: '/api/public/t'
+      preLoaderRoute: typeof ApiPublicTRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/account/apple': {
       id: '/api/public/account/apple'
       path: '/api/public/account/apple'
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliatesIndexRoute: AffiliatesIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
+  ApiPublicTRoute: ApiPublicTRoute,
   ApiPublicAccountAppleRoute: ApiPublicAccountAppleRoute,
   ApiPublicAccountAppleCallbackRoute: ApiPublicAccountAppleCallbackRoute,
   ApiPublicAccountBillingRoute: ApiPublicAccountBillingRoute,

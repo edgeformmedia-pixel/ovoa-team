@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 
 import { BandProvider } from "@/components/band/BandStore";
+import { useAnalytics } from "@/lib/analytics/track";
 import { useReferralCapture } from "@/lib/membership/referral";
 import appCss from "../styles.css?url";
 
@@ -135,6 +136,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useReferralCapture();
+  useAnalytics();
 
   return (
     <QueryClientProvider client={queryClient}>
