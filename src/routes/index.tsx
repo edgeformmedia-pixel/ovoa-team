@@ -289,7 +289,7 @@ function Landing() {
               Text OVOA
             </Link>
             <Link
-              to="/about"
+              to="/ai-wristband"
               aria-label="Search product information"
               title="Search"
               className="text-landing-ink transition-opacity hover:opacity-55"

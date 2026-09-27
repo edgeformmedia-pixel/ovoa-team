@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AiWristbandRouteImport } from './routes/ai-wristband'
 import { Route as BandRouteImport } from './routes/band'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ImessageRouteImport } from './routes/imessage'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OrderCompleteRouteImport } from './routes/order-complete'
@@ -22,8 +24,13 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TextRouteImport } from './routes/text'
+import { Route as WebsitesRouteImport } from './routes/websites'
 import { Route as AffiliatesIndexRouteImport } from './routes/affiliates/index'
 import { Route as AffiliatesDashboardRouteImport } from './routes/affiliates/dashboard'
+import { Route as CompareIndexRouteImport } from './routes/compare/index'
+import { Route as CompareBestAiAssistantsYouCanTextRouteImport } from './routes/compare/best-ai-assistants-you-can-text'
+import { Route as CompareChatgptRouteImport } from './routes/compare/chatgpt'
+import { Route as CompareSiriRouteImport } from './routes/compare/siri'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
@@ -59,6 +66,11 @@ const AccountRoute = AccountRouteImport.update({
   path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiWristbandRoute = AiWristbandRouteImport.update({
+  id: '/ai-wristband',
+  path: '/ai-wristband',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BandRoute = BandRouteImport.update({
   id: '/band',
   path: '/band',
@@ -72,6 +84,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImessageRoute = ImessageRouteImport.update({
+  id: '/imessage',
+  path: '/imessage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -109,6 +126,11 @@ const TextRoute = TextRouteImport.update({
   path: '/text',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WebsitesRoute = WebsitesRouteImport.update({
+  id: '/websites',
+  path: '/websites',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffiliatesIndexRoute = AffiliatesIndexRouteImport.update({
   id: '/affiliates/',
   path: '/affiliates/',
@@ -117,6 +139,27 @@ const AffiliatesIndexRoute = AffiliatesIndexRouteImport.update({
 const AffiliatesDashboardRoute = AffiliatesDashboardRouteImport.update({
   id: '/affiliates/dashboard',
   path: '/affiliates/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareIndexRoute = CompareIndexRouteImport.update({
+  id: '/compare/',
+  path: '/compare/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareBestAiAssistantsYouCanTextRoute =
+  CompareBestAiAssistantsYouCanTextRouteImport.update({
+    id: '/compare/best-ai-assistants-you-can-text',
+    path: '/compare/best-ai-assistants-you-can-text',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CompareChatgptRoute = CompareChatgptRouteImport.update({
+  id: '/compare/chatgpt',
+  path: '/compare/chatgpt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareSiriRoute = CompareSiriRouteImport.update({
+  id: '/compare/siri',
+  path: '/compare/siri',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EarlyAccessIndexRoute = EarlyAccessIndexRouteImport.update({
@@ -225,9 +268,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/ai-wristband': typeof AiWristbandRoute
   '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/imessage': typeof ImessageRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -235,11 +280,16 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/text': typeof TextRoute
+  '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
+  '/compare/chatgpt': typeof CompareChatgptRoute
+  '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
+  '/compare/': typeof CompareIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/replay': typeof ApiPublicReplayRoute
@@ -261,9 +311,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/ai-wristband': typeof AiWristbandRoute
   '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/imessage': typeof ImessageRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -271,11 +323,16 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/text': typeof TextRoute
+  '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
+  '/compare/chatgpt': typeof CompareChatgptRoute
+  '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates': typeof AffiliatesIndexRoute
+  '/compare': typeof CompareIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/replay': typeof ApiPublicReplayRoute
@@ -298,9 +355,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/ai-wristband': typeof AiWristbandRoute
   '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/imessage': typeof ImessageRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -308,11 +367,16 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/text': typeof TextRoute
+  '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
+  '/compare/chatgpt': typeof CompareChatgptRoute
+  '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text_/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
+  '/compare/': typeof CompareIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
   '/api/public/replay': typeof ApiPublicReplayRoute
@@ -336,9 +400,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/ai-wristband'
     | '/band'
     | '/checkout'
     | '/faq'
+    | '/imessage'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -346,11 +412,16 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/text'
+    | '/websites'
     | '/affiliates/dashboard'
+    | '/compare/best-ai-assistants-you-can-text'
+    | '/compare/chatgpt'
+    | '/compare/siri'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates/'
+    | '/compare/'
     | '/early-access/'
     | '/api/public/membership'
     | '/api/public/replay'
@@ -372,9 +443,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/ai-wristband'
     | '/band'
     | '/checkout'
     | '/faq'
+    | '/imessage'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -382,11 +455,16 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/text'
+    | '/websites'
     | '/affiliates/dashboard'
+    | '/compare/best-ai-assistants-you-can-text'
+    | '/compare/chatgpt'
+    | '/compare/siri'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates'
+    | '/compare'
     | '/early-access'
     | '/api/public/membership'
     | '/api/public/replay'
@@ -408,9 +486,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/ai-wristband'
     | '/band'
     | '/checkout'
     | '/faq'
+    | '/imessage'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -418,11 +498,16 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/text'
+    | '/websites'
     | '/affiliates/dashboard'
+    | '/compare/best-ai-assistants-you-can-text'
+    | '/compare/chatgpt'
+    | '/compare/siri'
     | '/early-access/admin'
     | '/early-access/welcome'
     | '/text_/link'
     | '/affiliates/'
+    | '/compare/'
     | '/early-access/'
     | '/api/public/membership'
     | '/api/public/replay'
@@ -445,9 +530,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AiWristbandRoute: typeof AiWristbandRoute
   BandRoute: typeof BandRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
+  ImessageRoute: typeof ImessageRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
   OrderCompleteRoute: typeof OrderCompleteRoute
@@ -455,11 +542,16 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TextRoute: typeof TextRoute
+  WebsitesRoute: typeof WebsitesRoute
   AffiliatesDashboardRoute: typeof AffiliatesDashboardRoute
+  CompareBestAiAssistantsYouCanTextRoute: typeof CompareBestAiAssistantsYouCanTextRoute
+  CompareChatgptRoute: typeof CompareChatgptRoute
+  CompareSiriRoute: typeof CompareSiriRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
   TextLinkRoute: typeof TextLinkRoute
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
+  CompareIndexRoute: typeof CompareIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
   ApiPublicReplayRoute: typeof ApiPublicReplayRoute
@@ -501,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-wristband': {
+      id: '/ai-wristband'
+      path: '/ai-wristband'
+      fullPath: '/ai-wristband'
+      preLoaderRoute: typeof AiWristbandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/band': {
       id: '/band'
       path: '/band'
@@ -520,6 +619,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/imessage': {
+      id: '/imessage'
+      path: '/imessage'
+      fullPath: '/imessage'
+      preLoaderRoute: typeof ImessageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms.txt': {
@@ -571,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TextRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/websites': {
+      id: '/websites'
+      path: '/websites'
+      fullPath: '/websites'
+      preLoaderRoute: typeof WebsitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affiliates/': {
       id: '/affiliates/'
       path: '/affiliates'
@@ -583,6 +696,34 @@ declare module '@tanstack/react-router' {
       path: '/affiliates/dashboard'
       fullPath: '/affiliates/dashboard'
       preLoaderRoute: typeof AffiliatesDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/': {
+      id: '/compare/'
+      path: '/compare'
+      fullPath: '/compare/'
+      preLoaderRoute: typeof CompareIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/best-ai-assistants-you-can-text': {
+      id: '/compare/best-ai-assistants-you-can-text'
+      path: '/compare/best-ai-assistants-you-can-text'
+      fullPath: '/compare/best-ai-assistants-you-can-text'
+      preLoaderRoute: typeof CompareBestAiAssistantsYouCanTextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/chatgpt': {
+      id: '/compare/chatgpt'
+      path: '/compare/chatgpt'
+      fullPath: '/compare/chatgpt'
+      preLoaderRoute: typeof CompareChatgptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/siri': {
+      id: '/compare/siri'
+      path: '/compare/siri'
+      fullPath: '/compare/siri'
+      preLoaderRoute: typeof CompareSiriRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/early-access/': {
@@ -725,9 +866,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AiWristbandRoute: AiWristbandRoute,
   BandRoute: BandRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
+  ImessageRoute: ImessageRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
   OrderCompleteRoute: OrderCompleteRoute,
@@ -735,11 +878,17 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TextRoute: TextRoute,
+  WebsitesRoute: WebsitesRoute,
   AffiliatesDashboardRoute: AffiliatesDashboardRoute,
+  CompareBestAiAssistantsYouCanTextRoute:
+    CompareBestAiAssistantsYouCanTextRoute,
+  CompareChatgptRoute: CompareChatgptRoute,
+  CompareSiriRoute: CompareSiriRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
   TextLinkRoute: TextLinkRoute,
   AffiliatesIndexRoute: AffiliatesIndexRoute,
+  CompareIndexRoute: CompareIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,
   ApiPublicReplayRoute: ApiPublicReplayRoute,

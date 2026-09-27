@@ -72,8 +72,12 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
           OVOA Band brings OVOA to your wrist
           <span aria-hidden="true">›</span>
         </a>
-        <p className="text-sm text-landing-muted sm:text-base">OVOA for iPhone</p>
-        <h1 className="mt-1.5 grid text-[clamp(2.65rem,6vw,5.25rem)] font-semibold leading-[0.98] tracking-normal text-landing-ink">
+        {/* The page's heading for search engines is this line; the big animated
+            one below is display type. */}
+        <h1 className="text-sm font-normal text-landing-muted sm:text-base">
+          OVOA, the AI assistant for iPhone
+        </h1>
+        <p className="mt-1.5 grid text-[clamp(2.65rem,6vw,5.25rem)] font-semibold leading-[0.98] tracking-normal text-landing-ink">
           {/* Both lines share one grid cell so the swap cross-fades in place. */}
           <span
             aria-hidden={swapped}
@@ -98,7 +102,7 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
           >
             Your life assistant.
           </span>
-        </h1>
+        </p>
         <p className="mt-2 text-lg text-landing-muted sm:text-2xl">Ask once. It’s handled.</p>
       </div>
 

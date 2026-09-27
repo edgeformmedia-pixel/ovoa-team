@@ -4,13 +4,21 @@ import { sitemapStaticPaths, sitemapXML, type SitemapEntry } from "@/lib/sitemap
 
 const BASE_URL = "https://ovoa.ai";
 
+// Each page's last change, by path (vite.config.ts routeLastmod, from git at build time).
+declare const __ROUTE_LASTMOD__: Record<string, string>;
+const LASTMOD: Record<string, string> =
+  typeof __ROUTE_LASTMOD__ === "object" && __ROUTE_LASTMOD__ ? __ROUTE_LASTMOD__ : {};
+
 export const Route = createFileRoute("/sitemap.xml")({
   staticData: { sitemap: false },
   server: {
     handlers: {
       GET: async () => {
         const router = await getRouterInstance();
-        const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => ({ path }));
+        const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => {
+          const lastmod = LASTMOD[path.length > 1 ? path.replace(/\/$/, "") : path];
+          return lastmod ? { path, lastmod } : { path };
+        });
         if (entries.length === 0) {
           return new Response(
             'No pages are included in this sitemap. Check route decisions and ancestor exclusions. Setting "exclude-subtree" on the root excludes the entire site.',

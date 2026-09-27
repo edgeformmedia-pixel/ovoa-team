@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { BandProvider } from "@/components/band/BandStore";
 import { useAnalytics } from "@/lib/analytics/track";
 import { useReferralCapture } from "@/lib/membership/referral";
+import { ogImageMeta } from "@/lib/seo";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -93,7 +94,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: "OVOA" },
       { property: "og:locale", content: "en_US" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      // Every page shares with the Band's picture unless it sets its own (a
+      // page's own meta wins over these, tag by tag).
+      ...ogImageMeta,
     ],
 
     links: [

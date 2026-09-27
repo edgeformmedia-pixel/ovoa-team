@@ -1,15 +1,21 @@
 import { Link } from "@tanstack/react-router";
 
+// Every public page is linked from here, so search engines (and people) can
+// reach each one from any other.
 const links = [
   { to: "/", label: "Home" },
   { to: "/text", label: "Text OVOA" },
+  { to: "/imessage", label: "AI in iMessage" },
+  { to: "/websites", label: "Websites by text" },
   { to: "/band", label: "OVOA Band V1" },
+  { to: "/ai-wristband", label: "How the Band works" },
+  { to: "/checkout", label: "Buy the Band" },
   { to: "/early-access", label: "Plans" },
-  { to: "/checkout", label: "Band" },
-  { to: "/account", label: "Account" },
+  { to: "/compare", label: "Compare" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
   { to: "/affiliates", label: "Affiliates" },
+  { to: "/account", label: "Account" },
   { to: "/privacy", label: "Privacy" },
   { to: "/terms", label: "Terms" },
 ] as const;

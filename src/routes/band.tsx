@@ -99,7 +99,7 @@ function BandPage() {
               Buy OVOA Band V1 · {price}
             </Link>
             <Link
-              to="/about"
+              to="/ai-wristband"
               className="inline-flex h-12 items-center rounded-full border border-landing-line px-7 text-[15px] font-semibold transition-colors hover:border-landing-muted"
             >
               More about the Band

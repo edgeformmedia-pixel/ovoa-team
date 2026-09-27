@@ -31,15 +31,96 @@ export const jsonLd = (data: object) => ({
   children: JSON.stringify(data),
 });
 
-// Home > page, for a page one level down.
-export function breadcrumbs(name: string, path: string) {
+export type Crumb = { name: string; path: string };
+
+// Home > page, or Home > section > page when `parent` is given.
+export function breadcrumbs(name: string, path: string, parent?: Crumb) {
+  const trail: Crumb[] = [{ name: "Home", path: "/" }, ...(parent ? [parent] : []), { name, path }];
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name, item: `${SITE_URL}${path}` },
+    itemListElement: trail.map((crumb, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: crumb.name,
+      item: `${SITE_URL}${crumb.path}`,
+    })),
+  };
+}
+
+export type Faq = { q: string; a: string };
+
+// The questions a page answers, as schema.org FAQPage. Only for questions the
+// page itself shows, word for word.
+export function faqJsonLd(faqs: Faq[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  };
+}
+
+// Title, description, canonical and the social preview for one page.
+export function pageHead({
+  title,
+  description,
+  path,
+  type = "website",
+}: {
+  title: string;
+  description: string;
+  path: string;
+  type?: "website" | "article";
+}) {
+  const url = `${SITE_URL}${path}`;
+  return {
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: type },
+      { property: "og:url", content: url },
+      ...ogImageMeta,
     ],
+    links: [{ rel: "canonical", href: url }],
+  };
+}
+
+const PUBLISHER = { "@type": "Organization", "@id": ORGANIZATION_ID, name: SITE_NAME, url: `${SITE_URL}/` };
+
+// A guide or comparison: who wrote it (OVOA) and when it last changed. The
+// dates are the ones the page shows.
+export function articleJsonLd({
+  title,
+  description,
+  path,
+  published,
+  modified,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  published: string;
+  modified: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    url: `${SITE_URL}${path}`,
+    mainEntityOfPage: `${SITE_URL}${path}`,
+    image: OG_IMAGE,
+    datePublished: published,
+    dateModified: modified,
+    author: PUBLISHER,
+    publisher: PUBLISHER,
+    inLanguage: "en-US",
   };
 }
 
@@ -56,13 +137,21 @@ export const WEBSITE = {
   publisher: { "@id": ORGANIZATION_ID },
 };
 
+// OVOA's own profiles elsewhere (X, Instagram, TikTok, LinkedIn, the App Store
+// listing once it's public). Search engines use them to tell OVOA apart from
+// the other "OVO"s, so add each one as soon as it exists.
+export const SAME_AS: string[] = [];
+
 export const ORGANIZATION = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": ORGANIZATION_ID,
   name: SITE_NAME,
-  alternateName: "Ovoa AI",
+  alternateName: ["Ovoa AI", "OVOA AI assistant"],
   url: `${SITE_URL}/`,
+  description:
+    "OVOA makes an AI assistant for iPhone that you text in iMessage or talk to, and the OVOA Band, a wristband that brings it to your wrist.",
+  ...(SAME_AS.length > 0 && { sameAs: SAME_AS }),
   logo: {
     "@type": "ImageObject",
     url: `${SITE_URL}/logo.png`,

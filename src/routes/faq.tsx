@@ -26,6 +26,14 @@ function faqsFor(data: PlansResult | undefined) {
       a: "An assistant you text or talk to. It schedules, remembers and follows through, then tells you when it's done or when it needs you. The OVOA Band is a woven wristband with one button that brings it to your wrist.",
     },
     {
+      q: "Can I just text OVOA?",
+      a: `Yes. OVOA answers iMessage like a contact, with no app needed: open ovoa.ai/text on your iPhone and say hi. Your first 5 texts are free with no account, 5 more after you give it your email, then texting is part of Base (${baseMonthly}). It texts you first too, with your brief, reminders and check-ins, up to 12 a day. iMessage only, so not Android or SMS yet.`,
+    },
+    {
+      q: "Can OVOA build me a website?",
+      a: "Yes. Text it what the site is for, your business or a client's, and a few minutes later it sends you the link to a finished site at your ovoa.ai address, with a contact form that texts you each message. Change it by texting. It's part of Base.",
+    },
+    {
       q: "What's free?",
       a: "Health tracking (Apple Health, plus heart rate and activity from the Band) and notes. Notes you speak into the Band are written out on your iPhone, not on our servers. No card and no time limit.",
     },

@@ -8,11 +8,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 // Keep in step with llms.txt, which has the same facts with live prices.
 const SUMMARY = [
-  "OVOA is an AI assistant for iPhone that you text or talk to: it schedules, remembers and follows through, then says when it's done or when it needs you.",
+  "OVOA is an AI assistant for iPhone that you text in iMessage or talk to: it schedules, remembers and follows through, then says when it's done or when it needs you.",
+  "You can text OVOA with no app (https://ovoa.ai/text, iMessage only): it texts you first with briefs, reminders and check-ins, and builds websites and small games from a text.",
   "The OVOA Band is a woven wristband with one button, heart rate and motion sensing, a microphone and a vibration motor that brings OVOA to your wrist.",
   "Everything is in beta: the app ships through Apple TestFlight and the Band is beta hardware. Health tracking and notes are free; the Base, Plus and Pro plans add the assistant. Current prices are at https://ovoa.ai/early-access and https://ovoa.ai/llms.txt.",
   "Personal data (requests, results, notes, health readings) is private to the signed-in account and is not available through this public endpoint.",
-  "Pages: / (home), /about (the Band), /faq, /early-access (plans), /checkout (buy the Band), /affiliates (the affiliate program), /privacy, /terms, /account (sign in or create an account). Contact: support@ovoa.ai.",
+  "Pages: / (home), /text (text OVOA), /imessage (OVOA in iMessage), /websites (websites by text), /band and /ai-wristband (the Band), /compare (OVOA vs ChatGPT, Siri and other texting assistants), /about, /faq, /early-access (plans), /checkout (buy the Band), /affiliates (the affiliate program), /privacy, /terms, /account (sign in or create an account). Contact: support@ovoa.ai.",
 ].join("\n");
 
 const TOOLS = [
