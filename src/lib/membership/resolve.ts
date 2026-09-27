@@ -42,6 +42,12 @@ const STATUS_RANK: Record<string, number> = {
   past_due: 1,
 };
 
+// Free access from the admin can be for a set time (a free week): its end is
+// current_period_end. A comp row with no end is open-ended, as before.
+const isLive = (r: MembershipRow) =>
+  isEntitled(r.status) &&
+  !(r.plan === "comp" && r.current_period_end && r.current_period_end < new Date().toISOString());
+
 const tierOfRow = (row: MembershipRow): PaidTier => (row.tier === "pro" ? "pro" : "base");
 
 function describe(row: MembershipRow): Membership {
@@ -76,7 +82,7 @@ function describe(row: MembershipRow): Membership {
 // rows: every member row for the email. The best live one wins: the higher
 // tier first, then the steadier status. With none live, the person is free.
 export function resolveMembership(rows: MembershipRow[]): Membership {
-  const live = rows.filter((r) => isEntitled(r.status));
+  const live = rows.filter(isLive);
   if (live.length === 0) {
     if (rows.length === 0) return NO_MEMBERSHIP;
     // Only a checkout that never went through: as good as nothing.
