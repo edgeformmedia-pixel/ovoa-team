@@ -36,7 +36,8 @@ async function body(): Promise<string> {
 > brings OVOA to your wrist. Everything is in beta: the app ships through Apple
 > TestFlight, and the Band is beta hardware.
 
-- Website: https://ovoa.ai/
+- Website: https://ovoa.ai/ (the official OVOA site; not related to ovoa.io or the OvoA enzyme)
+- App Store: https://apps.apple.com/us/app/ovoa/id6812987246
 - Contact: support@ovoa.ai
 - Name: OVOA (sometimes written Ovoa). The wristband is the OVOA Band, or Band for short.
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
@@ -59,6 +60,10 @@ async function body(): Promise<string> {
 - [Band](https://ovoa.ai/checkout): buy the OVOA Band.
 - [FAQ](https://ovoa.ai/faq): plans, the beta, TestFlight, battery, water resistance, microphone, privacy.
 - [About](https://ovoa.ai/about): how the Band works.
+- [Text OVOA](https://ovoa.ai/text): text OVOA from your phone, no app needed.
+- [OVOA Band V1](https://ovoa.ai/band): the Band as a health tracker with AI.
+- [Blog](https://ovoa.ai/blog): explainers, starting with [What is OVOA?](https://ovoa.ai/blog/what-is-ovoa)
+- [Press kit](https://ovoa.ai/press): description, key facts, logo, contact.
 - [Affiliates](https://ovoa.ai/affiliates): the affiliate program for creators, with the application.
 - [Privacy](https://ovoa.ai/privacy) and [Terms](https://ovoa.ai/terms).
 

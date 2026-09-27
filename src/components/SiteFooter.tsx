@@ -9,6 +9,8 @@ const links = [
   { to: "/account", label: "Account" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
+  { to: "/blog", label: "Blog" },
+  { to: "/press", label: "Press" },
   { to: "/affiliates", label: "Affiliates" },
   { to: "/privacy", label: "Privacy" },
   { to: "/terms", label: "Terms" },
