@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, MessageCircle } from "lucide-react";
 import qrcode from "qrcode-generator";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { EmbeddedCheckout } from "@/components/membership/EmbeddedCheckout";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { AppleMark, GoogleMark } from "@/components/SignInMarks";
 import {
@@ -13,18 +14,29 @@ import {
   type Linked,
   type TextPage,
 } from "@/lib/account/texting.functions";
+import { PLAN_BLURBS, PLAN_NAMES, perLabel, planOf } from "@/lib/membership/copy";
+import { getPlans } from "@/lib/membership/membership.functions";
+import type { PaidTier, PlansResult } from "@/lib/membership/plans";
 
-// Text OVOA: the front door now. Sign in with Apple or Google, give the number
+// Text OVOA: the front door now. Sign in with Apple or Google, pick Base or Pro
+// if the account has neither (texting is the assistant, which needs one), give the number
 // you'll text from, then send OVOA a ready-made message with a one-time code:
 // a QR code on a computer, a tap on a phone. The code proves the number
 // (jarvis-api texting.ts), and from then on the thread in Messages is OVOA.
 
 export const Route = createFileRoute("/text")({
   component: TextPageView,
-  validateSearch: (search: Record<string, unknown>): { error?: string | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { error?: string | undefined; paid?: string | undefined } => ({
     error: typeof search["error"] === "string" ? search["error"] : undefined,
+    // Stripe's checkout session id, back from paying for a plan here.
+    paid: typeof search["paid"] === "string" ? search["paid"] : undefined,
   }),
-  loader: () => getTextPage(),
+  loader: async () => {
+    const [page, plans] = await Promise.all([getTextPage(), getPlans()]);
+    return { page, plans };
+  },
   head: () => ({
     meta: [
       { title: "Text OVOA | Your AI assistant in iMessage" },
@@ -56,9 +68,11 @@ const ERRORS: Record<string, string> = {
 };
 
 function TextPageView() {
-  const data = Route.useLoaderData();
-  const { error } = Route.useSearch();
+  const { page: data, plans } = Route.useLoaderData();
+  const { error, paid } = Route.useSearch();
   const notice = error ? (ERRORS[error] ?? null) : null;
+  // Just paid: the webhook may not have recorded it yet, so don't ask again.
+  const needsPlan = data.state === "in" && data.paid === false && !paid;
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
       <MembershipHeader>
@@ -70,20 +84,24 @@ function TextPageView() {
         </Link>
       </MembershipHeader>
       <div className="mx-auto max-w-[480px] px-5 pb-24 pt-12 sm:pt-16">
-        <Steps at={data.state === "in" ? (data.linked ? 3 : 2) : 1} />
+        <Steps at={data.state !== "in" ? 1 : needsPlan ? 2 : data.linked ? 4 : 3} />
         {notice && <Notice>{notice}</Notice>}
+        {data.state === "in" && paid && data.paid === false && (
+          <Notice>Thanks! Your plan is switching on now. Add your number while it does.</Notice>
+        )}
         {data.state === "out" && <SignIn data={data} />}
         {data.state === "down" && (
           <Notice>We can&rsquo;t reach OVOA right now. Try again in a minute.</Notice>
         )}
-        {data.state === "in" && <Connect data={data} />}
+        {data.state === "in" &&
+          (needsPlan ? <PickPlan plans={plans} name={data.name} /> : <Connect data={data} />)}
       </div>
     </main>
   );
 }
 
-function Steps({ at }: { at: 1 | 2 | 3 }) {
-  const labels = ["Sign in", "Your number", "Text OVOA"];
+function Steps({ at }: { at: 1 | 2 | 3 | 4 }) {
+  const labels = ["Sign in", "Plan", "Your number", "Text OVOA"];
   return (
     <ol className="flex items-center gap-2 text-xs font-medium text-landing-muted">
       {labels.map((label, i) => (
@@ -98,7 +116,9 @@ function Steps({ at }: { at: 1 | 2 | 3 }) {
             {i + 1 < at ? <Check className="size-3" aria-hidden="true" /> : i + 1}
           </span>
           <span className={i + 1 === at ? "text-landing-ink" : ""}>{label}</span>
-          {i < labels.length - 1 && <span aria-hidden="true" className="h-px w-4 bg-landing-line" />}
+          {i < labels.length - 1 && (
+            <span aria-hidden="true" className="h-px w-4 bg-landing-line" />
+          )}
         </li>
       ))}
     </ol>
@@ -177,7 +197,72 @@ function SignInButton({
   );
 }
 
-// ---------- 2 and 3. Number, then the text ----------
+// ---------- 2. Plan ----------
+
+function PickPlan({ plans, name }: { plans: PlansResult; name: string }) {
+  const [tier, setTier] = useState<PaidTier | null>(null);
+  const first = name.split(" ")[0];
+  if (tier) {
+    const plan = planOf(plans, tier, "monthly");
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setTier(null)}
+          className="mt-8 text-sm font-medium text-landing-muted transition-colors hover:text-landing-ink"
+        >
+          &larr; Plans
+        </button>
+        <h1 className="mt-3 text-2xl font-semibold">
+          OVOA {PLAN_NAMES[tier]}, {perLabel(plan)}
+        </h1>
+        <p className="mt-1 text-sm text-landing-muted">Cancel anytime.</p>
+        <div className="mt-6 rounded-[1.25rem] bg-white p-2">
+          <EmbeddedCheckout order={{ plan: plan.id, from: "text" }} />
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <h1 className="mt-8 text-[clamp(2rem,6vw,2.75rem)] font-semibold leading-[1.05]">
+        Pick a plan{first ? `, ${first}` : ""}.
+      </h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-landing-muted">
+        Texting OVOA is the assistant, and the assistant comes with Base or Pro. Pay here, then add
+        your number. No app needed.
+      </p>
+      {!plans.configured && (
+        <Notice>Plans open shortly. Check back in a little while, or email support@ovoa.ai.</Notice>
+      )}
+      <div className="mt-8 grid gap-3">
+        {(["base", "pro"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            disabled={!plans.configured}
+            onClick={() => setTier(t)}
+            className="rounded-2xl border border-landing-line p-5 text-left transition-colors hover:border-landing-action disabled:pointer-events-none disabled:opacity-50"
+          >
+            <span className="flex items-baseline justify-between gap-3">
+              <span className="text-lg font-semibold">OVOA {PLAN_NAMES[t]}</span>
+              <span className="text-sm font-semibold">{perLabel(planOf(plans, t, "monthly"))}</span>
+            </span>
+            <span className="mt-1 block text-sm text-landing-muted">{PLAN_BLURBS[t]}</span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-5 text-center text-xs leading-relaxed text-landing-muted">
+        Already paid with another email?{" "}
+        <Link to="/account" className="underline underline-offset-2">
+          Your account
+        </Link>
+      </p>
+    </>
+  );
+}
+
+// ---------- 3 and 4. Number, then the text ----------
 
 /** A US number or one typed with its country code, as +E.164; null if it doesn't look like one. */
 function toE164(input: string): string | null {
@@ -190,9 +275,7 @@ function toE164(input: string): string | null {
 }
 
 const pretty = (e164: string) =>
-  /^\+1\d{10}$/.test(e164)
-    ? `(${e164.slice(2, 5)}) ${e164.slice(5, 8)}-${e164.slice(8)}`
-    : e164;
+  /^\+1\d{10}$/.test(e164) ? `(${e164.slice(2, 5)}) ${e164.slice(5, 8)}-${e164.slice(8)}` : e164;
 
 type Device = "iphone" | "android" | "desktop";
 
@@ -267,7 +350,14 @@ function Connect({ data }: { data: Extract<TextPage, { state: "in" }> }) {
   const first = data.name.split(" ")[0];
 
   if (linked && (code || !entered))
-    return <Done linked={linked} number={code?.number ?? data.number} device={device} entered={entered} />;
+    return (
+      <Done
+        linked={linked}
+        number={code?.number ?? data.number}
+        device={device}
+        entered={entered}
+      />
+    );
 
   if (!data.available)
     return (

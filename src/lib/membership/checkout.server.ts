@@ -26,7 +26,9 @@ import { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, formatMoney, type PlanId } from ".
 import { stripe } from "./stripe.server";
 import { loadPrices } from "./sync.server";
 
-export type CheckoutOrder = { band: true; withAi: boolean } | { band: false; plan: PlanId };
+// `from: "text"`: bought on /text, so Stripe sends them back there to add their number.
+export type CheckoutOrder =
+  { band: true; withAi: boolean } | { band: false; plan: PlanId; from?: "text" };
 
 // url is set for the hosted page, client_secret for the embedded one.
 export type CheckoutSession = { id: string; url: string | null; client_secret: string | null };
@@ -63,7 +65,9 @@ export async function createCheckoutSession(
         // straight to setting up the app, which waits for the payment.
         return_url: order.band
           ? `${origin}/order-complete?session_id={CHECKOUT_SESSION_ID}`
-          : welcome,
+          : order.from === "text"
+            ? `${origin}/text?paid={CHECKOUT_SESSION_ID}`
+            : welcome,
       }
     : {
         success_url: welcome,

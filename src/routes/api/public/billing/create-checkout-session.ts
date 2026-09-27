@@ -4,7 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 // POST JSON, returns { clientSecret, publishableKey }:
 //
 //   { plan: "base_monthly" | ... }   Base or Pro, from /early-access. Stripe
-//                                    finishes on /early-access/welcome.
+//                                    finishes on /early-access/welcome, or
+//                                    back on /text with { from: "text" }.
 //   { ai?: boolean }                 The Band, from /checkout: with Base's free
 //                                    days (ai true, the default) or "Band only".
 //                                    Stripe finishes on /order-complete.
@@ -14,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // same way. Prices are found by lookup key, so test and live keys each pick
 // up their own with no code change.
 
-type Body = { plan?: unknown; ai?: unknown; ref?: unknown };
+type Body = { plan?: unknown; ai?: unknown; ref?: unknown; from?: unknown };
 
 async function createSession(request: Request): Promise<Response> {
   const { REF_COOKIE, cleanRef, isPlanId } = await import("@/lib/membership/plans");
@@ -38,7 +39,11 @@ async function createSession(request: Request): Promise<Response> {
     const session = await createCheckoutSession(
       request,
       isPlanId(body.plan)
-        ? { band: false, plan: body.plan }
+        ? {
+            band: false,
+            plan: body.plan,
+            ...(body.from === "text" ? { from: "text" as const } : {}),
+          }
         : { band: true, withAi: body.ai !== false },
       { ref, embedded: true },
     );

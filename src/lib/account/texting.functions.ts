@@ -16,6 +16,9 @@ export type TextPage =
       available: boolean;
       number: string | null;
       linked: Linked;
+      // On Base or Pro, which texting OVOA needs; null if the members table
+      // couldn't be read (the page then doesn't stand in the way).
+      paid: boolean | null;
     }
   | { state: "down" };
 
@@ -39,9 +42,8 @@ async function texting(token: string): Promise<Status | null> {
 export const getTextPage = createServerFn({ method: "GET" }).handler(
   async (): Promise<TextPage> => {
     const { getRequest } = await import("@tanstack/react-start/server");
-    const { appleConfigured, googleConfigured, lookupAccount, sessionToken } = await import(
-      "./account.server"
-    );
+    const { appleConfigured, googleConfigured, lookupAccount, sessionToken } =
+      await import("./account.server");
     const request = getRequest();
     const out = { state: "out" as const, google: googleConfigured(), apple: appleConfigured() };
     const token = sessionToken(request);
@@ -49,7 +51,7 @@ export const getTextPage = createServerFn({ method: "GET" }).handler(
     const found = await lookupAccount(token);
     if (found.state === "out") return out;
     if (found.state === "down") return { state: "down" };
-    const status = await texting(token);
+    const [status, paid] = await Promise.all([texting(token), hasPlan(found.user.email)]);
     return {
       state: "in",
       name: found.user.name,
@@ -57,9 +59,21 @@ export const getTextPage = createServerFn({ method: "GET" }).handler(
       available: Boolean(status?.available),
       number: status?.number ?? null,
       linked: status?.linked ?? null,
+      paid,
     };
   },
 );
+
+async function hasPlan(email: string): Promise<boolean | null> {
+  const { store } = await import("@/lib/membership/store.server");
+  const { resolveMembership } = await import("@/lib/membership/resolve");
+  try {
+    return resolveMembership(await store().membersForApp(email.toLowerCase())).tier !== "free";
+  } catch (error) {
+    console.error("[text] membership", error);
+    return null;
+  }
+}
 
 /** Whether the code has come in yet: polled while the QR code is up. */
 export const getLinked = createServerFn({ method: "GET" }).handler(
@@ -73,8 +87,7 @@ export const getLinked = createServerFn({ method: "GET" }).handler(
 );
 
 export type LinkCode =
-  | { ok: true; number: string; body: string; expiresAt: number }
-  | { ok: false; error: string };
+  { ok: true; number: string; body: string; expiresAt: number } | { ok: false; error: string };
 
 /** A fresh code (15 minutes, one use) and the message that carries it. */
 export const startTextLink = createServerFn({ method: "POST" }).handler(
@@ -97,8 +110,10 @@ export const startTextLink = createServerFn({ method: "POST" }).handler(
         expiresAt: number;
         error: string;
       }>;
-      if (res.status === 503) return { ok: false, error: "Texting OVOA opens soon. Check back shortly." };
-      if (res.status === 429) return { ok: false, error: "Too many codes. Wait a few minutes and try again." };
+      if (res.status === 503)
+        return { ok: false, error: "Texting OVOA opens soon. Check back shortly." };
+      if (res.status === 429)
+        return { ok: false, error: "Too many codes. Wait a few minutes and try again." };
       if (!res.ok || !body.number || !body.body)
         return { ok: false, error: body.error ?? "That didn't work. Try again." };
       return { ok: true, number: body.number, body: body.body, expiresAt: body.expiresAt ?? 0 };
