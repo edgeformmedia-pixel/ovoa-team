@@ -140,7 +140,7 @@ export const WEBSITE = {
 // OVOA's own profiles elsewhere (X, Instagram, TikTok, LinkedIn, the App Store
 // listing once it's public). Search engines use them to tell OVOA apart from
 // the other "OVO"s, so add each one as soon as it exists.
-export const SAME_AS: string[] = [];
+export const SAME_AS: string[] = ["https://www.instagram.com/ovoa.ai/", "https://www.tiktok.com/@ovoa78"];
 
 export const ORGANIZATION = {
   "@context": "https://schema.org",
