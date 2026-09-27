@@ -28,11 +28,12 @@ import type { CommissionKind } from "./store.server";
 // the pages keep their buy buttons off in that state.
 export const getPlans = createServerFn({ method: "GET" }).handler(
   async (): Promise<PlansResult> => {
-    const { testflightPublicUrl } = await import("./testflight.server");
     const trial = {
       trialDays: NO_BAND_TRIAL_DAYS,
       bandTrialDays: BAND_TRIAL_DAYS,
-      betaUrl: testflightPublicUrl(),
+      // Public pages never carry the link: it's handed out on /account, after
+      // an email (beta.server.ts).
+      betaUrl: null,
     };
     const fallback: PlansResult = {
       configured: false,

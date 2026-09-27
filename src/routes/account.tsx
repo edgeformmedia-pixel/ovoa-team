@@ -752,6 +752,11 @@ function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
               </a>{" "}
               and tap Install.
             </>
+          ) : data.betaFull ? (
+            <>
+              The beta is full for now (Apple allows 10,000 testers). We&rsquo;ll email {email}{" "}
+              when there&rsquo;s room.
+            </>
           ) : invite.state === "failed" ? (
             <>
               Your TestFlight invite is on its way to {email}. If it isn&rsquo;t there within the

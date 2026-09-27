@@ -17,7 +17,9 @@ export type AccountPage =
       billing: boolean;
       // The TestFlight invite Apple emails every account (invites.server.ts).
       invite: AppInvite;
+      // The public TestFlight link, while this email has a seat (beta.server.ts).
       betaUrl: string | null;
+      betaFull: boolean;
     }
   // Signed out, or signed in but the app's server didn't answer ("down").
   // `apiUrl` is where the browser sends the code steps; `google` says whether
@@ -52,7 +54,7 @@ export const getAccount = createServerFn({ method: "GET" }).handler(
 
     const { store } = await import("@/lib/membership/store.server");
     const { resolveMembership } = await import("@/lib/membership/resolve");
-    const { testflightPublicUrl } = await import("@/lib/membership/testflight.server");
+    const { betaLinkFor } = await import("@/lib/membership/beta.server");
     const { ensureInvite } = await import("@/lib/membership/invites.server");
     const email = found.user.email.toLowerCase();
     let membership: Membership | null = null;
@@ -83,7 +85,7 @@ export const getAccount = createServerFn({ method: "GET" }).handler(
       membership,
       billing,
       invite,
-      betaUrl: testflightPublicUrl(),
+      ...(await betaLinkFor(email)),
     };
   },
 );
