@@ -227,7 +227,9 @@ function Privacy() {
         <p>
           To improve the website, ovoa.ai records which pages you visit, what you click, how far you
           scroll and how long you stay, with your browser type, device, country and the site that
-          sent you (and your email if you&rsquo;re signed in). It never records what you type. A
+          sent you (and your email if you&rsquo;re signed in). Visits are also recorded as a replay
+          of the page (what you saw, where the pointer went), kept for 30 days. It never records
+          what you type: every field is blanked out. A
           random id in your browser&rsquo;s storage ties your visits together. This stays with OVOA,
           no analytics company sees it. If your browser sends Global Privacy Control, none of it is
           recorded.
