@@ -8,6 +8,7 @@ import {
   type LucideIcon,
   MessageSquareText,
   Repeat,
+  Mail,
   Search,
   ShoppingBag,
   Smartphone,
@@ -30,6 +31,7 @@ import {
   COMMISSION_MONTHS,
   bandCommissionCents,
   formatMoney,
+  TESTFLIGHT_APP_URL,
   type PlansResult,
 } from "@/lib/membership/plans";
 import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
@@ -179,6 +181,65 @@ function PhoneFeature({
   );
 }
 
+const stepButton =
+  "mt-auto inline-flex h-11 items-center justify-center rounded-full bg-landing-action px-6 text-[15px] font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5";
+
+function SetupStep({
+  n,
+  title,
+  copy,
+  children,
+}: {
+  n: number;
+  title: string;
+  copy: string;
+  children: React.ReactNode;
+}) {
+  const [logo, action] = Array.isArray(children) ? children : [children, null];
+  return (
+    <li className="flex flex-col items-center rounded-[1.75rem] bg-landing-control/70 p-7 text-center">
+      <span className="text-sm font-semibold text-landing-action">Step {n}</span>
+      <div className="mt-5">{logo}</div>
+      <h3 className="mt-5 text-2xl font-semibold text-landing-ink">{title}</h3>
+      <p className="mb-6 mt-2 text-base leading-relaxed text-landing-muted">{copy}</p>
+      {action}
+    </li>
+  );
+}
+
+// Drawn stand-in for the TestFlight icon (blue tile, white propeller).
+function TestFlightLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" role="img" aria-label="TestFlight" className={className}>
+      <defs>
+        <linearGradient id="tf-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3fb8ff" />
+          <stop offset="1" stopColor="#0a6cff" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#tf-bg)" />
+      <g fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+        <circle cx="32" cy="32" r="17" strokeOpacity=".55" />
+        <path d="M32 32 L32 13" />
+        <path d="M32 32 L48.5 41.5" />
+        <path d="M32 32 L15.5 41.5" />
+      </g>
+      <circle cx="32" cy="32" r="4.5" fill="#fff" />
+    </svg>
+  );
+}
+
+function OvoaMark({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex items-center justify-center rounded-[14px] bg-landing-ink text-sm font-bold tracking-wide text-landing-action-foreground ${className ?? ""}`}
+    >
+      OVOA
+    </span>
+  );
+}
+
 function Landing() {
   const data = Route.useLoaderData();
   const band = bandPrice(data);
@@ -247,35 +308,48 @@ function Landing() {
         </div>
       </header>
 
-      <section className="px-6 pb-16 pt-16 text-center sm:pb-24 sm:pt-24">
-        <div className="mx-auto max-w-3xl">
+      <section className="px-6 pb-16 pt-14 text-center sm:pb-24 sm:pt-20">
+        <div className="mx-auto max-w-4xl">
           <h2 className="text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-normal">
-            Just text OVOA.
+            Get OVOA on your iPhone.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-            Your AI assistant, right in Messages. No app, no sign-up: your first 5 texts are free.
+            Three steps. About a minute.
           </p>
-          <Link
-            to="/text"
-            className="mt-9 inline-flex h-14 items-center gap-2 rounded-full bg-landing-action px-9 text-lg font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-          >
-            <MessageSquareText aria-hidden="true" className="size-5" />
-            Text OVOA
-          </Link>
-          <Link
-            to="/account"
-            className="ml-3 mt-9 inline-flex h-14 items-center gap-2 rounded-full border border-landing-line px-9 text-lg font-semibold text-landing-ink transition-colors hover:border-landing-muted"
-          >
-            <Smartphone aria-hidden="true" className="size-5" />
-            Get the app
-          </Link>
-          <p className="mt-3 text-sm text-landing-muted">The iPhone app is in beta through TestFlight. Sign up with your email to get the link.</p>
+          <ol className="mt-12 grid gap-4 text-left sm:grid-cols-3">
+            <SetupStep n={1} title="Download TestFlight" copy="Apple’s free app for trying new apps.">
+              <TestFlightLogo className="size-16" />
+              <a
+                href={TESTFLIGHT_APP_URL}
+                target="_blank"
+                rel="noreferrer"
+                className={stepButton}
+              >
+                Get TestFlight
+              </a>
+            </SetupStep>
+            <SetupStep n={2} title="Get your invite" copy="Enter your email. We send the OVOA invite right away.">
+              <Mail aria-hidden="true" className="size-16 stroke-[1.4] text-landing-action" />
+              <Link to="/account" className={stepButton}>
+                Get my invite
+              </Link>
+            </SetupStep>
+            <SetupStep n={3} title="Open OVOA" copy="Tap the invite on your iPhone, then Install. Say hi.">
+              <OvoaMark className="size-16" />
+              <span className="mt-auto pt-5 text-sm text-landing-muted">That’s it.</span>
+            </SetupStep>
+          </ol>
+          <p className="mt-8 text-sm text-landing-muted">
+            No iPhone handy?{" "}
+            <Link to="/text" className="font-medium text-landing-ink underline underline-offset-4">
+              Just text OVOA
+            </Link>{" "}
+            instead.
+          </p>
         </div>
       </section>
 
-      <ScrollScrubVideo
-        note={`Beta · Free for health and notes · Assistant from ${base} · Band ${band}`}
-      />
+      <ScrollScrubVideo note="Beta · Free to download on iPhone" />
 
       <HowItWorksDemo />
 
