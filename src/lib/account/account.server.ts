@@ -29,7 +29,7 @@ export const APPLE_STATE_COOKIE = "ovoa_apple_state";
 // Where a Google or Apple sign-in lands after: /account unless it started on
 // one of these pages.
 export const NEXT_COOKIE = "ovoa_next";
-const NEXT_PAGES = ["/account", "/text"] as const;
+const NEXT_PAGES = ["/account", "/text/link"] as const;
 export const nextPage = (value: string | null | undefined): string =>
   NEXT_PAGES.find((p) => p === value) ?? "/account";
 // The app's server ends a site session after 30 days (auth.ts SESSION_TTL_MS).

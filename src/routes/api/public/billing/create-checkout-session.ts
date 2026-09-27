@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 //
 //   { plan: "base_monthly" | ... }   Base or Pro, from /early-access. Stripe
 //                                    finishes on /early-access/welcome, or
-//                                    back on /text with { from: "text" }.
+//                                    back on /text/link with { from: "text" }.
 //   { ai?: boolean }                 The Band, from /checkout: with Base's free
 //                                    days (ai true, the default) or "Band only".
 //                                    Stripe finishes on /order-complete.

@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 
 const links = [
   { to: "/", label: "Home" },
+  { to: "/text", label: "Text OVOA" },
+  { to: "/band", label: "OVOA Band V1" },
   { to: "/early-access", label: "Plans" },
   { to: "/checkout", label: "Band" },
   { to: "/account", label: "Account" },

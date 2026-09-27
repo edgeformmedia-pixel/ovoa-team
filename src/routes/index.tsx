@@ -194,10 +194,10 @@ function Landing() {
               Collection
             </Link>
             <Link
-              to="/about"
-              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
+              to="/band"
+              className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
             >
-              Band
+              OVOA Band V1
             </Link>
             <Link
               to="/early-access"
@@ -245,6 +245,24 @@ function Landing() {
           </div>
         </div>
       </header>
+
+      <section className="px-6 pb-16 pt-16 text-center sm:pb-24 sm:pt-24">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-normal">
+            Just text OVOA.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
+            Your AI assistant, right in Messages. No app, no sign-up: your first 5 texts are free.
+          </p>
+          <Link
+            to="/text"
+            className="mt-9 inline-flex h-14 items-center gap-2 rounded-full bg-landing-action px-9 text-lg font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+          >
+            <MessageSquareText aria-hidden="true" className="size-5" />
+            Text OVOA
+          </Link>
+        </div>
+      </section>
 
       <ScrollScrubVideo
         note={`Beta · Free for health and notes · Assistant from ${base} · Band ${band}`}

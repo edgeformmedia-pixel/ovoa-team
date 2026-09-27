@@ -26,7 +26,7 @@ import { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, formatMoney, type PlanId } from ".
 import { stripe } from "./stripe.server";
 import { loadPrices } from "./sync.server";
 
-// `from: "text"`: bought on /text, so Stripe sends them back there to add their number.
+// `from: "text"`: bought on /text/link, so Stripe sends them back there to add their number.
 export type CheckoutOrder =
   { band: true; withAi: boolean } | { band: false; plan: PlanId; from?: "text" };
 
@@ -66,7 +66,7 @@ export async function createCheckoutSession(
         return_url: order.band
           ? `${origin}/order-complete?session_id={CHECKOUT_SESSION_ID}`
           : order.from === "text"
-            ? `${origin}/text?paid={CHECKOUT_SESSION_ID}`
+            ? `${origin}/text/link?paid={CHECKOUT_SESSION_ID}`
             : welcome,
       }
     : {

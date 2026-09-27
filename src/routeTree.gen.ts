@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as BandRouteImport } from './routes/band'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
@@ -26,6 +27,7 @@ import { Route as AffiliatesDashboardRouteImport } from './routes/affiliates/das
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
+import { Route as TextLinkRouteImport } from './routes/text_.link'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
 import { Route as ApiPublicAccountAppleRouteImport } from './routes/api/public/account/apple'
 import { Route as ApiPublicAccountAppleCallbackRouteImport } from './routes/api/public/account/apple-callback'
@@ -53,6 +55,11 @@ const AboutRoute = AboutRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BandRoute = BandRouteImport.update({
+  id: '/band',
+  path: '/band',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -123,6 +130,11 @@ const EarlyAccessAdminRoute = EarlyAccessAdminRouteImport.update({
 const EarlyAccessWelcomeRoute = EarlyAccessWelcomeRouteImport.update({
   id: '/early-access/welcome',
   path: '/early-access/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TextLinkRoute = TextLinkRouteImport.update({
+  id: '/text_/link',
+  path: '/text/link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicMembershipRoute = ApiPublicMembershipRouteImport.update({
@@ -201,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -213,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/text/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -233,6 +247,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -245,6 +260,7 @@ export interface FileRoutesByTo {
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/text/link': typeof TextLinkRoute
   '/affiliates': typeof AffiliatesIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -266,6 +282,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/band': typeof BandRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -278,6 +295,7 @@ export interface FileRoutesById {
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
+  '/text_/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -300,6 +318,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/band'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -312,6 +331,7 @@ export interface FileRouteTypes {
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
+    | '/text/link'
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
@@ -332,6 +352,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/band'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -344,6 +365,7 @@ export interface FileRouteTypes {
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
+    | '/text/link'
     | '/affiliates'
     | '/early-access'
     | '/api/public/membership'
@@ -364,6 +386,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/band'
     | '/checkout'
     | '/faq'
     | '/llms.txt'
@@ -376,6 +399,7 @@ export interface FileRouteTypes {
     | '/affiliates/dashboard'
     | '/early-access/admin'
     | '/early-access/welcome'
+    | '/text_/link'
     | '/affiliates/'
     | '/early-access/'
     | '/api/public/membership'
@@ -397,6 +421,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  BandRoute: typeof BandRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
@@ -409,6 +434,7 @@ export interface RootRouteChildren {
   AffiliatesDashboardRoute: typeof AffiliatesDashboardRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
+  TextLinkRoute: typeof TextLinkRoute
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
@@ -447,6 +473,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/band': {
+      id: '/band'
+      path: '/band'
+      fullPath: '/band'
+      preLoaderRoute: typeof BandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -547,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarlyAccessWelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/text_/link': {
+      id: '/text_/link'
+      path: '/text/link'
+      fullPath: '/text/link'
+      preLoaderRoute: typeof TextLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/membership': {
       id: '/api/public/membership'
       path: '/api/public/membership'
@@ -645,6 +685,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  BandRoute: BandRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
@@ -657,6 +698,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliatesDashboardRoute: AffiliatesDashboardRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
+  TextLinkRoute: TextLinkRoute,
   AffiliatesIndexRoute: AffiliatesIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/account/google-callback")({
 
         const url = new URL(request.url);
         const next = nextPage(readCookie(request, NEXT_COOKIE));
-        // Errors and a finished sign-in go back where it started (/account or /text).
+        // Errors and a finished sign-in go back where it started (/account or /text/link).
         const account = `${url.origin}${next}`;
         const go = (location: string, cookie?: string) => {
           const headers = new Headers({ location });

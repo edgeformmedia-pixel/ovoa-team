@@ -145,7 +145,7 @@ function SignIn({ data, notice }: { data: SignInData; notice: string | null }) {
     const email = hash.get("email");
     if (ticket && email) {
       setStep({ at: "finish", ticket, email, name: hash.get("name") ?? "" });
-      if (hash.get("next") === "/text") nextRef.current = "/text";
+      if (hash.get("next") === "/text/link") nextRef.current = "/text/link";
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, []);

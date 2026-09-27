@@ -123,3 +123,28 @@ export const startTextLink = createServerFn({ method: "POST" }).handler(
     }
   },
 );
+
+// /text: OVOA's public number, for anyone to text with no account
+// (jarvis-api GET /texting/number: { number: "+1..." | null }). null means
+// texting isn't open yet, or the app's server couldn't be reached.
+export const getPublicTextNumber = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ number: string | null }> => {
+    const { accountApiUrl } = await import("./account.server");
+    try {
+      const res = await fetch(`${accountApiUrl()}/texting/number`, {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { number: null };
+      const body = (await res.json()) as { number?: unknown };
+      const number =
+        typeof body.number === "string" && /^\+[1-9]\d{7,14}$/.test(body.number)
+          ? body.number
+          : null;
+      return { number };
+    } catch (error) {
+      console.error("[text] GET /texting/number", error);
+      return { number: null };
+    }
+  },
+);
