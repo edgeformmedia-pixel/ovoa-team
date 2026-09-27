@@ -10,6 +10,7 @@ import {
   Repeat,
   Search,
   ShoppingBag,
+  Smartphone,
 } from "lucide-react";
 import OvoaIphoneDemo, { type DemoStep } from "@/components/OvoaIphoneDemo";
 import { HowItWorksDemo } from "@/components/HowItWorksDemo";
@@ -261,6 +262,16 @@ function Landing() {
             <MessageSquareText aria-hidden="true" className="size-5" />
             Text OVOA
           </Link>
+          <a
+            href="https://testflight.apple.com/join/KQfgqp3h"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-3 mt-9 inline-flex h-14 items-center gap-2 rounded-full border border-landing-line px-9 text-lg font-semibold text-landing-ink transition-colors hover:border-landing-muted"
+          >
+            <Smartphone aria-hidden="true" className="size-5" />
+            Get the app
+          </a>
+          <p className="mt-3 text-sm text-landing-muted">The iPhone app is in beta through TestFlight.</p>
         </div>
       </section>
 
