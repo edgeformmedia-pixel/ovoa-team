@@ -1,10 +1,11 @@
 // What each plan includes, in the words the pages use. Prices are NOT here:
 // they come from Stripe through getPlans() (plans.ts has the fallbacks).
 //
-// The Free / Base / Pro split is SPEC §1 in ovoa-app/docs/paywall, as decided
-// on 2026-09-23: Base has every AI feature (the wake word, Always listen and
-// the background agent included), and Pro is Base with three times the daily
-// AI replies, nothing else. The plans page reads PLAN_BLURBS and
+// The Free / Base / Plus / Pro split is SPEC §1 in ovoa-app/docs/paywall.
+// Decided 2026-09-23 and changed 2026-09-27: Base has every AI feature but the
+// background agent (the wake word and Always listen included) at 15 replies a
+// day; Plus adds the background agent and doubles the replies; Pro is Plus
+// with four times Base's replies, nothing else. The plans page reads PLAN_BLURBS and
 // PLAN_FEATURES; the FAQ answers (early-access/index.tsx, faq.tsx), llms.txt,
 // terms.tsx and the welcome page's offers say the same in their own words, so
 // change them together.
@@ -23,12 +24,18 @@ import {
 
 export type PlanColumn = "free" | PaidTier;
 
-export const PLAN_NAMES: Record<PlanColumn, string> = { free: "Free", base: "Base", pro: "Pro" };
+export const PLAN_NAMES: Record<PlanColumn, string> = {
+  free: "Free",
+  base: "Base",
+  plus: "Plus",
+  pro: "Pro",
+};
 
 export const PLAN_BLURBS: Record<PlanColumn, string> = {
   free: "Health tracking and notes, on your iPhone.",
   base: "Turns on the OVOA assistant.",
-  pro: "Everything in Base, with three times the daily AI replies.",
+  plus: "Everything in Base, plus the background agent and twice the daily AI replies.",
+  pro: "Everything in Plus, with four times Base's daily AI replies.",
 };
 
 // true = included, false = not, a string = included with that detail.
@@ -37,44 +44,57 @@ export const PLAN_FEATURES: {
   label: string;
   free: FeatureCell;
   base: FeatureCell;
+  plus: FeatureCell;
   pro: FeatureCell;
 }[] = [
   {
     label: "Health: Apple Health, Band heart rate and activity",
     free: true,
     base: true,
+    plus: true,
     pro: true,
   },
   {
     label: "Notes, typed or spoken into the Band, written out on your iPhone",
     free: true,
     base: true,
+    plus: true,
     pro: true,
   },
   {
     label: "Chat and talk with OVOA: reminders, email, calendar, money, memory, morning brief",
     free: false,
     base: true,
+    plus: true,
     pro: true,
   },
-  { label: "Press the Band, ask, and hear OVOA answer", free: false, base: true, pro: true },
+  {
+    label: "Press the Band, ask, and hear OVOA answer",
+    free: false,
+    base: true,
+    plus: true,
+    pro: true,
+  },
   {
     label: "Hands-free wake word and Always listen, no button needed",
     free: false,
     base: true,
+    plus: true,
     pro: true,
   },
   {
     label: "Background agent: jobs that run on their own and report back",
     free: false,
-    base: true,
+    base: false,
+    plus: true,
     pro: true,
   },
   {
     label: "Daily AI replies",
     free: false,
     base: "Everyday use",
-    pro: "3× Base",
+    plus: "2× Base",
+    pro: "4× Base",
   },
 ];
 
@@ -100,6 +120,18 @@ export function planOf(
   const id = planId(tier, period);
   return (result?.plans.find((p) => p.id === id) ??
     FALLBACK_PLANS.find((p) => p.id === id)) as PublicPlan;
+}
+
+// Whether a plan can be bought right now: Stripe is connected and has its
+// price. A tier added before its prices are made in Stripe (run
+// scripts/stripe-setup.mjs) shows its fallback price with the button off.
+export function isSold(
+  result: Pick<PlansResult, "configured" | "plans"> | undefined,
+  tier: PaidTier,
+  period: BillingPeriod,
+): boolean {
+  const id = planId(tier, period);
+  return !!result?.configured && result.plans.some((p) => p.id === id);
 }
 
 export const bandPrice = (result: Pick<PlansResult, "band"> | undefined) => {

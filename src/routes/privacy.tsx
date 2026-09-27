@@ -190,7 +190,7 @@ function Privacy() {
           If you connect a Google account, OVOA can read and act on your Gmail, Calendar, Tasks and
           Contacts, the files OVOA itself made in your Google Drive, and a Google Doc or Sheet you
           point it to. It can&rsquo;t search the rest of your Drive. It uses these when you ask, and
-          on Base and Pro it also checks them in the background for a few things: the morning
+          on Base, Plus and Pro it also checks them in the background for a few things: the morning
           brief&rsquo;s look at the last day&rsquo;s unread mail, getting you ready for a meeting,
           emails you sent that got no reply, and a weekly look through the last month of mail for
           bills that are due. With more than one account connected, OVOA learns what each is used
@@ -340,7 +340,7 @@ function Privacy() {
           <li>
             <strong>The day summary.</strong> One short summary per day: a title and two or three
             sentences, with the day&rsquo;s calories if you noted food. The AI writes it each night
-            for Base and Pro members who used OVOA that day. Free accounts don&rsquo;t get one,
+            for Base, Plus and Pro members who used OVOA that day. Free accounts don&rsquo;t get one,
             because it needs AI.
           </li>
           <li>

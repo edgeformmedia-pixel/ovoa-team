@@ -206,9 +206,9 @@ async function main() {
     );
   const first = setup();
   check(
-    "setup creates 3 products and 5 prices",
-    (first.match(/Created product/g) ?? []).length === 3 &&
-      (first.match(/Created .* price/g) ?? []).length === 5,
+    "setup creates 4 products and 7 prices",
+    (first.match(/Created product/g) ?? []).length === 4 &&
+      (first.match(/Created .* price/g) ?? []).length === 7,
   );
   const again = setup();
   check("setup re-run creates nothing", !/Created|Updated/.test(again));
@@ -783,6 +783,22 @@ async function main() {
     sql("UPDATE members SET app_email = NULL WHERE email = 'pro@buyer.test'");
     const back = await membership("pro@buyer.test");
     check("app email: cleared, back on the paying email", back.tier === "pro", back);
+  }
+
+  // ---- 4b. Plus monthly ----
+  {
+    const { sessionId } = await checkout("plan=plus_monthly");
+    await pay(sessionId, "plus@buyer.test");
+    results.plus = await membership("plus@buyer.test");
+    check(
+      "plus monthly: membership",
+      results.plus.tier === "plus" &&
+        results.plus.status === "active" &&
+        results.plus.source === "stripe",
+      results.plus,
+    );
+    const row = sql("SELECT tier, plan FROM members WHERE email = 'plus@buyer.test'")[0];
+    check("plus monthly: member row", row?.tier === "plus" && row.plan === "monthly", row);
   }
 
   // ---- 5. Cancel ----

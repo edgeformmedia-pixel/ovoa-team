@@ -375,7 +375,7 @@ function Admin() {
               aria-label="Plan"
               className="inline-flex h-10 shrink-0 self-start rounded-full bg-landing-control p-1"
             >
-              {(["base", "pro"] as const).map((tier) => (
+              {(["base", "plus", "pro"] as const).map((tier) => (
                 <button
                   key={tier}
                   type="button"

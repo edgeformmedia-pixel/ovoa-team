@@ -13,6 +13,7 @@ import {
   PLAN_FEATURES,
   PLAN_NAMES,
   bandPrice,
+  isSold,
   perLabel,
   planOf,
   type FeatureCell,
@@ -27,11 +28,11 @@ import {
 } from "@/lib/membership/plans";
 import { appJsonLd, breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const PAGE_TITLE = "OVOA plans: free, Base and Pro";
+const PAGE_TITLE = "OVOA plans: free, Base, Plus and Pro";
 
 function describe(data: PlansResult | undefined) {
   const base = planOf(data, "base", "monthly");
-  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, and Pro gives you three times as many AI replies a day.`;
+  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, Plus adds the background agent and twice the replies, and Pro gives you four times as many AI replies a day.`;
 }
 
 export const Route = createFileRoute("/early-access/")({
@@ -62,7 +63,7 @@ export const Route = createFileRoute("/early-access/")({
 const STEPS = [
   {
     title: "Pick a plan",
-    copy: "Free costs nothing. Base and Pro are paid by card or Apple Pay through Stripe, and you can cancel anytime.",
+    copy: "Free costs nothing. Base, Plus and Pro are paid by card or Apple Pay through Stripe, and you can cancel anytime.",
   },
   {
     title: "Install through TestFlight",
@@ -133,7 +134,7 @@ function PlanColumnCard({
   enabled: boolean;
   onPick: (tier: PaidTier) => void;
 }) {
-  const dark = column === "base";
+  const dark = column === "plus";
   const muted = dark ? "text-landing-action-foreground/65" : "text-landing-muted";
   const paid = column === "free" ? null : planOf(data, column, period);
   const savings = column === "free" ? null : annualSavings(data.plans, column);
@@ -307,7 +308,7 @@ function EarlyAccess() {
   const baseMonthly = planOf(data, "base", "monthly");
   const bestSaving = Math.max(
     0,
-    ...(["base", "pro"] as const).map((t) => annualSavings(plans, t)?.percent ?? 0),
+    ...(["base", "plus", "pro"] as const).map((t) => annualSavings(plans, t)?.percent ?? 0),
   );
 
   const faq = [
@@ -317,15 +318,19 @@ function EarlyAccess() {
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. The background agent runs jobs on its own and reports back. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
+    },
+    {
+      q: "What's in Plus?",
+      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and twice as many AI replies a day. ${perLabel(planOf(data, "plus", "monthly"))}, or ${perLabel(planOf(data, "plus", "annual"))}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, with three times as many AI replies a day. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
+      a: `Everything in Plus, with four times as many AI replies a day as Base. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
     },
     {
       q: "Is there a free trial?",
-      a: `Not on its own: Base and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Band comes with ${bandTrialDays} days of Base free.`,
+      a: `Not on its own: Base, Plus and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Band comes with ${bandTrialDays} days of Base free.`,
     },
     {
       q: "Is it finished?",
@@ -394,7 +399,7 @@ function EarlyAccess() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
               OVOA is in beta. Health tracking and notes are free. Base turns on the OVOA assistant
-              for {perLabel(baseMonthly)}, and Pro gives you three times as many AI replies a day.
+              for {perLabel(baseMonthly)}, Plus adds the background agent and twice the replies, and Pro gives you four times as many AI replies a day.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
               <a
@@ -476,14 +481,14 @@ function EarlyAccess() {
           {picked ? (
             <PlanCheckout tier={picked} data={data} period={period} onBack={() => pick(null)} />
           ) : (
-            <div className="mt-10 grid gap-3 lg:grid-cols-3">
-              {(["free", "base", "pro"] as const).map((column) => (
+            <div className="mt-10 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {(["free", "base", "plus", "pro"] as const).map((column) => (
                 <PlanColumnCard
                   key={column}
                   column={column}
                   data={data}
                   period={period}
-                  enabled={configured}
+                  enabled={column === "free" || isSold(data, column, period)}
                   onPick={pick}
                 />
               ))}
@@ -572,7 +577,7 @@ function EarlyAccess() {
         <div className="mx-auto max-w-[1200px] text-[13px] leading-relaxed text-landing-muted">
           <h2 className="text-sm font-semibold text-landing-ink">Plan terms, in short</h2>
           <p className="mt-3 max-w-3xl">
-            Base and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
+            Base, Plus and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
             day you sign up until you cancel. A plan that comes with an OVOA Band starts after its{" "}
             {bandTrialDays} free days, which begin when you start them, unless you cancel first.
             Cancel anytime from Manage billing or by emailing support@ovoa.ai; you keep your plan

@@ -5,7 +5,7 @@
 // same things, so the webhook records either one the same way; only where the
 // buyer lands afterwards differs.
 //
-//   { band: false, plan }   Base or Pro AI on its own. Paid from day one
+//   { band: false, plan }   Base, Plus or Pro AI on its own. Paid from day one
 //                           (NO_BAND_TRIAL_DAYS = 0).
 //   { band: true, withAi }  The Band (one-time). With AI, BAND_TRIAL_DAYS of
 //                           Base monthly, which the buyer starts later (the

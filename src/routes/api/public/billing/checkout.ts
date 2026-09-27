@@ -6,7 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // runs. GET and POST take the same fields:
 //
 //   ?plan=base_monthly|base_annual|pro_monthly|pro_annual
-//       Base or Pro AI on its own.
+//       Base, Plus or Pro AI on its own.
 //   ?band=1
 //       The Band plus BAND_TRIAL_DAYS of Base AI, started later.
 //   ?band=1&ai=0

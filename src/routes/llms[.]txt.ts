@@ -26,7 +26,7 @@ async function body(): Promise<string> {
   const { planOf, perLabel } = await import("@/lib/membership/copy");
   const { plans, band, days } = await prices();
   const data = { plans, band };
-  const p = (tier: "base" | "pro", period: "monthly" | "annual") =>
+  const p = (tier: "base" | "plus" | "pro", period: "monthly" | "annual") =>
     perLabel(planOf(data, tier, period));
   return `# OVOA
 
@@ -40,8 +40,9 @@ async function body(): Promise<string> {
 - Contact: support@ovoa.ai
 - Name: OVOA (sometimes written Ovoa). The wristband is the OVOA Band, or Band for short.
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
-- Base plan: the AI assistant with every AI feature, including the hands-free wake word, Always listen and the background agent, ${p("base", "monthly")} or ${p("base", "annual")}.
-- Pro plan: Base with three times as many AI replies a day, ${p("pro", "monthly")} or ${p("pro", "annual")}.
+- Base plan: the AI assistant, including the hands-free wake word and Always listen, ${p("base", "monthly")} or ${p("base", "annual")}.
+- Plus plan: Base plus the background agent (jobs that run on their own and report back) and twice as many AI replies a day, ${p("plus", "monthly")} or ${p("plus", "annual")}.
+- Pro plan: Plus with four times as many AI replies a day as Base, ${p("pro", "monthly")} or ${p("pro", "annual")}.
 - OVOA Band: ${formatMoney(band.amountCents, band.currency)} one time, includes ${days} days of Base (a Band bought on its own gets them with no card, and they end on their own). Ships to US addresses; no delivery date promised during the beta.
 
 ## What OVOA does
@@ -55,7 +56,7 @@ async function body(): Promise<string> {
 ## Pages
 
 - [Home](https://ovoa.ai/): what OVOA and the Band are.
-- [Plans](https://ovoa.ai/early-access): Free, Base and Pro, monthly or yearly.
+- [Plans](https://ovoa.ai/early-access): Free, Base, Plus and Pro, monthly or yearly.
 - [Band](https://ovoa.ai/checkout): buy the OVOA Band.
 - [FAQ](https://ovoa.ai/faq): plans, the beta, TestFlight, battery, water resistance, microphone, privacy.
 - [About](https://ovoa.ai/about): how the Band works.

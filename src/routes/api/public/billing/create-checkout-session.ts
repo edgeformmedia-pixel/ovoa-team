@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // Starts an embedded Stripe Checkout, paid inside the page with no redirect.
 // POST JSON, returns { clientSecret, publishableKey }:
 //
-//   { plan: "base_monthly" | ... }   Base or Pro, from /early-access. Stripe
+//   { plan: "base_monthly" | ... }   Base, Plus or Pro, from /early-access. Stripe
 //                                    finishes on /early-access/welcome, or
 //                                    back on /text/link with { from: "text" }.
 //   { ai?: boolean }                 The Band, from /checkout: with Base's free

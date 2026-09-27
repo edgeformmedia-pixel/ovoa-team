@@ -6,7 +6,7 @@ import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
 
 const PAGE_TITLE = "Terms · OVOA";
 const PAGE_DESCRIPTION =
-  "The terms for using OVOA, paying for Base or Pro, and buying the OVOA Band during the beta.";
+  "The terms for using OVOA, paying for Base, Plus or Pro, and buying the OVOA Band during the beta.";
 
 export const Route = createFileRoute("/terms")({
   component: Terms,
@@ -64,17 +64,23 @@ function Terms() {
             payment.
           </li>
           <li>
-            <strong>Base</strong>: the OVOA assistant, with every AI feature,{" "}
+            <strong>Base</strong>: the OVOA assistant, with every AI feature but the background
+            agent,{" "}
             {perLabel(planOf(data, "base", "monthly"))} or{" "}
             {perLabel(planOf(data, "base", "annual"))}.
           </li>
           <li>
-            <strong>Pro</strong>: Base with three times the daily AI allowance,{" "}
+            <strong>Plus</strong>: Base with the background agent and twice the daily AI allowance,{" "}
+            {perLabel(planOf(data, "plus", "monthly"))} or{" "}
+            {perLabel(planOf(data, "plus", "annual"))}.
+          </li>
+          <li>
+            <strong>Pro</strong>: Plus with four times Base&rsquo;s daily AI allowance,{" "}
             {perLabel(planOf(data, "pro", "monthly"))} or {perLabel(planOf(data, "pro", "annual"))}.
           </li>
         </ul>
         <p>
-          Base and Pro are subscriptions to the OVOA service. You pay from the day you sign up, and
+          Base, Plus and Pro are subscriptions to the OVOA service. You pay from the day you sign up, and
           your card is charged again every month or year until you cancel. What you pay for is the
           service, not access to TestFlight: the free app is free. Each plan has a daily AI
           allowance; when you reach it, OVOA tells you and says when it resets. The price you join

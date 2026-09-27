@@ -3,27 +3,44 @@
 // scripts/stripe-setup.mjs again with the new amount.
 //
 // What's sold (docs/paywall/SPEC.md in ovoa-app, §1–2):
-//   - Base AI and Pro AI, each monthly or yearly. No free trial without a Band.
+//   - Base, Plus and Pro AI, each monthly or yearly. No free trial without a
+//     Band. Plus (added 2026-09-27) sits between: it has the background agent,
+//     which Base no longer does, and twice Base's daily replies.
 //   - The OVOA Band, one-time. Each Band comes with BAND_TRIAL_DAYS of Base AI.
 //   - No lifetime plan any more. Old ovoa_member_* prices (and anyone still on
 //     them) count as Base.
 
-export type Tier = "free" | "base" | "pro";
+export type Tier = "free" | "base" | "plus" | "pro";
 export type PaidTier = Exclude<Tier, "free">;
 export type BillingPeriod = "monthly" | "annual";
-export type PlanId = "base_monthly" | "base_annual" | "pro_monthly" | "pro_annual";
+export type PlanId =
+  | "base_monthly"
+  | "base_annual"
+  | "plus_monthly"
+  | "plus_annual"
+  | "pro_monthly"
+  | "pro_annual";
 
 // What a member row's `plan` column holds: the billing period (the tier is its
 // own column). lifetime only appears on rows from the old Founder plan; comp is
 // free access given from the admin page.
 export type MemberPlan = BillingPeriod | "lifetime" | "comp";
 
-export const PAID_TIERS: PaidTier[] = ["base", "pro"];
-export const PLAN_IDS: PlanId[] = ["base_monthly", "base_annual", "pro_monthly", "pro_annual"];
+export const PAID_TIERS: PaidTier[] = ["base", "plus", "pro"];
+export const PLAN_IDS: PlanId[] = [
+  "base_monthly",
+  "base_annual",
+  "plus_monthly",
+  "plus_annual",
+  "pro_monthly",
+  "pro_annual",
+];
 
 export const PLAN_LOOKUP_KEYS: Record<PlanId, string> = {
   base_monthly: "ovoa_base_monthly",
   base_annual: "ovoa_base_annual",
+  plus_monthly: "ovoa_plus_monthly",
+  plus_annual: "ovoa_plus_annual",
   pro_monthly: "ovoa_pro_monthly",
   pro_annual: "ovoa_pro_annual",
 };
@@ -39,7 +56,8 @@ export const LEGACY_LOOKUP_KEYS = {
 } as const;
 
 export const planId = (tier: PaidTier, period: BillingPeriod): PlanId => `${tier}_${period}`;
-export const tierOfPlan = (plan: PlanId): PaidTier => (plan.startsWith("pro_") ? "pro" : "base");
+export const tierOfPlan = (plan: PlanId): PaidTier =>
+  plan.startsWith("pro_") ? "pro" : plan.startsWith("plus_") ? "plus" : "base";
 export const periodOfPlan = (plan: PlanId): BillingPeriod =>
   plan.endsWith("_annual") ? "annual" : "monthly";
 
@@ -48,7 +66,7 @@ export function isPlanId(value: unknown): value is PlanId {
 }
 
 export function isPaidTier(value: unknown): value is PaidTier {
-  return value === "base" || value === "pro";
+  return value === "base" || value === "plus" || value === "pro";
 }
 
 // The AI tier a Stripe price unlocks, from its lookup key. The Band (and any
@@ -56,6 +74,7 @@ export function isPaidTier(value: unknown): value is PaidTier {
 export function tierOf(lookupKey: string | null | undefined): PaidTier | null {
   if (!lookupKey) return null;
   if (lookupKey.startsWith("ovoa_pro_")) return "pro";
+  if (lookupKey.startsWith("ovoa_plus_")) return "plus";
   if (lookupKey.startsWith("ovoa_base_")) return "base";
   if (lookupKey.startsWith("ovoa_member_")) return "base";
   return null;
@@ -79,7 +98,7 @@ export const NO_BAND_TRIAL_DAYS = 0;
 export const BAND_TRIAL_DAYS = 7;
 
 // Partner program. Partners earn three ways:
-//   - AFFILIATE_PERCENT of every subscription payment (Base or Pro, monthly or
+//   - AFFILIATE_PERCENT of every subscription payment (any plan, monthly or
 //     yearly) for COMMISSION_MONTHS after the member joins.
 //   - BAND_COMMISSION_PERCENT of each Band they sell: $10 of the $89.99 Band.
 //     The Band's amount is kept out of the subscription commission, even when
@@ -169,6 +188,22 @@ export const FALLBACK_PLANS: PublicPlan[] = [
     tier: "base",
     period: "annual",
     amountCents: 9599,
+    currency: "usd",
+    interval: "year",
+  },
+  {
+    id: "plus_monthly",
+    tier: "plus",
+    period: "monthly",
+    amountCents: 1395,
+    currency: "usd",
+    interval: "month",
+  },
+  {
+    id: "plus_annual",
+    tier: "plus",
+    period: "annual",
+    amountCents: 13399,
     currency: "usd",
     interval: "year",
   },

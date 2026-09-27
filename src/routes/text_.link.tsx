@@ -23,12 +23,12 @@ import {
   type Linked,
   type TextPage,
 } from "@/lib/account/texting.functions";
-import { PLAN_BLURBS, PLAN_NAMES, perLabel, planOf } from "@/lib/membership/copy";
+import { PLAN_BLURBS, PLAN_NAMES, isSold, perLabel, planOf } from "@/lib/membership/copy";
 import { getPlans } from "@/lib/membership/membership.functions";
 import type { PaidTier, PlansResult } from "@/lib/membership/plans";
 
 // /text/link: link your number to an OVOA account (reached from /text, which
-// now lets anyone just text OVOA). Sign in with Apple or Google, pick Base or Pro
+// now lets anyone just text OVOA). Sign in with Apple or Google, pick Base, Plus or Pro
 // if the account has neither (texting is the assistant, which needs one), give the number
 // you'll text from, then send OVOA a ready-made message with a one-time code:
 // a QR code on a computer, a tap on a phone. The code proves the number
@@ -242,18 +242,18 @@ function PickPlan({ plans, name }: { plans: PlansResult; name: string }) {
         Pick a plan{first ? `, ${first}` : ""}.
       </h1>
       <p className="mt-3 text-[15px] leading-relaxed text-landing-muted">
-        Texting OVOA is the assistant, and the assistant comes with Base or Pro. Pay here, then add
+        Texting OVOA is the assistant, and the assistant comes with Base, Plus or Pro. Pay here, then add
         your number. No app needed.
       </p>
       {!plans.configured && (
         <Notice>Plans open shortly. Check back in a little while, or email support@ovoa.ai.</Notice>
       )}
       <div className="mt-8 grid gap-3">
-        {(["base", "pro"] as const).map((t) => (
+        {(["base", "plus", "pro"] as const).map((t) => (
           <button
             key={t}
             type="button"
-            disabled={!plans.configured}
+            disabled={!isSold(plans, t, "monthly")}
             onClick={() => setTier(t)}
             className="rounded-2xl border border-landing-line p-5 text-left transition-colors hover:border-landing-action disabled:pointer-events-none disabled:opacity-50"
           >

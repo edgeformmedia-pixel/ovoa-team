@@ -9,12 +9,14 @@ import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA FAQ: plans, the Band and the beta";
 const PAGE_DESCRIPTION =
-  "Answers about OVOA and the OVOA Band: what's free, what Base and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
+  "Answers about OVOA and the OVOA Band: what's free, what Base, Plus and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
 
 // Prices in the answers come from the live plans, never typed in here.
 function faqsFor(data: PlansResult | undefined) {
   const baseMonthly = perLabel(planOf(data, "base", "monthly"));
   const baseAnnual = perLabel(planOf(data, "base", "annual"));
+  const plusMonthly = perLabel(planOf(data, "plus", "monthly"));
+  const plusAnnual = perLabel(planOf(data, "plus", "annual"));
   const proMonthly = perLabel(planOf(data, "pro", "monthly"));
   const proAnnual = perLabel(planOf(data, "pro", "annual"));
   const days = data?.bandTrialDays ?? 7;
@@ -29,11 +31,15 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. The background agent runs jobs on its own and reports back. ${baseMonthly}, or ${baseAnnual}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${baseMonthly}, or ${baseAnnual}.`,
+    },
+    {
+      q: "What's in Plus?",
+      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and twice as many AI replies a day. ${plusMonthly}, or ${plusAnnual}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Base, with three times as many AI replies a day. ${proMonthly}, or ${proAnnual}.`,
+      a: `Everything in Plus, with four times as many AI replies a day as Base. ${proMonthly}, or ${proAnnual}.`,
     },
     {
       q: "Is this finished?",
@@ -49,7 +55,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "How do I ask OVOA to do something?",
-      a: "Press the Band's button and speak, or type in the app. The Band buzzes once to say it heard you, then OVOA gets to work. (That's the assistant, part of Base and Pro.)",
+      a: "Press the Band's button and speak, or type in the app. The Band buzzes once to say it heard you, then OVOA gets to work. (That's the assistant, part of Base, Plus and Pro.)",
     },
     {
       q: "How do I take a note?",

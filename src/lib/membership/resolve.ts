@@ -32,7 +32,7 @@ export const NO_MEMBERSHIP: Membership = {
   source: "none",
 };
 
-const TIER_RANK: Record<PaidTier, number> = { base: 1, pro: 2 };
+const TIER_RANK: Record<PaidTier, number> = { base: 1, plus: 2, pro: 3 };
 // Among rows with the same tier: settled beats free days beats a failing card.
 const STATUS_RANK: Record<string, number> = {
   active: 4,
@@ -48,7 +48,8 @@ const isLive = (r: MembershipRow) =>
   isEntitled(r.status) &&
   !(r.plan === "comp" && r.current_period_end && r.current_period_end < new Date().toISOString());
 
-const tierOfRow = (row: MembershipRow): PaidTier => (row.tier === "pro" ? "pro" : "base");
+const tierOfRow = (row: MembershipRow): PaidTier =>
+  row.tier === "pro" || row.tier === "plus" ? row.tier : "base";
 
 function describe(row: MembershipRow): Membership {
   const tier = tierOfRow(row);

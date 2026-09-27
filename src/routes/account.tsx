@@ -604,7 +604,7 @@ function planSummary(m: Membership | null): { name: string; detail: string } {
       detail:
         m.status === "canceled"
           ? `Your plan has ended. ${PLAN_BLURBS.free}`
-          : `${PLAN_BLURBS.free} The assistant comes with Base and Pro.`,
+          : `${PLAN_BLURBS.free} The assistant comes with Base, Plus and Pro.`,
     };
   }
   switch (m.status) {

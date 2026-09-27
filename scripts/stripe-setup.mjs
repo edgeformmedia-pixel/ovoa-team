@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Sets up Stripe for OVOA in one go:
-//   - one product per thing: Base AI, Pro AI, and the OVOA Band
-//   - five prices, found by the site through lookup keys:
+//   - one product per thing: Base AI, Plus AI, Pro AI, and the OVOA Band
+//   - seven prices, found by the site through lookup keys:
 //       ovoa_base_monthly $9.95/month    ovoa_base_annual $95.99/year
+//       ovoa_plus_monthly $13.95/month   ovoa_plus_annual $133.99/year
 //       ovoa_pro_monthly  $25.95/month   ovoa_pro_annual  $195.99/year
 //       ovoa_band         $89.99 once
 //   - the webhook that keeps members in sync (prints its signing secret)
@@ -11,8 +12,9 @@
 //
 //   XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_live_... --publishable pk_live_... --site https://ovoa.ai
 //
-// Options: --base-monthly 9.95 --base-annual 95.99 --pro-monthly 25.95
-//          --pro-annual 195.99 --band 89.99  (USD; these are the defaults)
+// Options: --base-monthly 9.95 --base-annual 95.99 --plus-monthly 13.95
+//          --plus-annual 133.99 --pro-monthly 25.95 --pro-annual 195.99
+//          --band 89.99  (USD; these are the defaults)
 //          --publishable pk_...  the publishable key, for the checkout embedded in /checkout and /early-access
 //          --new-webhook   replace the webhook and print a fresh secret
 //          --no-keys       don't make new OVOA_ADMIN_KEY / MEMBERSHIP_API_KEY values
@@ -44,9 +46,14 @@ const PRODUCTS = [
     description: "The OVOA assistant: chat, voice, reminders, email, calendar, memory. Beta.",
   },
   {
+    id: "ovoa_plus",
+    name: "OVOA Plus AI",
+    description: "Everything in Base plus the background agent, with twice the daily AI replies. Beta.",
+  },
+  {
     id: "ovoa_pro",
     name: "OVOA Pro AI",
-    description: "Everything in Base, with three times the daily AI replies. Beta.",
+    description: "Everything in Plus, with four times Base's daily AI replies. Beta.",
   },
   {
     id: "ovoa_band",
@@ -178,6 +185,20 @@ async function main() {
       product: "ovoa_base",
       nickname: "Base yearly",
       amount: cents(opts["base-annual"] ?? 95.99),
+      interval: "year",
+    },
+    {
+      key: "ovoa_plus_monthly",
+      product: "ovoa_plus",
+      nickname: "Plus monthly",
+      amount: cents(opts["plus-monthly"] ?? 13.95),
+      interval: "month",
+    },
+    {
+      key: "ovoa_plus_annual",
+      product: "ovoa_plus",
+      nickname: "Plus yearly",
+      amount: cents(opts["plus-annual"] ?? 133.99),
       interval: "year",
     },
     {

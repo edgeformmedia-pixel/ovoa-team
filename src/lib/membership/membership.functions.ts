@@ -168,7 +168,7 @@ function switchTarget(member: MemberRow, to: "annual" | "pro"): PlanId | null {
   if (member.status !== "trialing" && member.status !== "active") return null;
   if (member.cancel_at_period_end) return null;
   if (to === "annual") return member.plan === "monthly" ? planId(member.tier, "annual") : null;
-  return member.tier === "base" ? planId("pro", member.plan) : null;
+  return member.tier !== "pro" ? planId("pro", member.plan) : null;
 }
 
 function offerFor(member: MemberRow, prices: Prices, to: "annual" | "pro"): WelcomeOffer | null {
@@ -304,7 +304,7 @@ export const getWelcome = createServerFn({ method: "GET" })
 //   annual  monthly → yearly, same plan. During the Band's free days nothing is
 //           charged now; the yearly price starts when they end. Otherwise the
 //           year starts today, less what's left of the month already paid.
-//   pro     Base → Pro, same billing period. Starts today: the Band's free Base
+//   pro     Base or Plus → Pro, same billing period. Starts today: the Band's free Base
 //           days end, and a paid Base period is credited for what's left of it.
 // A change that needs a payment only happens if that payment goes through
 // (payment_behavior: pending_if_incomplete).
@@ -995,7 +995,7 @@ export const setBandOrderStatus = createServerFn({ method: "POST" })
 // ("base" when none is given). Shows up to the app like any paying member;
 // App Review's login needs "pro".
 //
-//   grantAccess({ data: { key, email, name?, note?, tier?: "base" | "pro" } })
+//   grantAccess({ data: { key, email, name?, note?, tier?: "base" | "plus" | "pro" } })
 export const grantAccess = createServerFn({ method: "POST" })
   .inputValidator(
     adminInput((input) => {

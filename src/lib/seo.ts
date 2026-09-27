@@ -78,9 +78,9 @@ export const ORGANIZATION = {
   },
 };
 
-// The iPhone app, with the Free, Base and Pro prices as offers.
+// The iPhone app, with the Free, Base, Plus and Pro prices as offers.
 export function appJsonLd(data: PlansResult | undefined) {
-  const subscription = (tier: "base" | "pro", period: "monthly" | "annual") => {
+  const subscription = (tier: "base" | "plus" | "pro", period: "monthly" | "annual") => {
     const plan = planOf(data, tier, period);
     const price = (plan.amountCents / 100).toFixed(2);
     const currency = plan.currency.toUpperCase();
@@ -126,6 +126,8 @@ export function appJsonLd(data: PlansResult | undefined) {
       },
       subscription("base", "monthly"),
       subscription("base", "annual"),
+      subscription("plus", "monthly"),
+      subscription("plus", "annual"),
       subscription("pro", "monthly"),
       subscription("pro", "annual"),
     ],

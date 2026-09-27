@@ -16,7 +16,7 @@ export type TextPage =
       available: boolean;
       number: string | null;
       linked: Linked;
-      // On Base or Pro, which texting OVOA needs; null if the members table
+      // On Base, Plus or Pro, which texting OVOA needs; null if the members table
       // couldn't be read (the page then doesn't stand in the way).
       paid: boolean | null;
     }
