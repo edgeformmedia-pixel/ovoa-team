@@ -27,6 +27,8 @@ import { Route as TextRouteImport } from './routes/text'
 import { Route as WebsitesRouteImport } from './routes/websites'
 import { Route as AffiliatesIndexRouteImport } from './routes/affiliates/index'
 import { Route as AffiliatesDashboardRouteImport } from './routes/affiliates/dashboard'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as CompareIndexRouteImport } from './routes/compare/index'
 import { Route as CompareBestAiAssistantsYouCanTextRouteImport } from './routes/compare/best-ai-assistants-you-can-text'
 import { Route as CompareChatgptRouteImport } from './routes/compare/chatgpt'
@@ -139,6 +141,16 @@ const AffiliatesIndexRoute = AffiliatesIndexRouteImport.update({
 const AffiliatesDashboardRoute = AffiliatesDashboardRouteImport.update({
   id: '/affiliates/dashboard',
   path: '/affiliates/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareIndexRoute = CompareIndexRouteImport.update({
@@ -282,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/text': typeof TextRoute
   '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
@@ -289,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/compare/': typeof CompareIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -325,6 +339,7 @@ export interface FileRoutesByTo {
   '/text': typeof TextRoute
   '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
@@ -332,6 +347,7 @@ export interface FileRoutesByTo {
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates': typeof AffiliatesIndexRoute
+  '/blog': typeof BlogIndexRoute
   '/compare': typeof CompareIndexRoute
   '/early-access': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -369,6 +385,7 @@ export interface FileRoutesById {
   '/text': typeof TextRoute
   '/websites': typeof WebsitesRoute
   '/affiliates/dashboard': typeof AffiliatesDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/compare/best-ai-assistants-you-can-text': typeof CompareBestAiAssistantsYouCanTextRoute
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
@@ -376,6 +393,7 @@ export interface FileRoutesById {
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text_/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/compare/': typeof CompareIndexRoute
   '/early-access/': typeof EarlyAccessIndexRoute
   '/api/public/membership': typeof ApiPublicMembershipRoute
@@ -414,6 +432,7 @@ export interface FileRouteTypes {
     | '/text'
     | '/websites'
     | '/affiliates/dashboard'
+    | '/blog/$slug'
     | '/compare/best-ai-assistants-you-can-text'
     | '/compare/chatgpt'
     | '/compare/siri'
@@ -421,6 +440,7 @@ export interface FileRouteTypes {
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates/'
+    | '/blog/'
     | '/compare/'
     | '/early-access/'
     | '/api/public/membership'
@@ -457,6 +477,7 @@ export interface FileRouteTypes {
     | '/text'
     | '/websites'
     | '/affiliates/dashboard'
+    | '/blog/$slug'
     | '/compare/best-ai-assistants-you-can-text'
     | '/compare/chatgpt'
     | '/compare/siri'
@@ -464,6 +485,7 @@ export interface FileRouteTypes {
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates'
+    | '/blog'
     | '/compare'
     | '/early-access'
     | '/api/public/membership'
@@ -500,6 +522,7 @@ export interface FileRouteTypes {
     | '/text'
     | '/websites'
     | '/affiliates/dashboard'
+    | '/blog/$slug'
     | '/compare/best-ai-assistants-you-can-text'
     | '/compare/chatgpt'
     | '/compare/siri'
@@ -507,6 +530,7 @@ export interface FileRouteTypes {
     | '/early-access/welcome'
     | '/text_/link'
     | '/affiliates/'
+    | '/blog/'
     | '/compare/'
     | '/early-access/'
     | '/api/public/membership'
@@ -544,6 +568,7 @@ export interface RootRouteChildren {
   TextRoute: typeof TextRoute
   WebsitesRoute: typeof WebsitesRoute
   AffiliatesDashboardRoute: typeof AffiliatesDashboardRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   CompareBestAiAssistantsYouCanTextRoute: typeof CompareBestAiAssistantsYouCanTextRoute
   CompareChatgptRoute: typeof CompareChatgptRoute
   CompareSiriRoute: typeof CompareSiriRoute
@@ -551,6 +576,7 @@ export interface RootRouteChildren {
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
   TextLinkRoute: typeof TextLinkRoute
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   CompareIndexRoute: typeof CompareIndexRoute
   EarlyAccessIndexRoute: typeof EarlyAccessIndexRoute
   ApiPublicMembershipRoute: typeof ApiPublicMembershipRoute
@@ -696,6 +722,20 @@ declare module '@tanstack/react-router' {
       path: '/affiliates/dashboard'
       fullPath: '/affiliates/dashboard'
       preLoaderRoute: typeof AffiliatesDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare/': {
@@ -880,6 +920,7 @@ const rootRouteChildren: RootRouteChildren = {
   TextRoute: TextRoute,
   WebsitesRoute: WebsitesRoute,
   AffiliatesDashboardRoute: AffiliatesDashboardRoute,
+  BlogSlugRoute: BlogSlugRoute,
   CompareBestAiAssistantsYouCanTextRoute:
     CompareBestAiAssistantsYouCanTextRoute,
   CompareChatgptRoute: CompareChatgptRoute,
@@ -888,6 +929,7 @@ const rootRouteChildren: RootRouteChildren = {
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
   TextLinkRoute: TextLinkRoute,
   AffiliatesIndexRoute: AffiliatesIndexRoute,
+  BlogIndexRoute: BlogIndexRoute,
   CompareIndexRoute: CompareIndexRoute,
   EarlyAccessIndexRoute: EarlyAccessIndexRoute,
   ApiPublicMembershipRoute: ApiPublicMembershipRoute,

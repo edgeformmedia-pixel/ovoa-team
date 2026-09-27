@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRouterInstance } from "@tanstack/react-start";
+import { livePosts } from "@/lib/blog/posts";
 import { sitemapStaticPaths, sitemapXML, type SitemapEntry } from "@/lib/sitemap";
 
 const BASE_URL = "https://ovoa.ai";
@@ -19,6 +20,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           const lastmod = LASTMOD[path.length > 1 ? path.replace(/\/$/, "") : path];
           return lastmod ? { path, lastmod } : { path };
         });
+        // Published blog posts (drafts never).
+        for (const post of livePosts()) entries.push({ path: `/blog/${post.slug}`, lastmod: post.updated });
         if (entries.length === 0) {
           return new Response(
             'No pages are included in this sitemap. Check route decisions and ancestor exclusions. Setting "exclude-subtree" on the root excludes the entire site.',
