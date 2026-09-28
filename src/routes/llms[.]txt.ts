@@ -44,8 +44,8 @@ async function body(): Promise<string> {
 - Texting: the first 5 texts are free with no account, 5 more after giving an email, then texting is part of Base.
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
 - Base plan: the AI assistant, including the hands-free wake word and Always listen, ${p("base", "monthly")} or ${p("base", "annual")}.
-- Plus plan: Base plus the background agent (jobs that run on their own and report back) and twice as many AI replies a day, ${p("plus", "monthly")} or ${p("plus", "annual")}.
-- Pro plan: Plus with four times as many AI replies a day as Base, ${p("pro", "monthly")} or ${p("pro", "annual")}.
+- Plus plan: Base plus the background agent (jobs that run on their own and report back) and 2.5 times the daily AI usage, ${p("plus", "monthly")} or ${p("plus", "annual")}.
+- Pro plan: Plus with 4 times Base's daily AI usage, ${p("pro", "monthly")} or ${p("pro", "annual")}.
 - OVOA Band: ${formatMoney(band.amountCents, band.currency)} one time, includes ${days} days of Base (a Band bought on its own gets them with no card, and they end on their own). Ships to US addresses; no delivery date promised during the beta.
 
 ## What OVOA does

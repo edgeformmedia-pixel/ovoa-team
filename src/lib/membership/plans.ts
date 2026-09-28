@@ -5,7 +5,7 @@
 // What's sold (docs/paywall/SPEC.md in ovoa-app, §1–2):
 //   - Base, Plus and Pro AI, each monthly or yearly. No free trial without a
 //     Band. Plus (added 2026-09-27) sits between: it has the background agent,
-//     which Base no longer does, and twice Base's daily replies.
+//     which Base no longer does, and 2.5× Base's daily usage.
 //   - The OVOA Band, one-time. Each Band comes with BAND_TRIAL_DAYS of Base AI.
 //   - No lifetime plan any more. Old ovoa_member_* prices (and anyone still on
 //     them) count as Base.

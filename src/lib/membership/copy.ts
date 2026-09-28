@@ -5,7 +5,7 @@
 // Decided 2026-09-23 and changed 2026-09-27: Base has every AI feature but the
 // background agent (the wake word and Always listen included) at 15 replies a
 // day; Plus adds the background agent and doubles the replies; Pro is Plus
-// with four times Base's replies, nothing else. The plans page reads PLAN_BLURBS and
+// with four times Base's daily usage, nothing else. Since 2026-09-28 usage is a daily budget that talking uses faster than typing, not a count of replies. The plans page reads PLAN_BLURBS and
 // PLAN_FEATURES; the FAQ answers (early-access/index.tsx, faq.tsx), llms.txt,
 // terms.tsx and the welcome page's offers say the same in their own words, so
 // change them together.
@@ -34,8 +34,8 @@ export const PLAN_NAMES: Record<PlanColumn, string> = {
 export const PLAN_BLURBS: Record<PlanColumn, string> = {
   free: "Health tracking and notes, on your iPhone.",
   base: "Turns on the OVOA assistant.",
-  plus: "Everything in Base, plus the background agent and twice the daily AI replies.",
-  pro: "Everything in Plus, with four times Base's daily AI replies.",
+  plus: "Everything in Base, plus the background agent and 2.5× the daily AI usage.",
+  pro: "Everything in Plus, with 4× Base's daily AI usage.",
 };
 
 // true = included, false = not, a string = included with that detail.
@@ -90,10 +90,10 @@ export const PLAN_FEATURES: {
     pro: true,
   },
   {
-    label: "Daily AI replies",
+    label: "Daily AI usage (talking uses it faster than typing)",
     free: false,
     base: "Everyday use",
-    plus: "2× Base",
+    plus: "2.5× Base",
     pro: "4× Base",
   },
 ];

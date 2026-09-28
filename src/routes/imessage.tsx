@@ -36,7 +36,7 @@ function faqsFor(data: PlansResult | undefined): Faq[] {
     },
     {
       q: "How much does it cost?",
-      a: `Your first 5 texts are free with no account. Give OVOA your email and you get 5 more. After that, texting is part of OVOA Base at ${base}, which also includes every other AI feature. Plus and Pro give you more replies a day.`,
+      a: `Your first 5 texts are free with no account. Give OVOA your email and you get 5 more. After that, texting is part of OVOA Base at ${base}, which also includes every other AI feature. Plus and Pro give you more daily usage.`,
     },
     {
       q: "What happens to my texts?",
@@ -214,7 +214,7 @@ function IMessagePage() {
         <p>
           Your first 5 texts are free, with no account. Give OVOA your email and you get 5 more.
           After that, texting is part of <a href="/early-access">OVOA Base</a> at {base}, along
-          with every other AI feature. Plus and Pro give you more replies a day.
+          with every other AI feature. Plus and Pro give you more daily usage.
         </p>
       </section>
     </ContentPage>

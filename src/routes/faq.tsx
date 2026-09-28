@@ -43,11 +43,15 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What's in Plus?",
-      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and twice as many AI replies a day. ${plusMonthly}, or ${plusAnnual}.`,
+      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and 2.5 times the daily AI usage. ${plusMonthly}, or ${plusAnnual}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Plus, with four times as many AI replies a day as Base. ${proMonthly}, or ${proAnnual}.`,
+      a: `Everything in Plus, with 4 times Base's daily AI usage. ${proMonthly}, or ${proAnnual}.`,
+    },
+    {
+      q: "How does daily usage work?",
+      a: "Each plan has a daily AI allowance. Everything OVOA does for you uses a little of it, based on what it really takes: a typed or texted reply uses the least, a spoken reply about two and a half times as much, and looking something up on the web more. So a day of mostly texting goes further than a day of mostly talking. When it runs out, OVOA tells you and picks up again the next day. Base covers everyday use; Plus has 2.5 times as much, and Pro 4 times.",
     },
     {
       q: "Is this finished?",

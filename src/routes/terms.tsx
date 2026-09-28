@@ -70,12 +70,12 @@ function Terms() {
             {perLabel(planOf(data, "base", "annual"))}.
           </li>
           <li>
-            <strong>Plus</strong>: Base with the background agent and twice the daily AI allowance,{" "}
+            <strong>Plus</strong>: Base with the background agent and 2.5 times the daily AI allowance,{" "}
             {perLabel(planOf(data, "plus", "monthly"))} or{" "}
             {perLabel(planOf(data, "plus", "annual"))}.
           </li>
           <li>
-            <strong>Pro</strong>: Plus with four times Base&rsquo;s daily AI allowance,{" "}
+            <strong>Pro</strong>: Plus with 4 times Base&rsquo;s daily AI allowance,{" "}
             {perLabel(planOf(data, "pro", "monthly"))} or {perLabel(planOf(data, "pro", "annual"))}.
           </li>
         </ul>
