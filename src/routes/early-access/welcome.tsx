@@ -543,7 +543,7 @@ function Welcome() {
                 <h2 className="text-2xl font-semibold">Want the assistant too?</h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
                   Base turns on OVOA&rsquo;s assistant: press the Band, ask, and hear the answer.
-                  Plus adds the background agent and 2.5× the daily usage; Pro has 4× Base&rsquo;s.
+                  Base comes with 300,000 credits a month. Plus adds the background agent and 750,000; Pro has 1,200,000.
                 </p>
                 <Link
                   to="/early-access"
@@ -678,8 +678,8 @@ function Welcome() {
           )}
           {pro && (
             <OfferCard
-              title="Get 4× Base's daily usage with Pro."
-              body={`Pro is Plus with 4 times Base's daily AI usage. ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
+              title="Get 1,200,000 credits a month with Pro."
+              body={`Pro is Plus with 1,200,000 credits a month (40,000 a day). ${money(pro)} a ${pro.interval}, starting today${w.status === "trialing" ? " (your free Base days end)" : ", less what's left of your current payment"}. Cancel anytime.`}
               cta={`Switch to Pro, ${money(pro)}/${pro.interval}`}
               busy={switching === "pro"}
               onTake={() => void take("pro", pro)}

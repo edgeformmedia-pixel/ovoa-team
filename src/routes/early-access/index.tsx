@@ -13,6 +13,8 @@ import {
   PLAN_FEATURES,
   PLAN_NAMES,
   bandPrice,
+  CREDITS_FAQ,
+  creditsLine,
   isSold,
   perLabel,
   planOf,
@@ -32,7 +34,7 @@ const PAGE_TITLE = "OVOA plans: free, Base, Plus and Pro";
 
 function describe(data: PlansResult | undefined) {
   const base = planOf(data, "base", "monthly");
-  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, Plus adds the background agent and 2.5× the daily usage, and Pro gives you 4× Base's.`;
+  return `OVOA is in beta on iPhone. Health tracking and notes are free. Base turns on the AI assistant for ${perLabel(base)}, Plus adds the background agent and 750,000 credits a month, and Pro gives you 1,200,000.`;
 }
 
 export const Route = createFileRoute("/early-access/")({
@@ -322,15 +324,14 @@ function EarlyAccess() {
     },
     {
       q: "What's in Plus?",
-      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and 2.5 times the daily AI usage. ${perLabel(planOf(data, "plus", "monthly"))}, or ${perLabel(planOf(data, "plus", "annual"))}.`,
+      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and ${creditsLine("plus")}. ${perLabel(planOf(data, "plus", "monthly"))}, or ${perLabel(planOf(data, "plus", "annual"))}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Plus, with 4 times Base's daily AI usage. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
+      a: `Everything in Plus, with ${creditsLine("pro")}. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
     },
     {
-      q: "How does daily usage work?",
-      a: "Each plan has a daily AI allowance. Everything OVOA does for you uses a little of it, based on what it really takes: a typed or texted reply uses the least, a spoken reply about two and a half times as much, and looking something up on the web more. So a day of mostly texting goes further than a day of mostly talking. When it runs out, OVOA tells you and picks up again the next day. Base covers everyday use; Plus has 2.5 times as much, and Pro 4 times.",
+      ...CREDITS_FAQ,
     },
     {
       q: "Is there a free trial?",
@@ -403,7 +404,7 @@ function EarlyAccess() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
               OVOA is in beta. Health tracking and notes are free. Base turns on the OVOA assistant
-              for {perLabel(baseMonthly)}, Plus adds the background agent and 2.5× the daily usage, and Pro gives you 4× Base's.
+              for {perLabel(baseMonthly)}, Plus adds the background agent and 750,000 credits a month, and Pro gives you 1,200,000.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
               <a

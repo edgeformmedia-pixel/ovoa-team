@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalPage } from "@/components/LegalPage";
 import { breadcrumbs, jsonLd } from "@/lib/seo";
 import { getPlans } from "@/lib/membership/membership.functions";
-import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
+import { bandPrice, creditsLine, perLabel, planOf } from "@/lib/membership/copy";
 
 const PAGE_TITLE = "Terms · OVOA";
 const PAGE_DESCRIPTION =
@@ -65,25 +65,28 @@ function Terms() {
           </li>
           <li>
             <strong>Base</strong>: the OVOA assistant, with every AI feature but the background
-            agent,{" "}
+            agent, with {creditsLine("base")},{" "}
             {perLabel(planOf(data, "base", "monthly"))} or{" "}
             {perLabel(planOf(data, "base", "annual"))}.
           </li>
           <li>
-            <strong>Plus</strong>: Base with the background agent and 2.5 times the daily AI allowance,{" "}
+            <strong>Plus</strong>: Base with the background agent and {creditsLine("plus")},{" "}
             {perLabel(planOf(data, "plus", "monthly"))} or{" "}
             {perLabel(planOf(data, "plus", "annual"))}.
           </li>
           <li>
-            <strong>Pro</strong>: Plus with 4 times Base&rsquo;s daily AI allowance,{" "}
+            <strong>Pro</strong>: Plus with {creditsLine("pro")},{" "}
             {perLabel(planOf(data, "pro", "monthly"))} or {perLabel(planOf(data, "pro", "annual"))}.
           </li>
         </ul>
         <p>
           Base, Plus and Pro are subscriptions to the OVOA service. You pay from the day you sign up, and
           your card is charged again every month or year until you cancel. What you pay for is the
-          service, not access to TestFlight: the free app is free. Each plan has a daily AI
-          allowance; when you reach it, OVOA tells you and says when it resets. The price you join
+          service, not access to TestFlight: the free app is free. Each plan&rsquo;s credits
+          measure AI use and refill every day up to the daily amount above; what you do uses them at
+          its real cost, so a spoken reply uses more than a typed one. When a day&rsquo;s credits run
+          out, OVOA tells you and says when they refill. Unused credits don&rsquo;t carry over and have
+          no cash value. The price you join
           at stays while you&rsquo;re a member; if we ever change it for new members, yours stays
           the same unless we tell you at least 30 days ahead.
         </p>

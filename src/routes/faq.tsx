@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getPlans } from "@/lib/membership/membership.functions";
-import { bandPrice, perLabel, planOf } from "@/lib/membership/copy";
+import { bandPrice, CREDITS_FAQ, creditsLine, perLabel, planOf } from "@/lib/membership/copy";
 import type { PlansResult } from "@/lib/membership/plans";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
@@ -43,15 +43,14 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What's in Plus?",
-      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and 2.5 times the daily AI usage. ${plusMonthly}, or ${plusAnnual}.`,
+      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and ${creditsLine("plus")}. ${plusMonthly}, or ${plusAnnual}.`,
     },
     {
       q: "What's in Pro?",
-      a: `Everything in Plus, with 4 times Base's daily AI usage. ${proMonthly}, or ${proAnnual}.`,
+      a: `Everything in Plus, with ${creditsLine("pro")}. ${proMonthly}, or ${proAnnual}.`,
     },
     {
-      q: "How does daily usage work?",
-      a: "Each plan has a daily AI allowance. Everything OVOA does for you uses a little of it, based on what it really takes: a typed or texted reply uses the least, a spoken reply about two and a half times as much, and looking something up on the web more. So a day of mostly texting goes further than a day of mostly talking. When it runs out, OVOA tells you and picks up again the next day. Base covers everyday use; Plus has 2.5 times as much, and Pro 4 times.",
+      ...CREDITS_FAQ,
     },
     {
       q: "Is this finished?",

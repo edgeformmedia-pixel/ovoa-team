@@ -5,7 +5,7 @@
 // Decided 2026-09-23 and changed 2026-09-27: Base has every AI feature but the
 // background agent (the wake word and Always listen included) at 15 replies a
 // day; Plus adds the background agent and doubles the replies; Pro is Plus
-// with four times Base's daily usage, nothing else. Since 2026-09-28 usage is a daily budget that talking uses faster than typing, not a count of replies. The plans page reads PLAN_BLURBS and
+// with four times Base's daily usage, nothing else. Since 2026-09-28 usage is a daily budget that talking uses faster than typing, not a count of replies, sold as credits (CREDITS below). The plans page reads PLAN_BLURBS and
 // PLAN_FEATURES; the FAQ answers (early-access/index.tsx, faq.tsx), llms.txt,
 // terms.tsx and the welcome page's offers say the same in their own words, so
 // change them together.
@@ -24,6 +24,29 @@ import {
 
 export type PlanColumn = "free" | PaidTier;
 
+// Credits (2026-09-28): how usage is sold. One credit is $0.00001 of AI, so
+// Base's $0.10 a day is 10,000 credits, 300,000 a month. The app's server
+// counts the same (ovoa-app api/src/plans.ts CREDIT_MICRO) and still stops at
+// the daily amount, so every page says both numbers. A reply uses about 200
+// on average: about 130 typed or texted, about 340 spoken.
+export const CREDITS: Record<PaidTier, { perDay: number; perMonth: number }> = {
+  base: { perDay: 10_000, perMonth: 300_000 },
+  plus: { perDay: 25_000, perMonth: 750_000 },
+  pro: { perDay: 40_000, perMonth: 1_200_000 },
+};
+export const credits = (n: number) => n.toLocaleString("en-US");
+// "300,000 credits a month (10,000 a day)"
+export const creditsLine = (tier: PaidTier) =>
+  `${credits(CREDITS[tier].perMonth)} credits a month (${credits(CREDITS[tier].perDay)} a day)`;
+// "about 1,500 replies a month", at the average reply.
+export const repliesLine = (tier: PaidTier) =>
+  `about ${credits(Math.round(CREDITS[tier].perMonth / 200 / 100) * 100)} replies a month`;
+
+export const CREDITS_FAQ = {
+  q: "How do credits work?",
+  a: `Each plan comes with credits: Base has ${creditsLine("base")}, Plus ${creditsLine("plus")}, and Pro ${creditsLine("pro")}. Everything OVOA does for you uses some, based on what it really takes: a typed or texted reply uses about 130, a spoken reply about 340, and looking something up on the web more. An average reply is about 200, so Base is ${repliesLine("base")}. Your credits refill every day, so when a day's run out, OVOA tells you and picks up again the next day. Unused credits don't carry over.`,
+};
+
 export const PLAN_NAMES: Record<PlanColumn, string> = {
   free: "Free",
   base: "Base",
@@ -33,9 +56,9 @@ export const PLAN_NAMES: Record<PlanColumn, string> = {
 
 export const PLAN_BLURBS: Record<PlanColumn, string> = {
   free: "Health tracking and notes, on your iPhone.",
-  base: "Turns on the OVOA assistant.",
-  plus: "Everything in Base, plus the background agent and 2.5× the daily AI usage.",
-  pro: "Everything in Plus, with 4× Base's daily AI usage.",
+  base: `Turns on the OVOA assistant, with ${credits(300_000)} credits a month.`,
+  plus: `Everything in Base, plus the background agent and ${credits(750_000)} credits a month.`,
+  pro: `Everything in Plus, with ${credits(1_200_000)} credits a month.`,
 };
 
 // true = included, false = not, a string = included with that detail.
@@ -90,11 +113,11 @@ export const PLAN_FEATURES: {
     pro: true,
   },
   {
-    label: "Daily AI usage (talking uses it faster than typing)",
+    label: "AI credits a month (refilled daily; talking uses them faster than typing)",
     free: false,
-    base: "Everyday use",
-    plus: "2.5× Base",
-    pro: "4× Base",
+    base: "300,000 (10,000/day)",
+    plus: "750,000 (25,000/day)",
+    pro: "1,200,000 (40,000/day)",
   },
 ];
 
