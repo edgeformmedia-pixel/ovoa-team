@@ -397,14 +397,15 @@ function EarlyAccess() {
           <div className="max-w-2xl">
             <p className="flex items-center gap-2 text-sm font-medium">
               <BetaBadge />
-              <span className="text-landing-muted">iPhone, through TestFlight</span>
+              <span className="text-landing-muted">iMessage and iPhone</span>
             </p>
             <h1 className="mt-4 text-[clamp(2.6rem,6.5vw,5.25rem)] font-semibold leading-[0.98] tracking-normal">
               Start free. Add the assistant when you want it.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-              OVOA is in beta. Health tracking and notes are free. Base turns on the OVOA assistant
-              for {perLabel(baseMonthly)}, Plus adds the background agent and 750,000 credits a month, and Pro gives you 1,200,000.
+              Your first texts to OVOA are free. Base keeps the assistant going for{" "}
+              {perLabel(baseMonthly)}, Plus adds the background agent, and Pro gives you the most
+              usage.
             </p>
             <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
               <a
