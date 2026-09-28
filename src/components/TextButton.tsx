@@ -62,6 +62,7 @@ export function TextButtonPage({
         <Link to="/early-access">Plans</Link>
         <Link to="/privacy">Privacy</Link>
         <Link to="/terms">Terms</Link>
+        <Link to="/landing">More</Link>
       </nav>
     </main>
   );

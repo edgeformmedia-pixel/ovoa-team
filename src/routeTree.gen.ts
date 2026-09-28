@@ -17,6 +17,7 @@ import { Route as BandRouteImport } from './routes/band'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ImessageRouteImport } from './routes/imessage'
+import { Route as LandingRouteImport } from './routes/landing'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OrderCompleteRouteImport } from './routes/order-complete'
@@ -91,6 +92,11 @@ const FaqRoute = FaqRouteImport.update({
 const ImessageRoute = ImessageRouteImport.update({
   id: '/imessage',
   path: '/imessage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandingRoute = LandingRouteImport.update({
+  id: '/landing',
+  path: '/landing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -285,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/imessage': typeof ImessageRoute
+  '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/imessage': typeof ImessageRoute
+  '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/imessage': typeof ImessageRoute
+  '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
   '/order-complete': typeof OrderCompleteRoute
@@ -423,6 +432,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/faq'
     | '/imessage'
+    | '/landing'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/faq'
     | '/imessage'
+    | '/landing'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/faq'
     | '/imessage'
+    | '/landing'
     | '/llms.txt'
     | '/mcp'
     | '/order-complete'
@@ -559,6 +571,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
   ImessageRoute: typeof ImessageRoute
+  LandingRoute: typeof LandingRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
   OrderCompleteRoute: typeof OrderCompleteRoute
@@ -652,6 +665,13 @@ declare module '@tanstack/react-router' {
       path: '/imessage'
       fullPath: '/imessage'
       preLoaderRoute: typeof ImessageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landing': {
+      id: '/landing'
+      path: '/landing'
+      fullPath: '/landing'
+      preLoaderRoute: typeof LandingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms.txt': {
@@ -911,6 +931,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
   ImessageRoute: ImessageRoute,
+  LandingRoute: LandingRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
   OrderCompleteRoute: OrderCompleteRoute,
