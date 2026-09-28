@@ -57,12 +57,16 @@ export function TextButtonPage({
         <p className="mt-4 text-xs text-neutral-400">Free to try. iPhone only.</p>
       </div>
 
-      <nav className="absolute bottom-6 flex gap-4 text-xs text-neutral-400">
-        <Link to="/account">Account</Link>
-        <Link to="/early-access">Plans</Link>
-        <Link to="/privacy">Privacy</Link>
-        <Link to="/terms">Terms</Link>
-        <Link to="/landing">More</Link>
+      <nav className="absolute bottom-6 flex flex-col items-center gap-3 text-neutral-400">
+        <Link to="/landing" className="text-sm underline underline-offset-2">
+          More
+        </Link>
+        <div className="flex gap-4 text-xs">
+          <Link to="/account">Account</Link>
+          <Link to="/early-access">Plans</Link>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+        </div>
       </nav>
     </main>
   );
