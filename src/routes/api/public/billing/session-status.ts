@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/billing/session-status")({
             status: session.status,
             paymentStatus: session.payment_status,
             email: session.customer_details?.email ?? null,
-            // A Band bought with Base carries its plan (the free days start later).
+            // An OVOA Fit bought with Base carries its plan (the free days start later).
             withAi: session.mode === "subscription" || Boolean(session.metadata?.["plan"]),
           });
         } catch (error) {

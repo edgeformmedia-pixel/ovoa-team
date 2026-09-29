@@ -13,9 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AiWristbandRouteImport } from './routes/ai-wristband'
-import { Route as BandRouteImport } from './routes/band'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as FitRouteImport } from './routes/fit'
 import { Route as ImessageRouteImport } from './routes/imessage'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
@@ -74,9 +75,9 @@ const AiWristbandRoute = AiWristbandRouteImport.update({
   path: '/ai-wristband',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BandRoute = BandRouteImport.update({
-  id: '/band',
-  path: '/band',
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -87,6 +88,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FitRoute = FitRouteImport.update({
+  id: '/fit',
+  path: '/fit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImessageRoute = ImessageRouteImport.update({
@@ -287,9 +293,10 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
-  '/band': typeof BandRoute
+  '/app': typeof AppRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -333,9 +340,10 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
-  '/band': typeof BandRoute
+  '/app': typeof AppRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -380,9 +388,10 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
-  '/band': typeof BandRoute
+  '/app': typeof AppRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
+  '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -428,9 +437,10 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/ai-wristband'
-    | '/band'
+    | '/app'
     | '/checkout'
     | '/faq'
+    | '/fit'
     | '/imessage'
     | '/landing'
     | '/llms.txt'
@@ -474,9 +484,10 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/ai-wristband'
-    | '/band'
+    | '/app'
     | '/checkout'
     | '/faq'
+    | '/fit'
     | '/imessage'
     | '/landing'
     | '/llms.txt'
@@ -520,9 +531,10 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/ai-wristband'
-    | '/band'
+    | '/app'
     | '/checkout'
     | '/faq'
+    | '/fit'
     | '/imessage'
     | '/landing'
     | '/llms.txt'
@@ -567,9 +579,10 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   AiWristbandRoute: typeof AiWristbandRoute
-  BandRoute: typeof BandRoute
+  AppRoute: typeof AppRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
+  FitRoute: typeof FitRoute
   ImessageRoute: typeof ImessageRoute
   LandingRoute: typeof LandingRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
@@ -639,11 +652,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiWristbandRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/band': {
-      id: '/band'
-      path: '/band'
-      fullPath: '/band'
-      preLoaderRoute: typeof BandRouteImport
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fit': {
+      id: '/fit'
+      path: '/fit'
+      fullPath: '/fit'
+      preLoaderRoute: typeof FitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/imessage': {
@@ -927,9 +947,10 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AiWristbandRoute: AiWristbandRoute,
-  BandRoute: BandRoute,
+  AppRoute: AppRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
+  FitRoute: FitRoute,
   ImessageRoute: ImessageRoute,
   LandingRoute: LandingRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,

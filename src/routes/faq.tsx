@@ -7,9 +7,9 @@ import { bandPrice, CREDITS_FAQ, creditsLine, perLabel, planOf } from "@/lib/mem
 import type { PlansResult } from "@/lib/membership/plans";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const PAGE_TITLE = "OVOA FAQ: plans, the Band and the beta";
+const PAGE_TITLE = "OVOA FAQ: plans, OVOA Fit and the beta";
 const PAGE_DESCRIPTION =
-  "Answers about OVOA and the OVOA Band: what's free, what Base, Plus and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
+  "Answers about OVOA and the OVOA Fit: what's free, what Base, Plus and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
 
 // Prices in the answers come from the live plans, never typed in here.
 function faqsFor(data: PlansResult | undefined) {
@@ -23,7 +23,7 @@ function faqsFor(data: PlansResult | undefined) {
   return [
     {
       q: "What is OVOA?",
-      a: "An assistant you text or talk to. It schedules, remembers and follows through, then tells you when it's done or when it needs you. The OVOA Band is a woven wristband with one button that brings it to your wrist.",
+      a: "An assistant you text or talk to. It schedules, remembers and follows through, then tells you when it's done or when it needs you. The OVOA Fit is a woven wristband with one button that brings it to your wrist.",
     },
     {
       q: "Can I just text OVOA?",
@@ -35,11 +35,11 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "What's free?",
-      a: "Health tracking (Apple Health, plus heart rate and activity from the Band) and notes. Notes you speak into the Band are written out on your iPhone, not on our servers. No card and no time limit.",
+      a: "Health tracking (Apple Health, plus heart rate and activity from OVOA Fit) and notes. Notes you speak into OVOA Fit are written out on your iPhone, not on our servers. No card and no time limit.",
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${baseMonthly}, or ${baseAnnual}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press OVOA Fit, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${baseMonthly}, or ${baseAnnual}.`,
     },
     {
       q: "What's in Plus?",
@@ -54,23 +54,23 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "Is this finished?",
-      a: "No. OVOA is in beta: the iPhone app, the assistant and the Band are all still being built. Things can break and new builds come often. Your plan's price is kept while you're a member.",
+      a: "No. OVOA is in beta: the iPhone app, the assistant and OVOA Fit are all still being built. Things can break and new builds come often. Your plan's price is kept while you're a member.",
     },
     {
       q: "How does TestFlight work?",
       a: "TestFlight is Apple's own app for trying iPhone apps before they reach the App Store. Install TestFlight from the App Store, open your OVOA invite or link on your iPhone, and tap Install. OVOA then updates itself as we ship new builds. When OVOA reaches the App Store, your account and plan come with you.",
     },
     {
-      q: "How much is the Band?",
-      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base, which start when you choose (we email you a link), so they don't run out while the Band is on its way. After that Base is ${baseMonthly} if you keep it, or you can use the Band with the free app. Bought on its own, the Band still comes with the ${days} days, with no card needed: they end on their own and nothing is charged. The Band is beta hardware, made in small batches, and ships to US addresses.`,
+      q: "How much is OVOA Fit?",
+      a: `${bandPrice(data)}, one time. It comes with ${days} days of OVOA Base, which start when you choose (we email you a link), so they don't run out while OVOA Fit is on its way. After that Base is ${baseMonthly} if you keep it, or you can use OVOA Fit with the free app. Bought on its own, OVOA Fit still comes with the ${days} days, with no card needed: they end on their own and nothing is charged. OVOA Fit is beta hardware, made in small batches, and ships to US addresses.`,
     },
     {
       q: "How do I ask OVOA to do something?",
-      a: "Press the Band's button and speak, or type in the app. The Band buzzes once to say it heard you, then OVOA gets to work. (That's the assistant, part of Base, Plus and Pro.)",
+      a: "Press OVOA Fit's button and speak, or type in the app. OVOA Fit buzzes once to say it heard you, then OVOA gets to work. (That's the assistant, part of Base, Plus and Pro.)",
     },
     {
       q: "How do I take a note?",
-      a: "Double-tap the Band's button and speak, or type it in the app. The note is saved word for word and shows up in the app, searchable. Notes are free.",
+      a: "Double-tap OVOA Fit's button and speak, or type it in the app. The note is saved word for word and shows up in the app, searchable. Notes are free.",
     },
     {
       q: "What do the buzzes mean?",
@@ -81,12 +81,12 @@ function faqsFor(data: PlansResult | undefined) {
       a: "All day with heart rate and motion sensing running. You can check the level anytime in the app.",
     },
     {
-      q: "Is the Band water resistant?",
+      q: "Is OVOA Fit water resistant?",
       a: "Yes. Rain, sweat and hand washing are fine.",
     },
     {
       q: "When does the microphone listen?",
-      a: "When you ask it to: a press of the Band's button, a double-tap for a note, or the record button in the app. The hands-free wake word and Always listen are the exception: they're off until you turn them on, and your iPhone itself listens for the name. What it hears stays on the phone unless you say \"OVOA\" (a few words said just before can be included) or keep talking in the few seconds after OVOA answers, and then only the words go, never the audio. OVOA never records your day in the background.",
+      a: "When you ask it to: a press of OVOA Fit's button, a double-tap for a note, or the record button in the app. The hands-free wake word and Always listen are the exception: they're off until you turn them on, and your iPhone itself listens for the name. What it hears stays on the phone unless you say \"OVOA\" (a few words said just before can be included) or keep talking in the few seconds after OVOA answers, and then only the words go, never the audio. OVOA never records your day in the background.",
     },
     {
       q: "What happens to my data?",

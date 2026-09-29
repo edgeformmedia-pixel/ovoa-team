@@ -84,17 +84,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
 
       // Defaults for pages that don't set their own (the 404 page). The site's
-      // name is OVOA everywhere; the Band is the OVOA Band.
+      // name is OVOA everywhere; OVOA Fit is the OVOA Fit.
       { title: "OVOA: the AI assistant that gets things done" },
       {
         name: "description",
         content:
-          "OVOA is an AI assistant for iPhone you text or talk to: it schedules, remembers and follows through. The OVOA Band brings it to your wrist.",
+          "OVOA is an AI assistant for iPhone you text or talk to: it schedules, remembers and follows through. The OVOA Fit brings it to your wrist.",
       },
       { property: "og:site_name", content: "OVOA" },
       { property: "og:locale", content: "en_US" },
       { property: "og:type", content: "website" },
-      // Every page shares with the Band's picture unless it sets its own (a
+      // Every page shares with OVOA Fit's picture unless it sets its own (a
       // page's own meta wins over these, tag by tag).
       ...ogImageMeta,
     ],

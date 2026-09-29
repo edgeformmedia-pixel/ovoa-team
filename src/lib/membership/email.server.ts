@@ -62,7 +62,7 @@ export async function sendEmail(email: Email, idempotencyKey?: string): Promise<
 
 // ---------- The emails ----------
 
-// Free days that came with a Band and haven't been started, in words (from
+// Free days that came with an OVOA Fit and haven't been started, in words (from
 // trialOffer in sync.server.ts).
 export type TrialOffer = {
   days: number;
@@ -72,7 +72,7 @@ export type TrialOffer = {
   price: string | null;
   // "Visa ending in 4242", or null.
   card: string | null;
-  // A Band bought on its own: no card, so the days end on their own.
+  // An OVOA Fit bought on its own: no card, so the days end on their own.
   noCard: boolean;
 };
 
@@ -121,7 +121,7 @@ function afterTrial(t: TrialOffer): string {
   return `Nothing is charged for ${t.planName} until your ${t.days} days are up. ${then} Cancel before they end and you pay nothing more.`;
 }
 
-// Right after a Band is bought, with Base or on its own: the free days wait
+// Right after an OVOA Fit is bought, with Base or on its own: the free days wait
 // for them. The button opens the order page, which has the start form.
 export function trialWaitingEmail(input: {
   to: string;
@@ -130,10 +130,10 @@ export function trialWaitingEmail(input: {
   trial: TrialOffer;
 }): Email {
   const t = input.trial;
-  return compose(input.to, `Your OVOA Band is ordered. Your ${t.days} free days wait for you.`, [
+  return compose(input.to, `Your OVOA Fit is ordered. Your ${t.days} free days wait for you.`, [
     hello(input.firstName),
-    "Thanks for ordering the OVOA Band. It's beta hardware, made in small batches, so it may take a while to reach you. We'll email you when it ships.",
-    `Your ${t.days} free days of OVOA ${t.planName} haven't started. They start when you choose, so they don't run out while your Band is on its way. When it arrives, or whenever you're ready, open your order page and tap ${startLabel(t)}.`,
+    "Thanks for ordering the OVOA Fit. It's beta hardware, made in small batches, so it may take a while to reach you. We'll email you when it ships.",
+    `Your ${t.days} free days of OVOA ${t.planName} haven't started. They start when you choose, so they don't run out while your OVOA Fit is on its way. When it arrives, or whenever you're ready, open your order page and tap ${startLabel(t)}.`,
     { label: startLabel(t), url: input.url },
     afterTrial(t),
     "Your order page also shows how to put the free OVOA app on your iPhone in the meantime.",
@@ -156,8 +156,8 @@ export function affiliateAppliedEmail(input: {
   ]);
 }
 
-// When a Band is marked shipped. With free days still waiting, it's the
-// reminder to start them once the Band arrives.
+// When an OVOA Fit is marked shipped. With free days still waiting, it's the
+// reminder to start them once OVOA Fit arrives.
 export function bandShippedEmail(input: {
   to: string;
   firstName: string | null;
@@ -166,9 +166,9 @@ export function bandShippedEmail(input: {
   trial: TrialOffer | null;
 }): Email {
   const t = input.trial;
-  return compose(input.to, "Your OVOA Band has shipped", [
+  return compose(input.to, "Your OVOA Fit has shipped", [
     hello(input.firstName),
-    `Your OVOA Band is on its way${input.shipTo ? ` to ${input.shipTo}` : ""}.`,
+    `Your OVOA Fit is on its way${input.shipTo ? ` to ${input.shipTo}` : ""}.`,
     ...(t
       ? [
           `When it arrives, start your ${t.days} free days of OVOA ${t.planName} from your order page.`,

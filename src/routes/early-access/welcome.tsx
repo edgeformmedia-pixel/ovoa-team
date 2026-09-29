@@ -185,7 +185,7 @@ function AppEmailSwitch({ link }: { link: AppLink }) {
 }
 
 // Install TestFlight → join the beta → sign up. Same for members and for
-// people who bought a Band on its own (they get the free app).
+// people who bought an OVOA Fit on its own (they get the free app).
 function AppSteps({
   email,
   tf,
@@ -275,7 +275,7 @@ function BandCard({ band, email }: { band: WelcomeBand; email: string }) {
   if (band.status === "refunded") {
     return (
       <section className="mt-6 rounded-2xl border border-landing-line p-5 text-sm text-landing-muted">
-        Your Band order was refunded.
+        Your OVOA Fit order was refunded.
       </section>
     );
   }
@@ -284,21 +284,21 @@ function BandCard({ band, email }: { band: WelcomeBand; email: string }) {
       <Package aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-landing-action" />
       <div className="text-sm leading-relaxed text-landing-muted">
         <p className="text-base font-semibold text-landing-ink">
-          {band.status === "shipped" ? "Your Band has shipped." : "Your Band is on its way."}
+          {band.status === "shipped" ? "Your OVOA Fit has shipped." : "Your OVOA Fit is on its way."}
         </p>
         <p className="mt-1">
           {band.status === "shipped"
             ? `It's in the post${band.shipTo ? ` to ${band.shipTo}` : ""}.`
-            : `The Band is beta hardware, made in small batches. We'll ship it${band.shipTo ? ` to ${band.shipTo}` : ""} and email ${email} when it's sent.`}{" "}
-          Set up the app below in the meantime: it works without the Band.
+            : `OVOA Fit is beta hardware, made in small batches. We'll ship it${band.shipTo ? ` to ${band.shipTo}` : ""} and email ${email} when it's sent.`}{" "}
+          Set up the app below in the meantime: it works without OVOA Fit.
         </p>
       </div>
     </section>
   );
 }
 
-// A Band's free days of Base wait until the buyer starts them: with Base, on
-// the card saved at checkout; Band only (trial.noCard), with no card, so they
+// An OVOA Fit's free days of Base wait until the buyer starts them: with Base, on
+// the card saved at checkout; OVOA Fit only (trial.noCard), with no card, so they
 // end on their own. A form POST (see /api/public/billing/start-trial), never a
 // link, so a mail scanner opening the email's link can't start them.
 function TrialCard({
@@ -325,7 +325,7 @@ function TrialCard({
     >
       <h2 className="text-2xl font-semibold">{`Your ${days} free days of ${planName} are waiting.`}</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
-        They haven&rsquo;t started, so they won&rsquo;t run out while your Band is on its way. Start
+        They haven&rsquo;t started, so they won&rsquo;t run out while your OVOA Fit is on its way. Start
         them when it arrives, or now if you&rsquo;d like to try the assistant in the app first.
         {emailed ? " The link to this page is in your order email." : ""}
       </p>
@@ -503,10 +503,10 @@ function Welcome() {
     </p>
   );
 
-  // A Band order and the free app, with its free days of Base still waiting
-  // to be started (with Base, or Band only's with no card), or refunded with
+  // An OVOA Fit order and the free app, with its free days of Base still waiting
+  // to be started (with Base, or OVOA Fit only's with no card), or refunded with
   // nothing to start. Once they're started it's the member view below, and
-  // back here when that plan ends (b.ended): the Band keeps the free app.
+  // back here when that plan ends (b.ended): OVOA Fit keeps the free app.
   if (welcome.state === "band") {
     const b = welcome;
     const refunded = b.band.status === "refunded";
@@ -515,18 +515,18 @@ function Welcome() {
       <Shell>
         <h1 className="text-[clamp(2.25rem,6vw,3.25rem)] font-semibold leading-[1.04]">
           {refunded
-            ? "This Band order was refunded."
+            ? "This OVOA Fit order was refunded."
             : b.ended
               ? `Welcome back${name}.`
-              : `Thanks${name}. Your Band is ordered.`}
+              : `Thanks${name}. Your OVOA Fit is ordered.`}
         </h1>
         {errorRow}
         {!refunded && (
           <>
             <p className="mt-4 text-lg leading-relaxed text-landing-muted">
               {b.ended
-                ? `Your ${PLAN_NAMES[b.ended]} plan has ended. Your Band keeps working with the free OVOA app: health tracking and notes.`
-                : "Your Band works with the free OVOA app: health tracking and notes. Get the app ready now."}
+                ? `Your ${PLAN_NAMES[b.ended]} plan has ended. Your OVOA Fit keeps working with the free OVOA app: health tracking and notes.`
+                : "Your OVOA Fit works with the free OVOA app: health tracking and notes. Get the app ready now."}
             </p>
             {b.trial && sessionId && (
               <TrialCard trial={b.trial} sessionId={sessionId} emailed={b.emailed} />
@@ -535,14 +535,14 @@ function Welcome() {
             <AppSteps
               email={b.email}
               tf={b.testflight}
-              signUpNote="Then pair your Band from the app when it arrives."
+              signUpNote="Then pair your OVOA Fit from the app when it arrives."
             />
             {copyRow}
             {!b.trial && (
               <section className="mt-10 rounded-[1.75rem] bg-landing-ink p-7 text-landing-action-foreground sm:p-8">
                 <h2 className="text-2xl font-semibold">Want the assistant too?</h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-landing-action-foreground/70">
-                  Base turns on OVOA&rsquo;s assistant: press the Band, ask, and hear the answer.
+                  Base turns on OVOA&rsquo;s assistant: press OVOA Fit, ask, and hear the answer.
                   Base comes with 300,000 credits a month. Plus adds the background agent and 750,000; Pro has 1,200,000.
                 </p>
                 <Link

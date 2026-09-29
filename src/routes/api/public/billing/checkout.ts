@@ -8,9 +8,9 @@ import { createFileRoute } from "@tanstack/react-router";
 //   ?plan=base_monthly|base_annual|pro_monthly|pro_annual
 //       Base, Plus or Pro AI on its own.
 //   ?band=1
-//       The Band plus BAND_TRIAL_DAYS of Base AI, started later.
+//       OVOA Fit plus BAND_TRIAL_DAYS of Base AI, started later.
 //   ?band=1&ai=0
-//       "Band only, no AI".
+//       "OVOA Fit only, no AI".
 //
 // What each one buys is in checkout.server.ts. The partner code comes from the
 // ovoa_ref cookie (or ?ref=).

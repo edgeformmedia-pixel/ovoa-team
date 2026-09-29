@@ -48,7 +48,7 @@ function Privacy() {
       updated="September 25, 2026"
       intro={
         <p>
-          This covers the OVOA iPhone app, the OVOA Band and ovoa.ai. OVOA is in beta, so this page
+          This covers the OVOA iPhone app, the OVOA Fit and ovoa.ai. OVOA is in beta, so this page
           changes as the product does, and we keep it current. Questions: email{" "}
           <a href="mailto:support@ovoa.ai" className="font-semibold text-landing-ink">
             support@ovoa.ai
@@ -98,22 +98,22 @@ function Privacy() {
 
         <h3>What you say and type to OVOA</h3>
         <p>
-          The microphone is on when you ask it to be: a tap in the app, a Band press, the record
+          The microphone is on when you ask it to be: a tap in the app, an OVOA Fit press, the record
           button, or the wake word and Always listen, which are off until you turn them on. With
-          those, or with Clip click and the phone&rsquo;s microphone while an OVOA Band is paired,
+          those, or with Clip click and the phone&rsquo;s microphone while an OVOA Fit is paired,
           your iPhone listens on the phone itself. What it hears stays on the phone unless you say
-          &ldquo;OVOA&rdquo; or click the Band (a few words said just before can be included), or
+          &ldquo;OVOA&rdquo; or click OVOA Fit (a few words said just before can be included), or
           you keep talking in the few seconds after OVOA answers. Those words are sent to OVOA as
           text, and OVOA may ask the AI whether they were meant for it. If they weren&rsquo;t,
           they&rsquo;re dropped. What you say to OVOA is recognised on your iPhone (or by
           Apple&rsquo;s speech service on iPhones that can&rsquo;t do it themselves), and only the
-          text is sent to OVOA. A Band recording goes from the Band to your iPhone over Bluetooth
+          text is sent to OVOA. An OVOA Fit recording goes from OVOA Fit to your iPhone over Bluetooth
           and is written out the same way. The audio never reaches OVOA or the AI companies.
         </p>
         <p>
           OVOA keeps your conversations and the words of what you said to it so it can follow up and
           write the day summary. They&rsquo;re deleted after 14 days. Notes you type, and recordings
-          you make on purpose (with the Band or the record button), are kept word for word until you
+          you make on purpose (with OVOA Fit or the record button), are kept word for word until you
           delete them.
         </p>
 
@@ -121,7 +121,7 @@ function Privacy() {
         <p>
           If you allow it, OVOA reads your steps, heart rate (including resting heart rate and
           heart-rate variability), active energy, exercise and stand time, sleep and workouts from
-          Apple Health, and heart rate from the Band. The heart rate, daily steps and workouts it
+          Apple Health, and heart rate from OVOA Fit. The heart rate, daily steps and workouts it
           reads are synced to OVOA to show your trends and answer your questions, and deleted after
           14 days (the day summaries stay). Only the numbers a reply needs go to the AI. We never
           use health data for ads or marketing, and OVOA doesn&rsquo;t write to Apple Health. This
@@ -206,7 +206,7 @@ function Privacy() {
 
         <h3>Your phone and the app</h3>
         <p>
-          The phone&rsquo;s time zone, which permissions are on, whether a Band is paired, and a
+          The phone&rsquo;s time zone, which permissions are on, whether an OVOA Fit is paired, and a
           push notification token. The app also uploads diagnostic logs so we can fix problems;
           they&rsquo;re kept for 7 days. We count how much each person uses (replies, searches,
           seconds of OVOA&rsquo;s voice) to run fair daily and monthly limits and understand costs;
@@ -216,7 +216,7 @@ function Privacy() {
         <h3>Buying on ovoa.ai</h3>
         <p>
           Stripe handles payment, and we never see your card number. We keep your email, name, plan
-          and its status, the app email you move a plan to, and for a Band order the shipping
+          and its status, the app email you move a plan to, and for an OVOA Fit order the shipping
           address and phone number so we can send it. If you came through an affiliate&rsquo;s link,
           a cookie remembers their code for 90 days so they can be paid. Signing in on ovoa.ai sets
           a cookie that keeps you signed in, and Stripe&rsquo;s checkout sets its own cookies to

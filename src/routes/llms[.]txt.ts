@@ -32,22 +32,22 @@ async function body(): Promise<string> {
 
 > OVOA is an AI assistant for iPhone that you text in iMessage or talk to: it
 > schedules, remembers and follows through, and texts you first when something
-> needs you. It can also build a website or a small game from a text. The OVOA
-> Band is a woven wristband with one button, heart rate and motion sensing, a
+> needs you. It can also build a website or a small game from a text. The
+> OVOA Fit is a woven wristband with one button, heart rate and motion sensing, a
 > microphone and a vibration motor that brings OVOA to your wrist. Everything is
-> in beta: the app ships through Apple TestFlight, and the Band is beta hardware.
+> in beta: the app ships through Apple TestFlight, and OVOA Fit is beta hardware.
 
 - Website: https://ovoa.ai/
 - Text OVOA: https://ovoa.ai/text (opens Messages with OVOA's number; iMessage only)
 - Contact: support@ovoa.ai
-- Name: OVOA (sometimes written Ovoa). Not related to OVO, OVO A.I. or OVO AI Labs. The wristband is the OVOA Band, or Band for short.
+- Name: OVOA (sometimes written Ovoa). Not related to OVO, OVO A.I. or OVO AI Labs. The wristband is the OVOA Fit.
 - Texting: the first 5 texts are free with no account, 5 more after giving an email, then texting is part of Base.
 - Free plan: health tracking and notes, no AI. Spoken notes are written out on the iPhone.
 - Base plan: the AI assistant, including the hands-free wake word and Always listen, with ${creditsLine("base")}, ${p("base", "monthly")} or ${p("base", "annual")}.
 - Plus plan: Base plus the background agent (jobs that run on their own and report back) and ${creditsLine("plus")}, ${p("plus", "monthly")} or ${p("plus", "annual")}.
 - Pro plan: Plus with ${creditsLine("pro")}, ${p("pro", "monthly")} or ${p("pro", "annual")}.
 - Credits: ${CREDITS_FAQ.a}
-- OVOA Band: ${formatMoney(band.amountCents, band.currency)} one time, includes ${days} days of Base (a Band bought on its own gets them with no card, and they end on their own). Ships to US addresses; no delivery date promised during the beta.
+- OVOA Fit: ${formatMoney(band.amountCents, band.currency)} one time, includes ${days} days of Base (an OVOA Fit bought on its own gets them with no card, and they end on their own). Ships to US addresses; no delivery date promised during the beta.
 
 ## What OVOA does
 
@@ -56,22 +56,23 @@ async function body(): Promise<string> {
 - Websites by text: "build a website for my client Tony's Pizza" gives a finished, hosted site at <username>.ovoa.ai/<project> a few minutes later, with a contact form whose messages are texted and emailed to the owner. Changed by texting. No scripts on the pages. Up to 25 sites. Base.
 - Games by text: small games for two, each player on their own phone, or against the computer. Not listed in search.
 - Other people's OVOAs: find a time with a friend's OVOA, ask it something, share a game.
-- Tasks: press the Band's button and speak, or type in the app. One buzz means heard, one long buzz means done.
+- Tasks: press OVOA Fit's button and speak, or type in the app. One buzz means heard, one long buzz means done.
 - Notes: double-tap the button and speak. Saved word for word, searchable in the app.
 - Standing rules: requests that keep running in the background and report back each time.
-- Health: heart rate and activity from Apple Health and the Band.
+- Health: heart rate and activity from Apple Health and OVOA Fit.
 - Buzzes: one short = heard you, two short = on it, three short = needs an answer, one long = done, two long = couldn't finish.
 
 ## Pages
 
-- [Home](https://ovoa.ai/): what OVOA and the Band are.
+- [Home](https://ovoa.ai/): what OVOA and OVOA Fit are.
 - [Text OVOA](https://ovoa.ai/text): start texting OVOA.
 - [AI assistant in iMessage](https://ovoa.ai/imessage): what texting OVOA does, what it texts you, what it costs.
 - [Websites by text](https://ovoa.ai/websites): websites and games built from a text.
+- [OVOA app](https://ovoa.ai/app): the iPhone app, free beta through TestFlight.
 - [Plans](https://ovoa.ai/early-access): Free, Base, Plus and Pro, monthly or yearly.
-- [OVOA Band V1](https://ovoa.ai/band): the Band as a health tracker whose AI texts you what your data means.
-- [How the Band works](https://ovoa.ai/ai-wristband): tasks, notes, standing rules, buzzes and the hardware.
-- [Buy the Band](https://ovoa.ai/checkout): the OVOA Band checkout.
+- [OVOA Fit](https://ovoa.ai/fit): OVOA Fit as a health tracker whose AI texts you what your data means.
+- [How OVOA Fit works](https://ovoa.ai/ai-wristband): tasks, notes, standing rules, buzzes and the hardware.
+- [Buy OVOA Fit](https://ovoa.ai/checkout): the OVOA Fit checkout.
 - [Compare](https://ovoa.ai/compare): OVOA vs ChatGPT, OVOA vs Siri, and the best AI assistants you can text.
 - [FAQ](https://ovoa.ai/faq): texting, plans, the beta, TestFlight, battery, water resistance, microphone, privacy.
 - [About](https://ovoa.ai/about): who OVOA is and how it treats your data.

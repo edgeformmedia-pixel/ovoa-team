@@ -28,7 +28,7 @@ It's iMessage only for now (SMS can be faked, and OVOA acts on your account). Yo
 
 I'd love to hear what you'd text it first.
 
-**Gallery ideas (1270x760):** 1) a real conversation screenshot of a reminder coming back, 2) the morning brief text, 3) "build me a website" and the finished site on a phone, 4) the OVOA Band on a wrist.
+**Gallery ideas (1270x760):** 1) a real conversation screenshot of a reminder coming back, 2) the morning brief text, 3) "build me a website" and the finished site on a phone, 4) the OVOA Fit on a wrist.
 
 ## Pitch to "best AI assistants you can text" writers
 

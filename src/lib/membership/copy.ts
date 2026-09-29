@@ -71,14 +71,14 @@ export const PLAN_FEATURES: {
   pro: FeatureCell;
 }[] = [
   {
-    label: "Health: Apple Health, Band heart rate and activity",
+    label: "Health: Apple Health, OVOA Fit heart rate and activity",
     free: true,
     base: true,
     plus: true,
     pro: true,
   },
   {
-    label: "Notes, typed or spoken into the Band, written out on your iPhone",
+    label: "Notes, typed or spoken into OVOA Fit, written out on your iPhone",
     free: true,
     base: true,
     plus: true,
@@ -92,7 +92,7 @@ export const PLAN_FEATURES: {
     pro: true,
   },
   {
-    label: "Press the Band, ask, and hear OVOA answer",
+    label: "Press OVOA Fit, ask, and hear OVOA answer",
     free: false,
     base: true,
     plus: true,
@@ -125,7 +125,7 @@ export const PLAN_FEATURES: {
 // the price, and it stays while the member does.
 export const FOUNDING_PRICE_LINE = "Your founding price, kept while you're a member.";
 
-// schema.org availability for the Band's Offer. The Band is beta hardware sold
+// schema.org availability for OVOA Fit's Offer. OVOA Fit is beta hardware sold
 // in small batches that ship when ready, so it's on sale but not stocked in
 // quantity: LimitedAvailability. Switch to PreOrder if orders are taken before
 // any Bands exist to ship.
@@ -167,9 +167,9 @@ export function perLabel(plan: PublicPlan) {
   return `${formatMoney(plan.amountCents, plan.currency)}/${plan.interval}`;
 }
 
-// The Band's schema.org Product, from the live price. `images` are the page's
+// OVOA Fit's schema.org Product, from the live price. `images` are the page's
 // own product photos (site paths). The return policy is the one in the terms
-// (/terms, "The OVOA Band"): 30 days from delivery, US only.
+// (/terms, "The OVOA Fit"): 30 days from delivery, US only.
 export function bandProductJsonLd(
   result: Pick<PlansResult, "band"> | undefined,
   description: string,
@@ -180,7 +180,7 @@ export function bandProductJsonLd(
     "@context": "https://schema.org",
     "@type": "Product",
     "@id": "https://ovoa.ai/#band",
-    name: "OVOA Band",
+    name: "OVOA Fit",
     description,
     image: ["https://ovoa.ai/og-band.jpg", ...images.map((path) => `https://ovoa.ai${path}`)],
     brand: { "@type": "Brand", name: "OVOA" },

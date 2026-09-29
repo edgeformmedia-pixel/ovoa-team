@@ -203,7 +203,7 @@ export async function syncSubscription(
     typeof subscriptionOrId === "string"
       ? await retrieveSubscription(subscriptionOrId)
       : subscriptionOrId;
-  // The AI plan is the recurring item. (A Band bought in the same checkout is
+  // The AI plan is the recurring item. (An OVOA Fit bought in the same checkout is
   // billed once on the first invoice and never becomes a subscription item.)
   const item = sub.items.data.find((i) => i.price?.recurring) ?? sub.items.data[0];
   const customerId = idOf(sub.customer);
@@ -224,7 +224,7 @@ export async function syncSubscription(
     email = customer.email;
     name = name ?? customer.name;
   }
-  // Free days started from a Band order carry that order's checkout, so the
+  // Free days started from an OVOA Fit order carry that order's checkout, so the
   // webhook's copy of this row is tied to it too.
   const checkoutSessionId = hints.checkoutSessionId ?? sub.metadata?.["checkout_session"] ?? null;
 
@@ -248,8 +248,8 @@ export async function syncSubscription(
   return syncTestflight(member);
 }
 
-// Free days that came with a Band and haven't been started yet. `card` is the
-// saved card Base will be charged to when they end. `noCard`: a Band bought on
+// Free days that came with an OVOA Fit and haven't been started yet. `card` is the
+// saved card Base will be charged to when they end. `noCard`: an OVOA Fit bought on
 // its own, so no card was saved and the free days end on their own.
 export type WaitingTrial = {
   plan: PlanId;
@@ -268,10 +268,10 @@ const isBandCheckout = (session: StripeCheckoutSession) =>
   session.metadata?.["band"] === "1" ||
   Boolean(session.line_items?.data.some((li) => li.price?.lookup_key === BAND_LOOKUP_KEY));
 
-// A Band bought with Base (since Sept 23): one payment for the Band, the card
-// saved, and the plan and free days in the metadata for startBandTrial. Band
+// An OVOA Fit bought with Base (since Sept 23): one payment for OVOA Fit, the card
+// saved, and the plan and free days in the metadata for startBandTrial. OVOA Fit
 // checkouts from before then are subscription mode with the trial already
-// running; "Band only" has no plan (see bandOnlyTrial).
+// running; "OVOA Fit only" has no plan (see bandOnlyTrial).
 function laterTrial(session: StripeCheckoutSession): { plan: PlanId; days: number } | null {
   const plan = session.metadata?.["plan"];
   if (session.mode !== "payment" || !isPlanId(plan)) return null;
@@ -279,9 +279,9 @@ function laterTrial(session: StripeCheckoutSession): { plan: PlanId; days: numbe
   return { plan, days: Number.isInteger(days) && days >= 0 ? days : BAND_TRIAL_DAYS };
 }
 
-// "Band only" comes with the same free days of Base, but no card was saved
+// "OVOA Fit only" comes with the same free days of Base, but no card was saved
 // for it: started from the welcome page, they end on their own and nothing is
-// ever charged. It isn't a Band bought with AI, so band_orders.with_ai stays
+// ever charged. It isn't an OVOA Fit bought with AI, so band_orders.with_ai stays
 // false (recordBand reads laterTrial only).
 function bandOnlyTrial(session: StripeCheckoutSession): { plan: PlanId; days: number } | null {
   if (session.mode !== "payment" || !isBandCheckout(session)) return null;
@@ -312,7 +312,7 @@ export function orderPageUrl(session: { id: string; success_url?: unknown; retur
   return `${origin}/early-access/welcome?session_id=${session.id}`;
 }
 
-// Writes down a paid Band so the admin page shows it to ship. Safe to repeat.
+// Writes down a paid OVOA Fit so the admin page shows it to ship. Safe to repeat.
 async function recordBand(
   session: StripeCheckoutSession,
   email: string,
@@ -360,7 +360,7 @@ function retrieveCheckout(sessionId: string) {
 }
 
 // Everything a finished checkout implies: the AI membership (if any) and the
-// Band order (if any). Returns null while the checkout is still open (the
+// OVOA Fit order (if any). Returns null while the checkout is still open (the
 // buyer hit back, or the payment is still processing).
 export async function syncCheckoutSession(sessionId: string): Promise<CheckoutResult | null> {
   return syncCheckout(await retrieveCheckout(sessionId));
@@ -379,7 +379,7 @@ async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutRes
   const paid = session.payment_status === "paid";
   const band = isBandCheckout(session);
 
-  // The Band is charged at checkout, even when the AI part starts with free days.
+  // OVOA Fit is charged at checkout, even when the AI part starts with free days.
   const bandOrder = band && paid ? await recordBand(session, email, ref) : null;
 
   if (session.mode === "subscription" && session.subscription) {
@@ -394,9 +394,9 @@ async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutRes
   }
 
   if (session.mode !== "payment") return null;
-  // A Band, with Base to start later or on its own: no membership until the
+  // An OVOA Fit, with Base to start later or on its own: no membership until the
   // free days are started (then it's the member row made for this checkout,
-  // Band only included, so the welcome page can move it to another app email).
+  // OVOA Fit only included, so the welcome page can move it to another app email).
   if (band) {
     if (!bandOrder) return null;
     await recordBandCommission(bandOrder, null);
@@ -449,21 +449,21 @@ async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutRes
   return { member: await syncTestflight(member), bandOrder: null, waitingTrial: null };
 }
 
-// ---------- Starting a Band's free days ----------
+// ---------- Starting an OVOA Fit's free days ----------
 
 // Something the buyer can fix or should hear as is.
 export class TrialError extends Error {}
 
 type StripeList<T> = { data: T[] };
 
-// Starts the free days bought with a Band, when the buyer chooses (the button
+// Starts the free days bought with an OVOA Fit, when the buyer chooses (the button
 // on their welcome page, which the order email links to). Makes the Base
 // subscription on the card saved at checkout, with the free days as Stripe's
-// trial, so the first charge is when they end. "Band only" has no card saved:
+// trial, so the first charge is when they end. "OVOA Fit only" has no card saved:
 // its subscription has no payment method at all (the one that paid for the
-// Band was never attached to the customer, and Stripe refuses one that isn't),
+// OVOA Fit was never attached to the customer, and Stripe refuses one that isn't),
 // so it cancels itself when the free days end. Safe to repeat, and once per
-// Band order: a second call (a double click, a retry, a press after the days
+// OVOA Fit order: a second call (a double click, a retry, a press after the days
 // ended) finds the member row or the subscription the first one made.
 export async function startBandTrial(sessionId: string): Promise<Member> {
   const session = await retrieveCheckout(sessionId);
@@ -473,7 +473,7 @@ export async function startBandTrial(sessionId: string): Promise<Member> {
   if (!result?.bandOrder || !trial) {
     throw new TrialError(
       result?.bandOrder?.status === "refunded"
-        ? "This Band order was refunded, so its free days can't be started."
+        ? "This OVOA Fit order was refunded, so its free days can't be started."
         : "There are no free days waiting on this order.",
     );
   }
@@ -498,7 +498,7 @@ export async function startBandTrial(sessionId: string): Promise<Member> {
         ...(trial.days > 0 ? { trial_period_days: trial.days } : {}),
         default_payment_method: trial.noCard ? undefined : (savedCard(session).id ?? undefined),
         // Without a card on file when the free days end, stop rather than
-        // leave an unpaid invoice. That's always the case for Band only.
+        // leave an unpaid invoice. That's always the case for OVOA Fit only.
         trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
         metadata: {
           plan: trial.plan,
@@ -519,7 +519,7 @@ export async function startBandTrial(sessionId: string): Promise<Member> {
   });
 }
 
-// ---------- Emails to Band buyers ----------
+// ---------- Emails to OVOA Fit buyers ----------
 
 const CARD_BRANDS: Record<string, string> = {
   amex: "American Express",
@@ -531,7 +531,7 @@ const CARD_BRANDS: Record<string, string> = {
   visa: "Visa",
 };
 
-// Waiting free days in words, for the emails and the welcome page. Band only's
+// Waiting free days in words, for the emails and the welcome page. OVOA Fit only's
 // have no price: nothing is ever charged for them.
 export async function trialOffer(trial: WaitingTrial): Promise<TrialOffer> {
   let price: string | null = null;
@@ -563,8 +563,8 @@ export const firstNameOf = (order: BandOrder) =>
 export const shipPlaceOf = (order: BandOrder) =>
   [order.ship_city, order.ship_state].filter(Boolean).join(", ") || null;
 
-// The order email for a Band, sent by the webhook once the Band is paid for:
-// start the free days when it arrives. Band only gets it too, since its free
+// The order email for an OVOA Fit, sent by the webhook once OVOA Fit is paid for:
+// start the free days when it arrives. OVOA Fit only gets it too, since its free
 // days (no card) wait on the same page. The email links to that page, never to
 // the start itself. Best effort, like every email here.
 export async function emailWaitingTrial(result: CheckoutResult | null, url: string) {
@@ -581,7 +581,7 @@ export async function emailWaitingTrial(result: CheckoutResult | null, url: stri
   );
 }
 
-// When a Band is marked shipped on the admin page. Repeats the free days'
+// When an OVOA Fit is marked shipped on the admin page. Repeats the free days'
 // link if they're still waiting.
 export async function emailBandShipped(order: BandOrder) {
   const session = await retrieveCheckout(order.checkout_session_id);
@@ -643,8 +643,8 @@ async function earningPartner(ref: string | null, buyerEmail: string) {
   return affiliate;
 }
 
-// BAND_COMMISSION_PERCENT of a Band sold through a partner's link. Voided with
-// the rest if the Band's payment is refunded (matched by payment intent).
+// BAND_COMMISSION_PERCENT of an OVOA Fit sold through a partner's link. Voided with
+// the rest if OVOA Fit's payment is refunded (matched by payment intent).
 async function recordBandCommission(order: BandOrder, memberId: string | null) {
   if (order.amount_cents <= 0 || order.status === "refunded") return;
   const affiliate = await earningPartner(order.ref_code, order.email);
@@ -706,7 +706,7 @@ type StripeInvoice = {
   lines?: { data: StripeInvoiceLine[] };
 };
 
-// The Band has its own commission, so its amount comes off the invoice total.
+// OVOA Fit has its own commission, so its amount comes off the invoice total.
 async function bandCentsOn(invoice: StripeInvoice): Promise<number> {
   let bandPriceId: string | null = null;
   let cents = 0;
@@ -752,9 +752,9 @@ export async function handleChargeRefunded(charge: StripeCharge) {
 
   if (!charge.refunded) return;
 
-  // A fully refunded Band: don't ship it (or expect it back). Any AI
+  // A fully refunded OVOA Fit: don't ship it (or expect it back). Any AI
   // subscription bought with it carries on until it's cancelled in Stripe;
-  // Band only's free days, if started, still end on their own. Free days not
+  // OVOA Fit only's free days, if started, still end on their own. Free days not
   // started yet can't be started any more (syncCheckout).
   for (const order of await store().bandOrdersByPayment(paymentIntentId, invoiceId)) {
     if (order.status !== "refunded") await store().setBandOrderStatus(order.id, "refunded");

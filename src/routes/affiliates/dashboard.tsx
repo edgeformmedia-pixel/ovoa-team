@@ -64,7 +64,7 @@ function Tile({ label, value }: { label: string; value: string | number }) {
 
 const KIND_LABELS: Record<PartnerStats["recent"][number]["kind"], string> = {
   plan: "Plan payment",
-  band: "Band",
+  band: "OVOA Fit",
   views: "Views",
 };
 
@@ -110,7 +110,7 @@ function Dashboard() {
         ) : (
           <p className="mt-3 text-landing-muted">
             You earn {stats.percent}% of each payment your members make for their first{" "}
-            {COMMISSION_MONTHS} months, {formatMoney(bandCents)} on every Band
+            {COMMISSION_MONTHS} months, {formatMoney(bandCents)} on every OVOA Fit
             {stats.cpmCents > 0
               ? `, and ${formatMoney(stats.cpmCents)} per 1,000 views of your OVOA posts`
               : ""}

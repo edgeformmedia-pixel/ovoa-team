@@ -4,9 +4,9 @@
 //
 // What's sold (docs/paywall/SPEC.md in ovoa-app, §1–2):
 //   - Base, Plus and Pro AI, each monthly or yearly. No free trial without a
-//     Band. Plus (added 2026-09-27) sits between: it has the background agent,
+//     OVOA Fit. Plus (added 2026-09-27) sits between: it has the background agent,
 //     which Base no longer does, and 2.5× Base's daily usage.
-//   - The OVOA Band, one-time. Each Band comes with BAND_TRIAL_DAYS of Base AI.
+//   - The OVOA Fit, one-time. Each OVOA Fit comes with BAND_TRIAL_DAYS of Base AI.
 //   - No lifetime plan any more. Old ovoa_member_* prices (and anyone still on
 //     them) count as Base.
 
@@ -69,7 +69,7 @@ export function isPaidTier(value: unknown): value is PaidTier {
   return value === "base" || value === "plus" || value === "pro";
 }
 
-// The AI tier a Stripe price unlocks, from its lookup key. The Band (and any
+// The AI tier a Stripe price unlocks, from its lookup key. OVOA Fit (and any
 // price that isn't ours) unlocks none.
 export function tierOf(lookupKey: string | null | undefined): PaidTier | null {
   if (!lookupKey) return null;
@@ -82,15 +82,15 @@ export function tierOf(lookupKey: string | null | undefined): PaidTier | null {
 
 // Free days before the first charge.
 //   - Buying a plan on its own: none, you pay from day one.
-//   - Buying a Band with AI: BAND_TRIAL_DAYS of Base monthly, then Base until
-//     they cancel. The Band can take weeks to arrive, so the free days start
+//   - Buying an OVOA Fit with AI: BAND_TRIAL_DAYS of Base monthly, then Base until
+//     they cancel. OVOA Fit can take weeks to arrive, so the free days start
 //     when the buyer chooses, from the link in their order email (or their
-//     welcome page), not at checkout. Checkout charges the Band and saves the
+//     welcome page), not at checkout. Checkout charges OVOA Fit and saves the
 //     card; starting the free days makes the subscription (startBandTrial in
 //     sync.server.ts), and Stripe charges Base when they end. Stripe emails a
 //     reminder before that (turn it on in Stripe → Settings → Billing →
 //     Subscriptions and emails).
-//   - Buying the Band on its own: the same BAND_TRIAL_DAYS of Base, started
+//   - Buying OVOA Fit on its own: the same BAND_TRIAL_DAYS of Base, started
 //     the same way, but no card is saved, so they end on their own and nothing
 //     is charged. The buyer can give them away by starting them and moving
 //     them to another app email on the welcome page.
@@ -100,8 +100,8 @@ export const BAND_TRIAL_DAYS = 7;
 // Partner program. Partners earn three ways:
 //   - AFFILIATE_PERCENT of every subscription payment (any plan, monthly or
 //     yearly) for COMMISSION_MONTHS after the member joins.
-//   - BAND_COMMISSION_PERCENT of each Band they sell: $10 of the $89.99 Band.
-//     The Band's amount is kept out of the subscription commission, even when
+//   - BAND_COMMISSION_PERCENT of each OVOA Fit they sell: $10 of the $89.99 OVOA Fit.
+//     OVOA Fit's amount is kept out of the subscription commission, even when
 //     it's on the same invoice as the first AI payment.
 //   - A CPM on views of their posts about OVOA, at a rate set per partner on
 //     the admin page (affiliates.cpm_cents, per 1,000 views). Views are
@@ -164,7 +164,7 @@ export type PlansResult = {
   configured: boolean;
   plans: PublicPlan[];
   band: PublicBand | null;
-  // Free days when buying a plan on its own (0), and with a Band.
+  // Free days when buying a plan on its own (0), and with an OVOA Fit.
   trialDays: number;
   bandTrialDays: number;
   // The public TestFlight link, when one is set. The free app is free, so the
@@ -227,7 +227,7 @@ export const FALLBACK_PLANS: PublicPlan[] = [
 
 export const FALLBACK_BAND: PublicBand = { amountCents: 8999, currency: "usd" };
 
-// What a partner earns on one Band at today's price.
+// What a partner earns on one OVOA Fit at today's price.
 export function bandCommissionCents(band: PublicBand | null): number {
   return Math.round(((band ?? FALLBACK_BAND).amountCents * BAND_COMMISSION_PERCENT) / 100);
 }

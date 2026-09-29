@@ -1,6 +1,6 @@
 // Session replay: records the page with rrweb so a visit can be played back on
 // admin.ovoa.ai. Every field's text is masked, so nothing typed is ever sent,
-// and canvases (the 3D Band) are left out. Batches go gzipped to
+// and canvases (the 3D OVOA Fit) are left out. Batches go gzipped to
 // /api/public/replay (replay.server.ts) under the analytics visit id.
 // Mark anything else that must never be recorded with class "rr-block".
 

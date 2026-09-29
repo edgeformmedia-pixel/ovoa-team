@@ -6,7 +6,7 @@ import { bandPrice, creditsLine, perLabel, planOf } from "@/lib/membership/copy"
 
 const PAGE_TITLE = "Terms · OVOA";
 const PAGE_DESCRIPTION =
-  "The terms for using OVOA, paying for Base, Plus or Pro, and buying the OVOA Band during the beta.";
+  "The terms for using OVOA, paying for Base, Plus or Pro, and buying the OVOA Fit during the beta.";
 
 export const Route = createFileRoute("/terms")({
   component: Terms,
@@ -34,7 +34,7 @@ function Terms() {
       updated="September 25, 2026"
       intro={
         <p>
-          These terms cover the OVOA app, the OVOA assistant, the OVOA Band and ovoa.ai. By using
+          These terms cover the OVOA app, the OVOA assistant, the OVOA Fit and ovoa.ai. By using
           OVOA or buying from ovoa.ai you agree to them, and to the{" "}
           <Link
             to="/privacy"
@@ -50,7 +50,7 @@ function Terms() {
         <h2>OVOA is in beta</h2>
         <p>
           The iPhone app is pre-release software delivered through Apple&rsquo;s TestFlight, the
-          assistant is still being built, and the Band is beta hardware. Features can change, break
+          assistant is still being built, and OVOA Fit is beta hardware. Features can change, break
           or be removed, and OVOA may be unavailable at times. Don&rsquo;t rely on OVOA for anything
           where a missed reminder, a wrong answer or a failed alert could cause harm.
         </p>
@@ -103,23 +103,23 @@ function Terms() {
       </section>
 
       <section>
-        <h2>The OVOA Band</h2>
+        <h2>The OVOA Fit</h2>
         <p>
-          The Band is {bandPrice(data)}, paid once. A Band bought with OVOA Base includes {days}{" "}
+          OVOA Fit is {bandPrice(data)}, paid once. An OVOA Fit bought with OVOA Base includes {days}{" "}
           days of Base, which start when you start them from your order page (we email you the
           link), not at checkout. Your card is saved for Base at checkout. After the {days} days,
           Base is {perLabel(planOf(data, "base", "monthly"))} until you cancel, and nothing more is
-          charged if you cancel before they end. You can also buy the Band on its own, with no
+          charged if you cancel before they end. You can also buy OVOA Fit on its own, with no
           subscription and no card saved. It still comes with {days} days of Base, which you can
           start from your order page, or give to someone by moving them to their app email. Those
           days need no card: they end on their own, and nothing is charged.
         </p>
         <p>
-          The Band is beta hardware made in small batches. We ship to US addresses and email you
+          OVOA Fit is beta hardware made in small batches. We ship to US addresses and email you
           when yours is sent; we can&rsquo;t promise a delivery date. If you&rsquo;d rather not
           wait, email us before it ships and we&rsquo;ll refund it. If it arrives faulty, or
           isn&rsquo;t for you, email us within 30 days of delivery to return it for a refund. The
-          Band is not a medical device.
+          OVOA Fit is not a medical device.
         </p>
       </section>
 

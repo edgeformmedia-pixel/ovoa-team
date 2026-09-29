@@ -7,9 +7,10 @@ const links = [
   { to: "/text", label: "Text OVOA" },
   { to: "/imessage", label: "AI in iMessage" },
   { to: "/websites", label: "Websites by text" },
-  { to: "/band", label: "OVOA Band V1" },
-  { to: "/ai-wristband", label: "How the Band works" },
-  { to: "/checkout", label: "Buy the Band" },
+  { to: "/app", label: "OVOA app" },
+  { to: "/fit", label: "OVOA Fit" },
+  { to: "/ai-wristband", label: "How OVOA Fit works" },
+  { to: "/checkout", label: "Buy OVOA Fit" },
   { to: "/early-access", label: "Plans" },
   { to: "/compare", label: "Compare" },
   { to: "/about", label: "About" },
@@ -35,7 +36,7 @@ export function SiteFooter() {
         ))}
       </nav>
       <p className="mt-3 text-[11px] text-muted-foreground/70">
-        OVOA is in beta: the iPhone app comes through TestFlight, and the Band is beta hardware.
+        OVOA is in beta: the iPhone app comes through TestFlight, and OVOA Fit is beta hardware.
       </p>
     </footer>
   );

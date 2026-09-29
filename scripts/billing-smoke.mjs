@@ -265,7 +265,7 @@ async function main() {
   // Every price on the pages comes from Stripe (here, the fake one).
   for (const [path, must] of [
     ["/", ['"price":"89.99"', "LimitedAvailability", "$9.95/month"]],
-    ["/checkout", ["$89.99", '"price":"89.99"', "Band only"]],
+    ["/checkout", ["$89.99", '"price":"89.99"', "OVOA Fit only"]],
     ["/faq", ["$25.95/month", "What&#x27;s free?"]],
     ["/privacy", ["14 days"]],
     ["/terms", ["$195.99/year"]],
@@ -284,11 +284,11 @@ async function main() {
     });
   }
 
-  // ---- 1. Band + AI: the free days wait until the buyer starts them ----
+  // ---- 1. OVOA Fit + AI: the free days wait until the buyer starts them ----
   {
     const { sessionId, params } = await checkout("band=1&ref=maria");
     check(
-      "band+ai: one payment for the Band, card saved for Base",
+      "band+ai: one payment for OVOA Fit, card saved for Base",
       params.mode === "payment" &&
         params._items.length === 1 &&
         params.payment_intent_data?.setup_future_usage === "off_session" &&
@@ -326,7 +326,7 @@ async function main() {
       `SELECT * FROM affiliate_commissions WHERE source_id = 'band:${sessionId}'`,
     )[0];
     check(
-      "band+ai: $10 Band commission",
+      "band+ai: $10 OVOA Fit commission",
       bandComm?.amount_cents === 8999 &&
         bandComm.commission_cents === 1000 &&
         bandComm.payment_intent_id === order?.stripe_payment_intent_id,
@@ -387,7 +387,7 @@ async function main() {
     );
     const member = sql(`SELECT * FROM members WHERE checkout_session_id = '${sessionId}'`);
     check(
-      "band+ai: member row tied to the Band's checkout",
+      "band+ai: member row tied to OVOA Fit's checkout",
       member.length === 1 && member[0].stripe_subscription_id === subs[0]?.id,
       member,
     );
@@ -402,17 +402,17 @@ async function main() {
     );
     const tf = await beta("band-ai@buyer.test");
     check(
-      "band+ai: in the beta, one invite email across the Band and its Base days",
+      "band+ai: in the beta, one invite email across OVOA Fit and its Base days",
       tf.inGroup && tf.emails === 1,
       tf,
     );
   }
 
-  // ---- 2. Band only ----
+  // ---- 2. OVOA Fit only ----
   {
     const { sessionId, params } = await checkout("band=1&ai=0&ref=maria");
     check(
-      "band only: payment mode, Band only",
+      "band only: payment mode, OVOA Fit only",
       params.mode === "payment" && params._items.length === 1 && !params.subscription_data,
       params._items,
     );
@@ -437,7 +437,7 @@ async function main() {
       `SELECT * FROM affiliate_commissions WHERE source_id = 'band:${sessionId}'`,
     )[0];
     check(
-      "band only: $10 Band commission",
+      "band only: $10 OVOA Fit commission",
       bandComm?.amount_cents === 8999 && bandComm.commission_cents === 1000,
       bandComm,
     );
@@ -466,7 +466,7 @@ async function main() {
       waitingPage,
     )?.[0];
     const waitingChecks = {
-      band: waitingPage.includes("Your Band is on its way"),
+      band: waitingPage.includes("Your OVOA Fit is on its way"),
       offer: waitingPage.includes("free days of Base are waiting"),
       form: /method="post"/i.test(startForm ?? "") && !/<a [^>]*start-trial/.test(waitingPage),
       button: /Start my (<!-- -->)?7(<!-- -->)? free days/.test(waitingPage),
@@ -479,7 +479,7 @@ async function main() {
       Object.values(waitingChecks).every(Boolean),
       { ...waitingChecks, startForm },
     );
-    // The Band works with the free app, so Apple emails its invite, once.
+    // OVOA Fit works with the free app, so Apple emails its invite, once.
     check(
       "band only: Apple emails the free app's invite",
       waitingPage.includes("Apple is emailing your invite") &&
@@ -492,7 +492,7 @@ async function main() {
       (await beta("band-only@buyer.test")).emails === 1,
     );
 
-    // What live Stripe says to the card that paid for the Band: it was never
+    // What live Stripe says to the card that paid for OVOA Fit: it was never
     // attached to the customer, so a subscription can't use it.
     const paid = await (
       await fetch(
@@ -559,7 +559,7 @@ async function main() {
     const member = sql(`SELECT * FROM members WHERE checkout_session_id = '${sessionId}'`);
     results.bandOnlyMember = member[0]?.id;
     check(
-      "band only: member row tied to the Band's checkout",
+      "band only: member row tied to OVOA Fit's checkout",
       member.length === 1 && member[0].stripe_subscription_id === subs[0]?.id,
       member,
     );
@@ -568,7 +568,7 @@ async function main() {
     );
     check("band only: the order still says no AI", orderAfter[0]?.with_ai === 0, orderAfter);
     check(
-      "band only: still one order email, and one invite email across the Band and its free days",
+      "band only: still one order email, and one invite email across OVOA Fit and its free days",
       (await emailsTo("band-only@buyer.test")).length === 1 &&
         (await beta("band-only@buyer.test")).emails === 1,
     );
@@ -611,7 +611,7 @@ async function main() {
     );
   }
 
-  // ---- 2b. Band only, then a card added in Manage billing ----
+  // ---- 2b. OVOA Fit only, then a card added in Manage billing ----
   // Stripe charges a card the customer adds when the free days end, so the
   // page stops saying nothing is charged and offers the switches again.
   {
@@ -649,8 +649,8 @@ async function main() {
     );
   }
 
-  // ---- 2c. Band only: the free days end, the Band is kept ----
-  // The order page goes back to the Band's view: the free app's steps, the
+  // ---- 2c. OVOA Fit only: the free days end, OVOA Fit is kept ----
+  // The order page goes back to OVOA Fit's view: the free app's steps, the
   // order link, and plans, not a dead "this plan has ended".
   {
     const { sessionId } = await checkout("band=1&ai=0");
@@ -664,7 +664,7 @@ async function main() {
     const keptChecks = {
       ended: ended.status === "canceled",
       heading: page.includes("Welcome back"),
-      bandKeepsWorking: page.includes("Your Band keeps working with the free OVOA app"),
+      bandKeepsWorking: page.includes("Your OVOA Fit keeps working with the free OVOA app"),
       notDeadEnd: !page.includes("You can start a new one anytime"),
       appSteps: page.includes("Install TestFlight") && page.includes("Join the OVOA beta"),
       // Still in the beta from its order page: nobody leaves it when a plan ends.
@@ -735,7 +735,7 @@ async function main() {
     });
     check("embedded plan: an unknown plan is refused", bad.status === 400);
 
-    // The Band's embedded checkout asks for what the hosted one does.
+    // OVOA Fit's embedded checkout asks for what the hosted one does.
     const band = (await embedded({ ai: true })).params;
     check(
       "embedded band: ships, saves the card, returns to /order-complete",
@@ -828,7 +828,7 @@ async function main() {
       "SELECT email, status FROM band_orders WHERE email IN ('band-only@buyer.test', 'band-ai@buyer.test') ORDER BY email",
     );
     check(
-      "refund: both Band orders refunded",
+      "refund: both OVOA Fit orders refunded",
       orders.length === 2 && orders.every((o) => o.status === "refunded"),
       orders,
     );
@@ -836,20 +836,20 @@ async function main() {
       "SELECT source_id, status FROM affiliate_commissions WHERE source_id LIKE 'band:%'",
     );
     check(
-      "refund: both Band commissions voided",
+      "refund: both OVOA Fit commissions voided",
       bandComms.length === 2 && bandComms.every((c) => c.status === "void"),
       bandComms,
     );
     results.afterRefundBandAi = await membership("band-ai@buyer.test");
     check(
-      "refund: Band+AI keeps its trial until cancelled",
+      "refund: OVOA Fit + AI keeps its trial until cancelled",
       results.afterRefundBandAi.tier === "base" && results.afterRefundBandAi.status === "trialing",
       results.afterRefundBandAi,
     );
-    // Band only's free days, started and given away in block 2, run on too.
+    // OVOA Fit only's free days, started and given away in block 2, run on too.
     results.afterRefundBandOnly = await membership("band-gift@app.test");
     check(
-      "refund: Band only's started free days run on",
+      "refund: OVOA Fit only's started free days run on",
       results.afterRefundBandOnly.tier === "base" &&
         results.afterRefundBandOnly.status === "trialing",
       results.afterRefundBandOnly,

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import { SiteTabs } from "@/components/SiteTabs";
 import { Qr, pretty, smsHref, smsQr, useDevice } from "@/components/texting";
 
 // The whole front door: one line and one blue button that opens Messages with
@@ -28,9 +29,18 @@ export function TextButtonPage({
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-5 text-[#060606]">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 sm:px-8">
+        <span className="text-sm font-bold tracking-[0.12em]">OVOA</span>
+        <SiteTabs tone="plain" />
+        <Link to="/account" className="text-xs text-neutral-500">
+          Account
+        </Link>
+      </div>
       <div className="flex w-full max-w-[360px] flex-col items-center text-center">
-        <p className="text-sm font-bold tracking-[0.12em]">OVOA</p>
-        <h1 className="mt-6 text-[28px] font-semibold leading-tight">Just text it.</h1>
+        <h1 className="text-[34px] font-semibold leading-tight">Just text OVOA.</h1>
+        <p className="mt-3 text-base text-neutral-500">
+          The AI assistant in iMessage. It plans, remembers and follows through. No app needed.
+        </p>
 
         {!number ? (
           <p role="status" className="mt-10 text-sm text-neutral-500">
@@ -62,7 +72,6 @@ export function TextButtonPage({
           More
         </Link>
         <div className="flex gap-4 text-xs">
-          <Link to="/account">Account</Link>
           <Link to="/early-access">Plans</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>

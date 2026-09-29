@@ -8,13 +8,13 @@ import { createFileRoute } from "@tanstack/react-router";
 //   customer.subscription.deleted, invoice.paid, charge.refunded
 //
 // checkout.session.completed covers both kinds of checkout: subscription mode
-// (a plan) and payment mode (the Band, with Base to start later or on its
-// own). Either way a paid Band is written to band_orders for the admin page,
-// and an AI subscription to members with its tier. A Band (with Base, or on
+// (a plan) and payment mode (OVOA Fit, with Base to start later or on its
+// own). Either way a paid OVOA Fit is written to band_orders for the admin page,
+// and an AI subscription to members with its tier. An OVOA Fit (with Base, or on
 // its own with free days that need no card) also gets its order email here,
 // with the link to the page that starts the free days (the subscription
 // itself arrives through customer.subscription.created when they do).
-// charge.refunded marks a Band order refunded and voids partner
+// charge.refunded marks an OVOA Fit order refunded and voids partner
 // commission on the refunded money.
 //
 // Every handler is idempotent, so Stripe's retries and duplicate deliveries are

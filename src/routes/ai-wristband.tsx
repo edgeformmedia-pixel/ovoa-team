@@ -19,9 +19,9 @@ import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice } from "@/lib/membership/copy";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const PAGE_TITLE = "OVOA Band: the AI wristband you talk to";
+const PAGE_TITLE = "OVOA Fit: the AI wristband you talk to";
 const PAGE_DESCRIPTION =
-  "The OVOA Band is a woven wristband you talk to: press to ask for a task, double-tap to save a note, or set a standing rule. Heart rate, motion, mic and buzzes.";
+  "The OVOA Fit is a woven wristband you talk to: press to ask for a task, double-tap to save a note, or set a standing rule. Heart rate, motion, mic and buzzes.";
 
 export const Route = createFileRoute("/ai-wristband")({
   component: WristbandPage,
@@ -46,17 +46,17 @@ const MODES: { icon: LucideIcon; title: string; copy: string }[] = [
   {
     icon: CalendarCheck,
     title: "Tasks",
-    copy: "Ask once, out loud or in the app, and Band goes and does it. You get a buzz and a plain-English result when it's done, or when it needs you.",
+    copy: "Ask once, out loud or in the app, and OVOA Fit goes and does it. You get a buzz and a plain-English result when it's done, or when it needs you.",
   },
   {
     icon: NotebookPen,
     title: "Notes",
-    copy: "Double-tap the button and speak. The note is saved word for word, searchable in the app, with a title Band writes for you.",
+    copy: "Double-tap the button and speak. The note is saved word for word, searchable in the app, with a title OVOA Fit writes for you.",
   },
   {
     icon: Repeat,
     title: "Standing rules",
-    copy: "Some requests shouldn't happen once. They should keep happening. Band turns them into rules that run in the background and reports every time they fire.",
+    copy: "Some requests shouldn't happen once. They should keep happening. OVOA Fit turns them into rules that run in the background and reports every time they fire.",
   },
 ];
 
@@ -87,19 +87,19 @@ function WristbandPage() {
           to="/checkout"
           className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
         >
-          Buy Band
+          Buy OVOA Fit
         </Link>
       </MembershipHeader>
 
       <section className="px-6 py-16 sm:px-10 sm:py-24 lg:px-14">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <div className="max-w-xl lg:pr-10">
-            <p className="text-sm font-medium text-landing-muted">About the OVOA Band</p>
+            <p className="text-sm font-medium text-landing-muted">About the OVOA Fit</p>
             <h1 className="mt-3 text-[clamp(2.75rem,6vw,5.5rem)] font-semibold leading-[1] tracking-normal">
               A wristband you talk to.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              The OVOA Band is a woven wristband you talk to. Say or type what you want and it goes
+              The OVOA Fit is a woven wristband you talk to. Say or type what you want and it goes
               and does it: a task, a note kept word for word, or a standing rule that keeps running
               in the background.
             </p>
@@ -111,7 +111,7 @@ function WristbandPage() {
             />
             <img
               src={bandFront}
-              alt="The OVOA Band, a black woven AI wristband with sensor light and side button"
+              alt="The OVOA Fit, a black woven AI wristband with sensor light and side button"
               className="relative size-full object-contain"
             />
           </div>
@@ -182,7 +182,7 @@ function WristbandPage() {
           <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
             <img
               src={bandSensors}
-              alt="Underside of the OVOA Band showing the rear heart rate sensors and clasp"
+              alt="Underside of the OVOA Fit showing the rear heart rate sensors and clasp"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -207,13 +207,13 @@ function WristbandPage() {
 
       <section className="bg-landing-control/55 px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-medium text-landing-muted">The Band app</p>
+          <p className="text-sm font-medium text-landing-muted">OVOA Fit app</p>
           <h2 className="mt-3 text-[clamp(2.25rem,4.5vw,4.5rem)] font-semibold leading-[1.04] tracking-normal">
             Where everything lands.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-xl">
             Your tasks and what happened with them, your notes word for word, your health history,
-            and the connections Band can act on. The band itself is always one tap away: battery,
+            and the connections OVOA Fit can act on. OVOA Fit itself is always one tap away: battery,
             connection, and live sensor readings.
           </p>
         </div>
@@ -229,14 +229,14 @@ function WristbandPage() {
             {band}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-xl">
-            OVOA Band is beta hardware, with {data.bandTrialDays} days of the OVOA assistant
+            OVOA Fit is beta hardware, with {data.bandTrialDays} days of the OVOA assistant
             included.
           </p>
           <Link
             to="/checkout"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
           >
-            Buy Band
+            Buy OVOA Fit
           </Link>
         </div>
       </section>

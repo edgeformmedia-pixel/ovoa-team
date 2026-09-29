@@ -525,7 +525,7 @@ async function handle(req, res) {
     if (q.default_payment_method) {
       const pm = db.paymentMethods.get(q.default_payment_method);
       if (!pm) return err(res, 400, `No such PaymentMethod: '${q.default_payment_method}'`);
-      // Live Stripe's answer for the card that paid for a Band it didn't save.
+      // Live Stripe's answer for the card that paid for an OVOA Fit it didn't save.
       if (pm.customer !== q.customer)
         return err(
           res,

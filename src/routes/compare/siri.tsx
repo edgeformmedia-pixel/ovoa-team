@@ -122,7 +122,7 @@ function SiriPage() {
             {
               label: "How you reach it",
               values: [
-                "Text it in iMessage, talk to it in the OVOA app, or press the OVOA Band",
+                "Text it in iMessage, talk to it in the OVOA app, or press the OVOA Fit",
                 "Your voice, or the Siri app on iPhone",
               ],
             },

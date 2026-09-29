@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Sets up Stripe for OVOA in one go:
-//   - one product per thing: Base AI, Plus AI, Pro AI, and the OVOA Band
+//   - one product per thing: Base AI, Plus AI, Pro AI, and the OVOA Fit
 //   - seven prices, found by the site through lookup keys:
 //       ovoa_base_monthly $9.95/month    ovoa_base_annual $95.99/year
 //       ovoa_plus_monthly $13.95/month   ovoa_plus_annual $133.99/year
@@ -57,7 +57,7 @@ const PRODUCTS = [
   },
   {
     id: "ovoa_band",
-    name: "OVOA Band",
+    name: "OVOA Fit",
     description: "The OVOA wristband (beta hardware). Comes with 7 days of Base AI.",
   },
 ];
@@ -218,7 +218,7 @@ async function main() {
     {
       key: "ovoa_band",
       product: "ovoa_band",
-      nickname: "Band",
+      nickname: "OVOA Fit",
       amount: cents(opts.band ?? 89.99),
       interval: null,
     },
@@ -276,7 +276,7 @@ async function main() {
       url,
       enabled_events: EVENTS,
       api_version: API_VERSION,
-      description: "OVOA memberships and Band orders",
+      description: "OVOA memberships and OVOA Fit orders",
     });
     webhookSecret = hook.secret;
     say(`✓ Created webhook: ${url}`);

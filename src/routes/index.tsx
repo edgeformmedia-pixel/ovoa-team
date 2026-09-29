@@ -10,7 +10,7 @@ import type { PlansResult } from "@/lib/membership/plans";
 import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
 
 // The home page is one blue button that opens Messages to OVOA. Everything
-// else (plans, the Band, what OVOA does) has its own page.
+// else (plans, OVOA Fit, what OVOA does) has its own page.
 
 const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
 

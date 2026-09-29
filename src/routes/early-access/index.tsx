@@ -316,11 +316,11 @@ function EarlyAccess() {
   const faq = [
     {
       q: "What's free?",
-      a: "Health tracking (Apple Health, and heart rate and activity from the Band) and notes. Notes you speak into the Band are written out on your iPhone, so they never need the AI. No card, no time limit.",
+      a: "Health tracking (Apple Health, and heart rate and activity from OVOA Fit) and notes. Notes you speak into OVOA Fit are written out on your iPhone, so they never need the AI. No card, no time limit.",
     },
     {
       q: "What does Base add?",
-      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press the Band, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
+      a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press OVOA Fit, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
     },
     {
       q: "What's in Plus?",
@@ -335,11 +335,11 @@ function EarlyAccess() {
     },
     {
       q: "Is there a free trial?",
-      a: `Not on its own: Base, Plus and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Band comes with ${bandTrialDays} days of Base free.`,
+      a: `Not on its own: Base, Plus and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Fit comes with ${bandTrialDays} days of Base free.`,
     },
     {
       q: "Is it finished?",
-      a: "No. OVOA is in beta: the app, the assistant and the Band. Things can break, and new builds come often. Members tell us what to fix first.",
+      a: "No. OVOA is in beta: the app, the assistant and OVOA Fit. Things can break, and new builds come often. Members tell us what to fix first.",
     },
     {
       q: "How does TestFlight work?",
@@ -506,10 +506,10 @@ function EarlyAccess() {
               <div className="mt-3 flex flex-col gap-4 rounded-[1.75rem] border border-landing-line p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
                 <div>
                   <h3 className="text-lg font-semibold">
-                    Getting the OVOA Band? {bandTrialDays} days of Base come with it.
+                    Getting the OVOA Fit? {bandTrialDays} days of Base come with it.
                   </h3>
                   <p className="mt-1 text-sm text-landing-muted">
-                    The Band is {bandPrice(data)}, one time. You start the free days when you
+                    OVOA Fit is {bandPrice(data)}, one time. You start the free days when you
                     choose, Base starts after them, and you can cancel before then.
                   </p>
                 </div>
@@ -517,7 +517,7 @@ function EarlyAccess() {
                   to="/checkout"
                   className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-landing-line px-6 text-sm font-semibold transition-colors hover:border-landing-muted"
                 >
-                  See the Band
+                  See OVOA Fit
                 </Link>
               </div>
 
@@ -584,7 +584,7 @@ function EarlyAccess() {
           <h2 className="text-sm font-semibold text-landing-ink">Plan terms, in short</h2>
           <p className="mt-3 max-w-3xl">
             Base, Plus and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
-            day you sign up until you cancel. A plan that comes with an OVOA Band starts after its{" "}
+            day you sign up until you cancel. A plan that comes with an OVOA Fit starts after its{" "}
             {bandTrialDays} free days, which begin when you start them, unless you cancel first.
             Cancel anytime from Manage billing or by emailing support@ovoa.ai; you keep your plan
             until the end of the period you paid for. OVOA is beta software delivered through Apple

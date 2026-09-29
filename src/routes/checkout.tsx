@@ -14,17 +14,17 @@ import type { PlansResult } from "@/lib/membership/plans";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const productPhotos = [
-  { src: bandFront, alt: "OVOA Band, front and side view" },
-  { src: bandSensors, alt: "OVOA Band, rear sensor view" },
-  { src: bandCloseup, alt: "Close-up of the OVOA Band's sensors and woven material", fit: "cover" },
-  { src: bandFabric, alt: "Close view of the OVOA Band's woven material", fit: "cover" },
-  { src: bandProfile, alt: "OVOA Band, profile view" },
+  { src: bandFront, alt: "OVOA Fit, front and side view" },
+  { src: bandSensors, alt: "OVOA Fit, rear sensor view" },
+  { src: bandCloseup, alt: "Close-up of the OVOA Fit's sensors and woven material", fit: "cover" },
+  { src: bandFabric, alt: "Close view of the OVOA Fit's woven material", fit: "cover" },
+  { src: bandProfile, alt: "OVOA Fit, profile view" },
 ];
 
-const PAGE_TITLE = "Buy the OVOA Band (beta)";
+const PAGE_TITLE = "Buy the OVOA Fit (beta)";
 
 function describe(data: PlansResult | undefined) {
-  return `The OVOA Band is ${bandPrice(data)}, one time, and comes with ${data?.bandTrialDays ?? 7} days of OVOA Base, started when you choose, then ${perLabel(planOf(data, "base", "monthly"))}. Beta hardware, shipped to US addresses.`;
+  return `The OVOA Fit is ${bandPrice(data)}, one time, and comes with ${data?.bandTrialDays ?? 7} days of OVOA Base, started when you choose, then ${perLabel(planOf(data, "base", "monthly"))}. Beta hardware, shipped to US addresses.`;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/checkout")({
           productPhotos.map((photo) => photo.src),
         ),
       ),
-      jsonLd(breadcrumbs("OVOA Band", "/checkout")),
+      jsonLd(breadcrumbs("OVOA Fit", "/checkout")),
     ],
   }),
 });
@@ -105,7 +105,7 @@ function Choice({
   );
 }
 
-// The Band paid right here, for the choice on screen; to change it, the buyer
+// OVOA Fit paid right here, for the choice on screen; to change it, the buyer
 // goes back and picks again.
 function EmbeddedBandCheckout({
   withAi,
@@ -119,7 +119,7 @@ function EmbeddedBandCheckout({
   return (
     <div>
       <p className="mb-3 text-sm font-semibold">
-        {withAi ? `OVOA Band + ${days} days of OVOA Base` : "OVOA Band"}
+        {withAi ? `OVOA Fit + ${days} days of OVOA Base` : "OVOA Fit"}
       </p>
       <EmbeddedCheckout order={{ ai: withAi }} />
       <button
@@ -150,7 +150,7 @@ function Checkout() {
 
   const banner =
     error === "not-configured" || (!data.configured && error)
-      ? "Band orders aren't open yet. Check back very soon."
+      ? "OVOA Fit orders aren't open yet. Check back very soon."
       : error === "checkout"
         ? "Checkout didn't open. Please try again, or email support@ovoa.ai."
         : canceled
@@ -169,7 +169,7 @@ function Checkout() {
           >
             OVOA
           </Link>
-          <p className="text-xs font-semibold text-landing-ink sm:text-sm">OVOA Band · {band}</p>
+          <p className="text-xs font-semibold text-landing-ink sm:text-sm">OVOA Fit · {band}</p>
         </div>
       </header>
 
@@ -243,11 +243,11 @@ function Checkout() {
                     </span>
                   </p>
                   <h1 className="text-[30px] font-semibold leading-[1.08] text-landing-ink sm:text-[36px]">
-                    OVOA Band.
+                    OVOA Fit.
                     <span className="block text-landing-muted">Press it and talk.</span>
                   </h1>
                   <p className="mt-5 text-2xl font-semibold text-landing-ink">{band}</p>
-                  <p className="mt-1 text-sm text-landing-muted">One Band, paid once.</p>
+                  <p className="mt-1 text-sm text-landing-muted">One OVOA Fit, paid once.</p>
                 </div>
 
                 {banner && (
@@ -267,16 +267,16 @@ function Checkout() {
                   <Choice
                     selected={withAi}
                     onSelect={() => !paying && setWithAi(true)}
-                    title={`Band + ${days} days of OVOA Base`}
+                    title={`OVOA Fit + ${days} days of OVOA Base`}
                     price={band}
                   >
                     Includes {days} days of OVOA Base, started when you choose, then {base}; cancel
-                    anytime. Base is the OVOA assistant: press the Band, ask, and hear the answer.
+                    anytime. Base is the OVOA assistant: press OVOA Fit, ask, and hear the answer.
                   </Choice>
                   <Choice
                     selected={!withAi}
                     onSelect={() => !paying && setWithAi(false)}
-                    title="Band only"
+                    title="OVOA Fit only"
                     price={band}
                   >
                     No subscription and no card saved. It still comes with {days} free days of OVOA
@@ -287,7 +287,7 @@ function Checkout() {
 
                 <div className="mb-8 rounded-lg bg-landing-control p-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-landing-muted">OVOA Band</span>
+                    <span className="text-landing-muted">OVOA Fit</span>
                     <span className="font-semibold">{band}</span>
                   </div>
                   {withAi && (
@@ -302,7 +302,7 @@ function Checkout() {
                   </div>
                   <p className="mt-3 text-[11px] leading-5 text-landing-muted">
                     {withAi
-                      ? `Your ${days} free days of OVOA Base start when you choose, not today: we email you a link to start them, so they don't run out while your Band is on its way. Your card is saved for Base, then ${base} once they end, until you cancel. Cancel before then and you pay nothing more. The Band is a one-time charge. Prices in US dollars.`
+                      ? `Your ${days} free days of OVOA Base start when you choose, not today: we email you a link to start them, so they don't run out while your OVOA Fit is on its way. Your card is saved for Base, then ${base} once they end, until you cancel. Cancel before then and you pay nothing more. OVOA Fit is a one-time charge. Prices in US dollars.`
                       : "A one-time charge, no subscription. Prices in US dollars."}
                   </p>
                 </div>
@@ -334,7 +334,7 @@ function Checkout() {
             <div className="mt-8 rounded-lg border border-landing-line p-4 text-[12px] leading-5 text-landing-muted">
               <p className="font-semibold text-landing-ink">About shipping</p>
               <p className="mt-1">
-                The Band is beta hardware, made in small batches. We ship to US addresses and email
+                OVOA Fit is beta hardware, made in small batches. We ship to US addresses and email
                 you when yours is on its way. We can&rsquo;t promise a delivery date yet.
               </p>
             </div>

@@ -2,34 +2,34 @@
 
 This turns ovoa.ai into a place where people pay for OVOA while the iPhone app is still in TestFlight. It's the same model rolltoreel.com (Roll) uses.
 
-**What's sold** (the app, the AI and the Band are all beta; the source of truth is `docs/paywall/SPEC.md` in `ovoa-app`):
+**What's sold** (the app, the AI and OVOA Fit are all beta; the source of truth is `docs/paywall/SPEC.md` in `ovoa-app`):
 
 | | Price | What it is |
 | --- | --- | --- |
 | Free | $0 | Health tracking and notes, no AI |
 | Base | $9.95/month or $95.99/year | The OVOA assistant. 20 replies a day. |
 | Pro | $25.95/month or $195.99/year | Base with three times the replies, nothing else. 60 replies a day. |
-| OVOA Band | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base that the buyer starts when they choose. Sold with Base (the card is saved and Base follows the free days) or on its own ("Band only": no card, so the 7 days end on their own) |
+| OVOA Fit | $89.99 once | Beta hardware, US shipping. Comes with 7 days of Base that the buyer starts when they choose. Sold with Base (the card is saved and Base follows the free days) or on its own ("OVOA Fit only": no card, so the 7 days end on their own) |
 
-There's no free trial without a Band: a plan bought on its own is paid from day one.
+There's no free trial without an OVOA Fit: a plan bought on its own is paid from day one.
 
 **The flow:**
 
 ```
 ovoa.ai/early-access (plans)  →  Stripe Checkout, paid from day one
-ovoa.ai/checkout (the Band)   →  Stripe Checkout: the Band is charged and the card is saved for Base
-                                 (or "Band only": a one-time payment, nothing saved; its 7 free days
+ovoa.ai/checkout (OVOA Fit)   →  Stripe Checkout: OVOA Fit is charged and the card is saved for Base
+                                 (or "OVOA Fit only": a one-time payment, nothing saved; its 7 free days
                                  start the same way but need no card, so they end on their own)
-                              →  order email from no-reply@ovoa.ai: "start your 7 free days when your Band arrives"
+                              →  order email from no-reply@ovoa.ai: "start your 7 free days when your OVOA Fit arrives"
                               →  they tap Start on their welcome page: Base monthly starts with 7 free days,
                                  and Stripe charges the saved card when those end
         →  ovoa.ai/early-access/welcome  (install TestFlight → join the beta → sign up in the app with the same email)
         →  the app's server asks ovoa.ai which plan that email is on, and unlocks that much
 ```
 
-**Why the Band's free days wait.** The Band can take weeks to arrive, and 7 free days that start at checkout would be over before it does. So checkout only charges the Band and saves the card. The order email (and the "shipped" email you send with **Mark shipped**) links to their welcome page, where **Start my 7 free days** creates the Base subscription right then, with Stripe's 7-day trial; the first $9.95 is charged 7 days after they tap it. Until they do, they're on the free app and nothing is billed. If they never tap it, Base never starts. The button is a form on the page, not the email link itself, because mail scanners open every link in an email and would otherwise start the free days on their own. Band orders from before Sept 23 were made the old way (the trial started at checkout) and carry on as they are.
+**Why OVOA Fit's free days wait.** OVOA Fit can take weeks to arrive, and 7 free days that start at checkout would be over before it does. So checkout only charges OVOA Fit and saves the card. The order email (and the "shipped" email you send with **Mark shipped**) links to their welcome page, where **Start my 7 free days** creates the Base subscription right then, with Stripe's 7-day trial; the first $9.95 is charged 7 days after they tap it. Until they do, they're on the free app and nothing is billed. If they never tap it, Base never starts. The button is a form on the page, not the email link itself, because mail scanners open every link in an email and would otherwise start the free days on their own. OVOA Fit orders from before Sept 23 were made the old way (the trial started at checkout) and carry on as they are.
 
-**Band only gets the 7 days too.** A Band bought on its own gets the same order email and the same **Start my 7 free days** form, once per order. With no card saved, its Base subscription has no payment method and Stripe cancels it when the 7 days end (`missing_payment_method: cancel`), so nothing is ever charged. To give the days to someone else, the buyer starts them and then uses **Use a different email in the app** with that person's app email. This applies to Band-only orders from before this change too.
+**OVOA Fit only gets the 7 days too.** An OVOA Fit bought on its own gets the same order email and the same **Start my 7 free days** form, once per order. With no card saved, its Base subscription has no payment method and Stripe cancels it when the 7 days end (`missing_payment_method: cancel`), so nothing is ever charged. To give the days to someone else, the buyer starts them and then uses **Use a different email in the app** with that person's app email. This applies to OVOA Fit-only orders from before this change too.
 
 The app account has to use the email they paid with. When it doesn't (Apple Pay or Link filled in another address, or they already had an app account), the welcome page has **Use a different email in the app**: the plan moves to that app account, and the paying email goes back to the free app. You can do the same for someone on the admin page (**Set app email** under their email).
 
@@ -38,20 +38,20 @@ The app account has to use the email they paid with. When it doesn't (Apple Pay 
 | Page / endpoint | What it does |
 | --- | --- |
 | `/early-access` | Plans page: Free, Base and Pro columns, a Monthly / Yearly switch, FAQ |
-| `/checkout` | The Band, with 7 days of Base or "Band only" |
-| `/early-access/welcome` | After checkout: TestFlight steps, Band status, "pay yearly" and "switch to Pro" offers, Manage billing |
+| `/checkout` | OVOA Fit, with 7 days of Base or "OVOA Fit only" |
+| `/early-access/welcome` | After checkout: TestFlight steps, OVOA Fit status, "pay yearly" and "switch to Pro" offers, Manage billing |
 | `/account` | Sign in or create an OVOA account, the same one the app uses: an emailed code or Google. Shows the plan, Manage billing and the TestFlight steps (Part F) |
-| `/early-access/admin` | Your dashboard: revenue, trials, every member, Band orders (Mark shipped), partner payouts, give free Base or Pro |
+| `/early-access/admin` | Your dashboard: revenue, trials, every member, OVOA Fit orders (Mark shipped), partner payouts, give free Base or Pro |
 | `/privacy`, `/terms` | Drafts written from what the app server actually stores. Read them before going live. |
 | `/affiliates` + `/affiliates/dashboard` | Affiliate program (linked from the bottom of the home page as "Affiliate? Work with us"): apply, then each affiliate gets a private stats page. `/partners` redirects here |
 | `/api/public/billing/checkout` | Starts a Stripe Checkout. Plain links work: `?plan=base_monthly` (or `base_annual`, `pro_monthly`, `pro_annual`), `?band=1`, `?band=1&ai=0` |
 | `/api/public/billing/webhook` | Stripe tells the site about payments, renewals, cancellations, refunds |
 | `/api/public/billing/portal` | Stripe's billing page (cancel, change card, invoices) |
-| `/api/public/billing/start-trial` | The welcome page's **Start my 7 free days**: makes the Base subscription for a Band bought with Base or on its own (Band only: no card, so the days end on their own) |
-| Emails from no-reply@ovoa.ai | The Band order email (start link) and the "your Band has shipped" email, through Resend (Part E) |
+| `/api/public/billing/start-trial` | The welcome page's **Start my 7 free days**: makes the Base subscription for an OVOA Fit bought with Base or on its own (OVOA Fit only: no card, so the days end on their own) |
+| Emails from no-reply@ovoa.ai | OVOA Fit order email (start link) and the "your OVOA Fit has shipped" email, through Resend (Part E) |
 | `/api/public/membership` | Tells the OVOA app's server which plan an email is on (`tier`: free, base or pro) |
 | `scripts/stripe-setup.mjs` | Creates the products, prices, webhook and billing portal in Stripe for you |
-| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, Band orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B); `0006` the affiliate application's audience questions |
+| `migrations/…` | The site's database tables (Cloudflare D1): `0001` members, partners, commissions; `0002` plan tiers, OVOA Fit orders; `0003` the app email a plan was moved to; `0004` partner CPM rates and logged views; `0005` the free app's TestFlight invites (Part B); `0006` the affiliate application's audience questions |
 
 The landing page has a new "Get the app" button (top right) and an "Early access" section near the bottom, and the footer links to both new pages. Anyone arriving on any page with `?ref=code` is credited to that partner for 90 days.
 
@@ -78,11 +78,11 @@ From Roll's live site and code:
 | Roll | OVOA (this setup) |
 | --- | --- |
 | Stripe web checkout, not Apple | Stripe Checkout |
-| 7-day free trial, card up front | Only with a Band: 7 days of Base, card up front, started when the buyer chooses (the Band ships later). Plans alone are paid from day one; the free app is the way to try OVOA |
-| $49/mo or $229/yr, sold as "50% off early access" | Base $9.95/mo or $95.99/yr, Pro $25.95/mo or $195.99/yr, Band $89.99 (you pick the prices, see Step 3) |
+| 7-day free trial, card up front | Only with an OVOA Fit: 7 days of Base, card up front, started when the buyer chooses (OVOA Fit ships later). Plans alone are paid from day one; the free app is the way to try OVOA |
+| $49/mo or $229/yr, sold as "50% off early access" | Base $9.95/mo or $95.99/yr, Pro $25.95/mo or $195.99/yr, OVOA Fit $89.99 (you pick the prices, see Step 3) |
 | After paying: "open this on your iPhone" handoff page | `/early-access/welcome` with the TestFlight steps |
 | Upsells right after checkout: monthly → annual ("nothing charged today") | Monthly → yearly and Base → Pro on the welcome page |
-| Affiliates: 10% for 12 months, 90-day cookie, paid monthly via PayPal from $50 | 15% of plan payments for 6 months, $10 (11.11%) per Band, plus a CPM set per partner; 90-day cookie, PayPal monthly from $50 (change in `src/lib/membership/plans.ts`) |
+| Affiliates: 10% for 12 months, 90-day cookie, paid monthly via PayPal from $50 | 15% of plan payments for 6 months, $10 (11.11%) per OVOA Fit, plus a CPM set per partner; 90-day cookie, PayPal monthly from $50 (change in `src/lib/membership/plans.ts`) |
 | Free access types (reviewer, beta tester, golden ticket) | "Give free access" on the admin page |
 
 One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $229). OVOA doesn't show a "was" price it never charged. Advertising a fake former price can get you in trouble with the FTC. The pitch is "founding price, kept while you stay a member", which is true: Stripe keeps charging each member the price they signed up at.
@@ -97,7 +97,7 @@ One difference on purpose: Roll shows crossed-out "regular" prices ($588 → $22
 
 ---
 
-## Already did the first setup? Move to Base, Pro and the Band
+## Already did the first setup? Move to Base, Pro and OVOA Fit
 
 If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do these in order. Everything stays in Stripe **test mode**. If you're starting fresh, skip this and follow Part A; it has the same steps.
 
@@ -107,9 +107,9 @@ If you set this up before Sept 22 (Monthly, Annual and Founder lifetime), do the
    XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --publishable pk_test_XXXX --site https://ovoa.ai --no-keys
    ```
 
-   It makes the Base AI, Pro AI and OVOA Band products and their five prices, puts the Stripe secrets on the site, and leaves your admin and membership keys alone (`--no-keys`). To change a price, add `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` or `--band` with the amount (the old `--monthly`, `--annual` and `--lifetime` are gone).
+   It makes the Base AI, Pro AI and OVOA Fit products and their five prices, puts the Stripe secrets on the site, and leaves your admin and membership keys alone (`--no-keys`). To change a price, add `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` or `--band` with the amount (the old `--monthly`, `--annual` and `--lifetime` are gone).
 2. **Archive the old prices.** Stripe → **Product catalog** → the old OVOA membership product → archive the three `ovoa_member_*` prices (monthly, annual, lifetime). Anyone already on them keeps working and counts as Base.
-3. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling the Band in the US (Step 2, item 5).
+3. **Stripe settings.** Turn on the trial-ending reminder email (Step 2), and check shipping and tax for selling OVOA Fit in the US (Step 2, item 5).
 4. **App Review's login gets Pro.** Admin page → **Give free access** → the App Review email → **Pro**. Do it for yourself and your testers too, before step 5.
 5. **The app's plan check** (Part C) stays off for v1. When you switch plans on, it's the same `MEMBERSHIP_API_KEY` on the site and on the app's Worker.
 
@@ -119,7 +119,7 @@ The database tables are already there (migrations `0001` to `0004`, as of Sept 2
 
 ## Where the site runs
 
-ovoa.ai is a Cloudflare Worker, `ovoa-site`, in the **admin@ovoa.ai** Cloudflare account (`wrangler.site.jsonc`). It answers at https://ovoa.ai, https://www.ovoa.ai and https://ovoa-site.ovoa.workers.dev. Cloudflare makes the DNS records and certificates for the two custom domains itself. Members, partners and Band orders are in its Cloudflare D1 database, `ovoa-site-db`.
+ovoa.ai is a Cloudflare Worker, `ovoa-site`, in the **admin@ovoa.ai** Cloudflare account (`wrangler.site.jsonc`). It answers at https://ovoa.ai, https://www.ovoa.ai and https://ovoa-site.ovoa.workers.dev. Cloudflare makes the DNS records and certificates for the two custom domains itself. Members, partners and OVOA Fit orders are in its Cloudflare D1 database, `ovoa-site-db`.
 
 Every command below runs from the `ovoa-team` folder in Git Bash, with the admin@ovoa.ai Wrangler login. `XDG_CONFIG_HOME` picks that login; your plain `npx wrangler` login is a different account.
 
@@ -137,7 +137,7 @@ ovoa.ai runs on the **live** Stripe keys. To try checkout with the `4242 4242 42
 
 ## The test site (Stripe test mode)
 
-https://ovoa-site-test.ovoa.workers.dev is the same site as a second Worker, `ovoa-site-test` (`wrangler.test.jsonc`), on Stripe **test** keys and its own database, `ovoa-site-test-db`. Pay there with `4242 4242 4242 4242`, any future date, any CVC and any ZIP. Nothing is charged, and test members and Band orders never show up on ovoa.ai. Its admin key is in `stripe/test.env`, and its admin page is https://ovoa-site-test.ovoa.workers.dev/early-access/admin.
+https://ovoa-site-test.ovoa.workers.dev is the same site as a second Worker, `ovoa-site-test` (`wrangler.test.jsonc`), on Stripe **test** keys and its own database, `ovoa-site-test-db`. Pay there with `4242 4242 4242 4242`, any future date, any CVC and any ZIP. Nothing is charged, and test members and OVOA Fit orders never show up on ovoa.ai. Its admin key is in `stripe/test.env`, and its admin page is https://ovoa-site-test.ovoa.workers.dev/early-access/admin.
 
 | You want to… | Run |
 | --- | --- |
@@ -167,7 +167,7 @@ In the Stripe dashboard (test mode is fine; these settings are shared):
    - Turn on **Send emails about upcoming renewals** and **Smart Retries** (retries failed cards automatically).
 3. **Settings → Business → Customer emails:** turn on **Successful payments** and **Refunds**, so members get receipts.
 4. **Settings → Payments → Payment methods:** make sure **Cards**, **Apple Pay** and **Google Pay** are on. Checkout shows Apple Pay by itself on iPhones.
-5. **The Band is a physical product shipped in the US.** Checkout already asks for a US shipping address and a phone number. Check **Settings → Tax** (Stripe Tax, or decide you'll handle sales tax yourself) and whether you want a shipping rate; right now checkout adds no shipping charge, so the $89.99 has to cover it.
+5. **OVOA Fit is a physical product shipped in the US.** Checkout already asks for a US shipping address and a phone number. Check **Settings → Tax** (Stripe Tax, or decide you'll handle sales tax yourself) and whether you want a shipping rate; right now checkout adds no shipping charge, so the $89.99 has to cover it.
 
 ### Step 3. Run the setup script (test mode)
 
@@ -184,7 +184,7 @@ cd /c/Users/thoma/OneDrive/Documents/GitHub/ovoa-team
 XDG_CONFIG_HOME=C:/Users/thoma/.wrangler-ovoa node scripts/stripe-setup.mjs --key sk_test_XXXX --publishable pk_test_XXXX --site https://ovoa.ai
 ```
 
-It creates three products (Base AI, Pro AI, OVOA Band) and five prices: `ovoa_base_monthly` $9.95, `ovoa_base_annual` $95.99, `ovoa_pro_monthly` $25.95, `ovoa_pro_annual` $195.99 and `ovoa_band` $89.99. To use different prices, add them to the end, for example `--base-monthly 10.95 --pro-annual 199`. The options are `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` and `--band`. You can change prices any time later by running it again; existing members keep the price they signed up at.
+It creates three products (Base AI, Pro AI, OVOA Fit) and five prices: `ovoa_base_monthly` $9.95, `ovoa_base_annual` $95.99, `ovoa_pro_monthly` $25.95, `ovoa_pro_annual` $195.99 and `ovoa_band` $89.99. To use different prices, add them to the end, for example `--base-monthly 10.95 --pro-annual 199`. The options are `--base-monthly`, `--base-annual`, `--pro-monthly`, `--pro-annual` and `--band`. You can change prices any time later by running it again; existing members keep the price they signed up at.
 
 4. It puts the secrets on the site and prints a block like this. **Copy it into your password manager now.** Stripe only shows the webhook secret once.
 
@@ -210,7 +210,7 @@ To set one by hand instead, see [Where the site runs](#where-the-site-runs).
 
 ### Step 5. The database tables
 
-`migrations/` holds six files, all applied as of Sept 25. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and Band buyers; the sixth adds the affiliate application's platform, links and audience size, and when each one was reviewed. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
+`migrations/` holds six files, all applied as of Sept 25. The first creates the `members`, `affiliates` and `affiliate_commissions` tables; the second adds each member's plan tier and the `band_orders` table; the third adds the app email a member can move their plan to; the fourth adds each partner's CPM rate and the views logged for it; the fifth keeps the TestFlight invites sent to free accounts and OVOA Fit buyers; the sixth adds the affiliate application's platform, links and audience size, and when each one was reviewed. Nobody can read them from a browser; only the site's server can. If a new file ever shows up there, run `npm run db:migrate` (see [Where the site runs](#where-the-site-runs)) before deploying.
 
 ### Step 6. Check the site
 
@@ -255,16 +255,16 @@ From now on the welcome page shows a **Join the OVOA beta** button that opens th
 1. Open https://ovoa.ai/checkout on your phone, keep "with 7 days of Base" picked, and tap **Continue to payment**.
 2. Pay with the Stripe test card: number `4242 4242 4242 4242`, any future date, any CVC, any ZIP, and a US address.
 3. You land on the welcome page. Check:
-   - [ ] It says your 7 free days of Base are waiting, and shows the Band order. If emails are on (Part E), the order email from no-reply@ovoa.ai is in your inbox with a **Start my 7 free days** button.
+   - [ ] It says your 7 free days of Base are waiting, and shows OVOA Fit order. If emails are on (Part E), the order email from no-reply@ovoa.ai is in your inbox with a **Start my 7 free days** button.
    - [ ] **Start my 7 free days** asks you to confirm, then the page says your free days run until next week's date. In Stripe, the customer now has a Base subscription, trialing, on the card you paid with.
    - [ ] **Join the OVOA beta** opens TestFlight.
    - [ ] The **Pay yearly** offer works (nothing is charged today; Stripe now shows the yearly price starting after the free days).
    - [ ] **Manage billing** opens Stripe's page, where you can cancel.
    - [ ] Under step 3, **Use a different email in the app** saves an address, and the step then names that address.
-4. Open https://ovoa.ai/early-access/admin, paste your `OVOA_ADMIN_KEY`. You should see yourself under *Everyone*, status `trialing`, the Band under *Band orders* with Base *Started*, and green dots in *Setup* for Stripe key, webhook, database, public link and emails. Click **Mark shipped** on the Band: the "your Band has shipped" email arrives.
+4. Open https://ovoa.ai/early-access/admin, paste your `OVOA_ADMIN_KEY`. You should see yourself under *Everyone*, status `trialing`, OVOA Fit under *OVOA Fit orders* with Base *Started*, and green dots in *Setup* for Stripe key, webhook, database, public link and emails. Click **Mark shipped** on OVOA Fit: the "your OVOA Fit has shipped" email arrives.
 5. In Stripe → **Developers → Webhooks**, open the `ovoa.ai` endpoint. Recent deliveries should all show `200`.
-6. Buy **Pro yearly** on https://ovoa.ai/early-access with a second email: no free days, charged today. Then refund the Band in Stripe (**Payments** → the payment → **Refund**). On the admin page the Band order changes to `refunded`.
-7. If the app's plan check is on (Part C): sign in to the app with each email and pull to refresh on Settings → Your plan. The Band email says Base (trial), the Pro one says Pro. Cancel one in Manage billing, refresh, and it says Free: health and notes still work, the assistant says it's part of a plan. On the Pro email's welcome page, move the plan to a third email you have an app account for: after Refresh, that account says Pro and the Pro email says Free.
+6. Buy **Pro yearly** on https://ovoa.ai/early-access with a second email: no free days, charged today. Then refund OVOA Fit in Stripe (**Payments** → the payment → **Refund**). On the admin page OVOA Fit order changes to `refunded`.
+7. If the app's plan check is on (Part C): sign in to the app with each email and pull to refresh on Settings → Your plan. OVOA Fit email says Base (trial), the Pro one says Pro. Cancel one in Manage billing, refresh, and it says Free: health and notes still work, the assistant says it's part of a plan. On the Pro email's welcome page, move the plan to a third email you have an app account for: after Refresh, that account says Pro and the Pro email says Free.
 
 The same run happens automatically on your PC with a fake Stripe: `npm run build && npm run test:billing`.
 
@@ -296,7 +296,7 @@ The app is free, so everyone who wants it should get it without asking. With Par
 | Who | When |
 | --- | --- |
 | Anyone with an OVOA account | The first time they're signed in on https://ovoa.ai/account: made there (the emailed code proves the address), or made in the app and signed in on the site. The free plan's **Get the free app** button and the home page's **Get the app** both lead there. |
-| Band buyers (Band only, or with Base) | When their order page opens after checkout |
+| OVOA Fit buyers (OVOA Fit only, or with Base) | When their order page opens after checkout |
 | Members, and **Give free access** | When the plan starts |
 
 Each email is invited once: someone already in the group (a free account who then buys Base, say) isn't emailed again. The account page says to open Apple's email and has **send it again** (at most every 10 minutes, 5 in all). A plan ending doesn't take anyone out of the beta: they're back on the free app, which the app works out from the plan check (Part C). That's also what Apple's rule 2.2 asks: TestFlight isn't something anyone pays for.
@@ -363,7 +363,7 @@ To undo it quickly, delete the secret on the Worker (`npx wrangler secret delete
 How it pays out: when someone arrives through `?ref=maria` and buys within 90 days, Maria earns:
 
 - 15% of each of their plan payments (monthly or yearly) for 6 months.
-- 11.11% of each Band they buy, which is $10 on an $89.99 Band.
+- 11.11% of each OVOA Fit they buy, which is $10 on an $89.99 OVOA Fit.
 - Her CPM on views of her OVOA posts. Set her rate in the inbox (dollars per 1,000 views). When she sends you her view counts, check them and use **Log views**: the payout is added to what she's owed. Each one adds a new line, so log each batch of views once.
 
 Nothing is earned during a free trial ($0), and refunded payments (Bands included) are voided automatically. Affiliates earn only while they're approved, and never on their own purchases. The percentages, months, window and payout minimum are at the top of `src/lib/membership/plans.ts` (the inbox's approval email repeats them, from admin.ovoa.ai's `src/lib/types.ts`). The members admin page (`/early-access/admin`) still lists affiliates and can approve and pay them too, but it sends no emails.
@@ -372,7 +372,7 @@ Nothing is earned during a free trial ($0), and refunded payments (Bands include
 
 ## Part E: emails from no-reply@ovoa.ai (Resend)
 
-Band buyers get two emails from `no-reply@ovoa.ai`: the order email right after they pay, with the link to start their free days, and a "your Band has shipped" email when you click **Mark shipped** (with the start link again if they haven't used it). Replies go to support@ovoa.ai. They're sent through Resend (resend.com; free up to 3,000 emails a month).
+OVOA Fit buyers get two emails from `no-reply@ovoa.ai`: the order email right after they pay, with the link to start their free days, and a "your OVOA Fit has shipped" email when you click **Mark shipped** (with the start link again if they haven't used it). Replies go to support@ovoa.ai. They're sent through Resend (resend.com; free up to 3,000 emails a month).
 
 1. Sign up at https://resend.com.
 2. **Domains → Add Domain** → `ovoa.ai`. Resend shows a few DNS records (an MX and TXT records for SPF and DKIM). Add them where the DNS for ovoa.ai is managed, then click **Verify** in Resend. It usually takes minutes, sometimes a few hours. It must say *Verified*, or Resend can't send as no-reply@ovoa.ai.
@@ -384,7 +384,7 @@ Want a different sender? Add the secret `EMAIL_FROM`, e.g. `OVOA <hello@ovoa.ai>
 
 Resend only sends. Replies go to support@ovoa.ai, which needs a real inbox: ovoa.ai's MX records go to Zoho Mail (being set up Sept 23), with support@ as an alias of admin@. Don't touch Resend's `send.ovoa.ai` and `resend._domainkey` records when changing mail settings.
 
-Without the key nothing is emailed, and nothing else breaks: buyers still see **Start my 7 free days** on their welcome page right after paying, and the admin page has **Copy start link** on each Band order that hasn't started, to send them yourself (only to that buyer's own address: it opens their order).
+Without the key nothing is emailed, and nothing else breaks: buyers still see **Start my 7 free days** on their welcome page right after paying, and the admin page has **Copy start link** on each OVOA Fit order that hasn't started, to send them yourself (only to that buyer's own address: it opens their order).
 
 ---
 
@@ -446,15 +446,15 @@ Google sign-ins are checked by the app's server with Google itself, and matched 
 | You want to… | Do this |
 | --- | --- |
 | See money and members | `/early-access/admin`, or the Stripe dashboard |
-| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded Band shows `refunded` under *Band orders*, and its free days can no longer be started; if they were already started, Base carries on until you cancel that subscription too (Band only's free days end on their own; nothing is charged). |
+| Refund someone | Stripe → **Payments** → the payment → **Refund**. Their partner's commission is voided. A refunded OVOA Fit shows `refunded` under *OVOA Fit orders*, and its free days can no longer be started; if they were already started, Base carries on until you cancel that subscription too (OVOA Fit only's free days end on their own; nothing is charged). |
 | Cancel someone | Stripe → **Customers** → them → the subscription → **Cancel**. They keep access until the end of what they paid for. |
-| Ship a Band | Admin page → *Band orders* → the address is there → **Mark shipped**. This emails the buyer that it's on its way, with the button to start their free days if they haven't. |
-| Someone lost the link to start their free days | Admin page → *Band orders* → **Copy start link** under *Not started*, then email it to them (only to their own address). |
+| Ship an OVOA Fit | Admin page → *OVOA Fit orders* → the address is there → **Mark shipped**. This emails the buyer that it's on its way, with the button to start their free days if they haven't. |
+| Someone lost the link to start their free days | Admin page → *OVOA Fit orders* → **Copy start link** under *Not started*, then email it to them (only to their own address). |
 | Give someone free access | Admin page → **Give free access**, and pick Base or Pro (reviewers, friends, creators) |
 | Someone paid but the app says Free | Usually the app account uses another email. Admin page → *Everyone* → **Set app email** under their email → the email they sign in to the app with. They tap Refresh on Settings → Your plan. |
 | Change prices | Re-run `node scripts/stripe-setup.mjs --key sk_live_XXXX --site https://ovoa.ai --no-keys --base-monthly 10.95` (or `--base-annual`, `--pro-monthly`, `--pro-annual`, `--band`). The site shows new prices within 5 minutes; existing members keep theirs. |
 | Offer a discount code | Stripe → **Products → Coupons** → create a coupon and a *promotion code* (e.g. `LAUNCH20`). Checkout already has a "Add promotion code" box. |
-| Change the Band's free days | `BAND_TRIAL_DAYS` in `src/lib/membership/plans.ts` (plans bought alone have none: `NO_BAND_TRIAL_DAYS`) |
+| Change OVOA Fit's free days | `BAND_TRIAL_DAYS` in `src/lib/membership/plans.ts` (plans bought alone have none: `NO_BAND_TRIAL_DAYS`) |
 | Resend someone's welcome link | Admin page → *Everyone* → **Copy welcome link** under their email, then email it to them (only to the member's own address: it opens their billing). |
 
 ---
@@ -464,9 +464,9 @@ Google sign-ins are checked by the app's server with Google itself, and matched 
 Roll's growth engine is short videos of the product doing its thing, pushed by creators on commission. For OVOA:
 
 1. **Record 5 short clips** of OVOA handling a real, relatable errand ("I'm running late, tell my 3pm", "remind me to call mom when I leave work"). Screen recording plus your voice. Post them on TikTok, Instagram Reels and YouTube Shorts with `ovoa.ai/early-access` in the bio.
-2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/affiliates`, and approve them in the affiliate inbox on admin.ovoa.ai. 15% for 6 months, $10 a Band and a CPM is a strong offer at that size.
+2. **Sign 10 micro-creators** (5k to 50k followers in productivity, ADHD, founders, fitness). Give each one free access on the admin page, ask them to apply at `/affiliates`, and approve them in the affiliate inbox on admin.ovoa.ai. 15% for 6 months, $10 an OVOA Fit and a CPM is a strong offer at that size.
 3. **Lead with Annual.** It's the highlighted card and the one-click upsell after checkout; each annual member is cash up front and far less churn.
-4. **Email your Band buyers** a few days after their Band ships if their free days still say *Not started* on the admin page ("did it arrive? tap Start when you're ready"), and on day 6 of their free days ("they end tomorrow, here's what people use it for"). Their emails are on the admin page. Trial-to-paid conversion is the number that matters most; the admin page shows *In free trial* next to *Paying* so you can watch it.
+4. **Email your OVOA Fit buyers** a few days after their OVOA Fit ships if their free days still say *Not started* on the admin page ("did it arrive? tap Start when you're ready"), and on day 6 of their free days ("they end tomorrow, here's what people use it for"). Their emails are on the admin page. Trial-to-paid conversion is the number that matters most; the admin page shows *In free trial* next to *Paying* so you can watch it.
 5. **Lean on the free app.** Health and notes are free with no time limit, so "try it free" is an honest pitch. The upgrade happens when someone wants to talk to it.
 
 ---
@@ -499,7 +499,7 @@ All of them live on the site's Worker; [Where the site runs](#where-the-site-run
 | `TESTFLIGHT_PUBLIC_URL` | Yes, unless you do Part B | TestFlight → Members group → Public Link |
 | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY`, `TESTFLIGHT_GROUP_ID` | Part B | App Store Connect → Integrations, and the admin page's group finder |
 | `MEMBERSHIP_API_KEY` | Yes | Printed by the script. The same value goes on **both** the site and the app's Worker (`wrangler secret put MEMBERSHIP_API_KEY` in `ovoa-app/jarvis/api`, Part C), once plans are switched on (not for v1) |
-| `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends the Band emails from no-reply@ovoa.ai |
+| `RESEND_API_KEY` | Recommended | Resend → API Keys (Part E). Sends OVOA Fit emails from no-reply@ovoa.ai |
 | `EMAIL_FROM` | No | A different sender than `OVOA <no-reply@ovoa.ai>` |
 | `GOOGLE_CLIENT_SECRET` | For "Continue with Google" | `google/.env` (Part F). `GOOGLE_CLIENT_ID` is in `wrangler.site.jsonc` |
 | `OVOA_API_URL` | No | The app's server for accounts, if not `https://api.ovoa.ai` |

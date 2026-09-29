@@ -67,10 +67,10 @@ export type WelcomeTestflight = {
 export type WelcomeData =
   | { state: "pending" }
   | { state: "error"; message: string }
-  // A Band order and no membership yet: free days that haven't been started
-  // (`trial`: Base's with a card, or Band only's with none), or a refunded
-  // order with nothing to start. Also a Band order whose plan has ended
-  // (`ended`: its tier): the Band still works with the free app.
+  // An OVOA Fit order and no membership yet: free days that haven't been started
+  // (`trial`: Base's with a card, or OVOA Fit only's with none), or a refunded
+  // order with nothing to start. Also an OVOA Fit order whose plan has ended
+  // (`ended`: its tier): OVOA Fit still works with the free app.
   | {
       state: "band";
       firstName: string | null;
@@ -95,10 +95,10 @@ export type WelcomeData =
       trialEndsAt: string | null;
       renewsAt: string | null;
       cancelAtPeriodEnd: boolean;
-      // Band only's free days: no card on file, so they end on their own and
+      // OVOA Fit only's free days: no card on file, so they end on their own and
       // there's nothing to switch.
       noCard: boolean;
-      // Set when a Band came in the same checkout.
+      // Set when an OVOA Fit came in the same checkout.
       band: WelcomeBand | null;
       testflight: WelcomeTestflight;
       // What their plan costs now (null for free access), and what they can
@@ -128,8 +128,8 @@ function bandSummary(order: import("./store.server").BandOrder): WelcomeBand {
 type MemberRow = import("./store.server").Member;
 type Prices = import("./sync.server").Prices;
 
-// The free days that came with a Band bought on its own (startBandTrial made
-// them with no card), while they run: a member row on a Band order that has no
+// The free days that came with an OVOA Fit bought on its own (startBandTrial made
+// them with no card), while they run: a member row on an OVOA Fit order that has no
 // AI of its own. Unless a card was added since (Manage billing lets them): it
 // becomes the customer's default, Stripe charges it when the days end, and
 // then these are ordinary free days with a price and the switches.
@@ -187,7 +187,7 @@ function offerFor(member: MemberRow, prices: Prices, to: "annual" | "pro"): Welc
     currency: price.currency,
     interval: price.recurring?.interval === "year" ? "year" : "month",
     saveCents,
-    // Yearly during the Band's free days starts when they end. Everything else
+    // Yearly during OVOA Fit's free days starts when they end. Everything else
     // (and Pro always) starts today.
     chargedToday: !(to === "annual" && member.status === "trialing"),
   };
@@ -202,11 +202,11 @@ async function welcomeFor(sessionId: string): Promise<WelcomeData> {
   const { member, bandOrder, waitingTrial } = result;
   const publicUrl = testflightPublicUrl();
 
-  // No plan yet, or the plan from a Band order has ended: the Band's view,
+  // No plan yet, or the plan from an OVOA Fit order has ended: OVOA Fit's view,
   // with the free app's steps.
   if (!member || (bandOrder && !isEntitled(member.status))) {
     if (!bandOrder) return { state: "pending" };
-    // The Band works with the free app, so its buyer gets Apple's invite too
+    // OVOA Fit works with the free app, so its buyer gets Apple's invite too
     // (once: someone already in the beta, a member whose plan ended say, isn't
     // emailed again).
     const { ensureInvite } = await import("./invites.server");
@@ -301,10 +301,10 @@ export const getWelcome = createServerFn({ method: "GET" })
   });
 
 // The welcome page's two switches:
-//   annual  monthly → yearly, same plan. During the Band's free days nothing is
+//   annual  monthly → yearly, same plan. During OVOA Fit's free days nothing is
 //           charged now; the yearly price starts when they end. Otherwise the
 //           year starts today, less what's left of the month already paid.
-//   pro     Base or Plus → Pro, same billing period. Starts today: the Band's free Base
+//   pro     Base or Plus → Pro, same billing period. Starts today: OVOA Fit's free Base
 //           days end, and a paid Base period is credited for what's left of it.
 // A change that needs a payment only happens if that payment goes through
 // (payment_behavior: pending_if_incomplete).
@@ -318,7 +318,7 @@ export const changePlan = createServerFn({ method: "POST" })
     const { stripe } = await import("./stripe.server");
     const result = await sync.syncCheckoutSession(data.sessionId);
     const member = result?.member;
-    // Band only's free days have no card to charge a switch to.
+    // OVOA Fit only's free days have no card to charge a switch to.
     const target =
       member && !(await noCardTrial(member, result?.bandOrder ?? null))
         ? switchTarget(member, data.to)
@@ -636,7 +636,7 @@ export type AdminBandOrder = {
   phone: string | null;
   withAi: boolean;
   // When its free days of Base were started (at checkout, for orders with
-  // Base from before Sept 23; Band only's have no card), or null while they
+  // Base from before Sept 23; OVOA Fit only's have no card), or null while they
   // wait for the buyer.
   baseStartedAt: string | null;
   checkoutSessionId: string;
@@ -676,7 +676,7 @@ export type AdminOverview = {
   members: AdminMember[];
   bandOrders: AdminBandOrder[];
   affiliates: AdminAffiliate[];
-  // TestFlight invites for the free app (accounts and Band buyers); null
+  // TestFlight invites for the free app (accounts and OVOA Fit buyers); null
   // without the app_invites table.
   appInvites: AdminInvite[] | null;
 };
@@ -963,7 +963,7 @@ export const listTestflightGroups = createServerFn({ method: "POST" })
     return tf.listBetaGroups();
   });
 
-// Band orders: mark one shipped once it's in the post (or back to paid if that
+// OVOA Fit orders: mark one shipped once it's in the post (or back to paid if that
 // was a mistake). Marking it shipped emails the buyer, with the link to start
 // their free days if they're still waiting. Refunds happen in Stripe and
 // arrive through the webhook.
@@ -978,7 +978,7 @@ export const setBandOrderStatus = createServerFn({ method: "POST" })
     await requireAdmin(data.key);
     const { store } = await import("./store.server");
     const order = await store().getBandOrder(data.id);
-    if (!order) throw new Error("No such Band order.");
+    if (!order) throw new Error("No such OVOA Fit order.");
     await store().setBandOrderStatus(data.id, data.status);
     let emailed = false;
     if (data.status === "shipped" && order.status === "paid") {

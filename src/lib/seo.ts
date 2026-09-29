@@ -12,7 +12,7 @@ export const SITE_NAME = "OVOA";
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 
 export const OG_IMAGE = `${SITE_URL}/og-band.jpg`;
-const OG_IMAGE_ALT = "The OVOA Band: a black woven wristband with one button and a status light";
+const OG_IMAGE_ALT = "The OVOA Fit: a black woven wristband with one button and a status light";
 
 // The preview image tags every shareable page uses (og-band.jpg is 1200×630).
 export const ogImageMeta = [
@@ -150,7 +150,7 @@ export const ORGANIZATION = {
   alternateName: ["Ovoa AI", "OVOA AI assistant"],
   url: `${SITE_URL}/`,
   description:
-    "OVOA makes an AI assistant for iPhone that you text in iMessage or talk to, and the OVOA Band, a wristband that brings it to your wrist.",
+    "OVOA makes an AI assistant for iPhone that you text in iMessage or talk to, and the OVOA Fit, a wristband that brings it to your wrist.",
   ...(SAME_AS.length > 0 && { sameAs: SAME_AS }),
   logo: {
     "@type": "ImageObject",

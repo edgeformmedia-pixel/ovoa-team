@@ -43,5 +43,5 @@ export const HEALTH_SCRIPT: DemoStep[] = [
     text: "Averaged 148 bpm and peaked at 171 on the last hill. You were back under 100 two minutes after you stopped.",
   },
   { who: "me", wait: 3, dur: 1.6, text: "Nice. Remind me to stretch tonight." },
-  { who: "ovoa", wait: 0.6, dur: 1.4, text: "Done. I’ll buzz your Band at 8." },
+  { who: "ovoa", wait: 0.6, dur: 1.4, text: "Done. I’ll buzz your OVOA Fit at 8." },
 ];

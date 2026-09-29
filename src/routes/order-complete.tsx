@@ -76,12 +76,12 @@ function OrderComplete() {
             </span>
             <h1 className="text-[30px] font-semibold leading-tight">Order confirmed</h1>
             <p className="mt-4 text-sm leading-6 text-landing-muted">
-              Thanks for ordering the OVOA Band.
+              Thanks for ordering the OVOA Fit.
               {status.email ? ` A receipt is on its way to ${status.email}.` : ""} We&rsquo;ll email
-              you when your Band ships.
+              you when your OVOA Fit ships.
               {status.withAi
                 ? " Your free days of OVOA Base start when you choose: the next page has the button, and so does your order email."
-                : " Your Band comes with free days of OVOA Base too, with no card: start them from the next page whenever you like, and they end on their own."}
+                : " Your OVOA Fit comes with free days of OVOA Base too, with no card: start them from the next page whenever you like, and they end on their own."}
             </p>
             <Button
               asChild

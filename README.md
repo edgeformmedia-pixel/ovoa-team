@@ -1,10 +1,10 @@
 # ovoa.ai
 
-The OVOA website: the landing pages, plans and Band checkout (Stripe), OVOA accounts
+The OVOA website: the landing pages, plans and OVOA Fit checkout (Stripe), OVOA accounts
 (shared with the app), the members admin and the partner program.
 
 It runs as a Cloudflare Worker (`ovoa-site`, `wrangler.site.jsonc`) on the admin@ovoa.ai
-account, with members, partners and Band orders in Cloudflare D1 (`ovoa-site-db`,
+account, with members, partners and OVOA Fit orders in Cloudflare D1 (`ovoa-site-db`,
 tables in `migrations/`). [setup.md](setup.md) has everything about running it.
 
 ## Development

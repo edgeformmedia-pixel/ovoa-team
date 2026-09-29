@@ -26,7 +26,7 @@ import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 const PAGE_TITLE = "OVOA Affiliates: earn from every member you send";
 
 function describe(data: PlansResult | undefined) {
-  return `Share OVOA and earn ${AFFILIATE_PERCENT}% of every payment your referrals make for ${COMMISSION_MONTHS} months, ${formatMoney(bandCommissionCents(data?.band ?? null))} on every Band, plus a CPM on your posts.`;
+  return `Share OVOA and earn ${AFFILIATE_PERCENT}% of every payment your referrals make for ${COMMISSION_MONTHS} months, ${formatMoney(bandCommissionCents(data?.band ?? null))} on every OVOA Fit, plus a CPM on your posts.`;
 }
 
 export const Route = createFileRoute("/affiliates/")({
@@ -55,8 +55,8 @@ function earnings(bandCents: number) {
       copy: `You earn ${AFFILIATE_PERCENT}% of every plan payment each person you refer makes, monthly or yearly, for their first ${COMMISSION_MONTHS} months.`,
     },
     {
-      title: `${formatMoney(bandCents)} per Band`,
-      copy: `Every Band bought through your link earns you ${formatMoney(bandCents)}, on top of the plan commission.`,
+      title: `${formatMoney(bandCents)} per OVOA Fit`,
+      copy: `Every OVOA Fit bought through your link earns you ${formatMoney(bandCents)}, on top of the plan commission.`,
     },
     {
       title: "Plus a CPM",
@@ -197,7 +197,7 @@ function Affiliates() {
         <div className="mx-auto max-w-[1200px]">
           <p className="text-sm font-medium text-landing-action">OVOA Affiliates</p>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.6rem,6.5vw,5.25rem)] font-semibold leading-[0.98] tracking-normal">
-            Share OVOA. Earn {AFFILIATE_PERCENT}%, {formatMoney(bandCents)} a Band, and a CPM.
+            Share OVOA. Earn {AFFILIATE_PERCENT}%, {formatMoney(bandCents)} an OVOA Fit, and a CPM.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-xl">
             For creators, coaches and newsletter writers whose people would love an assistant that

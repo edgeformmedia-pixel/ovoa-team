@@ -262,7 +262,7 @@ function Admin() {
           <Tile
             label="Bands to ship"
             value={stats.bandsToShip}
-            sub={`${formatMoney(stats.bandCents)} in Band sales`}
+            sub={`${formatMoney(stats.bandCents)} in OVOA Fit sales`}
           />
           <Tile label="Free access" value={stats.comp} />
           <Tile label="Owed to affiliates" value={formatMoney(stats.owedCents)} />
@@ -406,7 +406,7 @@ function Admin() {
         </Section>
 
         <Section
-          title={`Band orders (${bandOrders.length})`}
+          title={`OVOA Fit orders (${bandOrders.length})`}
           aside={
             stats.bandsToShip > 0 ? (
               <span className="text-sm text-landing-muted">{stats.bandsToShip} to ship</span>
@@ -414,7 +414,7 @@ function Admin() {
           }
         >
           {bandOrders.length === 0 ? (
-            <p className="text-sm text-landing-muted">No Band orders yet.</p>
+            <p className="text-sm text-landing-muted">No OVOA Fit orders yet.</p>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-landing-line">
               <table className="w-full min-w-[860px] text-left text-sm">
@@ -464,7 +464,7 @@ function Admin() {
                       <td className="px-4 py-2.5">
                         {!b.withAi && (
                           <span className="block text-xs text-landing-muted">
-                            Band only, free days with no card
+                            OVOA Fit only, free days with no card
                           </span>
                         )}
                         {b.baseStartedAt ? (
@@ -519,7 +519,7 @@ function Admin() {
                                 const note = config.email
                                   ? " This emails them that it's on its way."
                                   : "";
-                                if (window.confirm(`Mark ${b.email}'s Band as shipped?${note}`)) {
+                                if (window.confirm(`Mark ${b.email}'s OVOA Fit as shipped?${note}`)) {
                                   void act(b.id, () =>
                                     setBandStatus({ data: { key, id: b.id, status: "shipped" } }),
                                   );
@@ -552,10 +552,10 @@ function Admin() {
             </div>
           )}
           <p className="mt-2 text-xs text-landing-muted">
-            Every Band buyer gets the free app, and Apple emails them the TestFlight invite (with
+            Every OVOA Fit buyer gets the free app, and Apple emails them the TestFlight invite (with
             automatic invites set up; otherwise their order page shows the public link). The free
             days start when the buyer taps Start on their order page (the order email and the
-            shipped email link to it): with Base on the card saved at checkout, Band only with no
+            shipped email link to it): with Base on the card saved at checkout, OVOA Fit only with no
             card, so they end on their own. Without emails set up, send them the start link, only to
             their own address.
           </p>
@@ -889,7 +889,7 @@ function Admin() {
           {!config.invites ? (
             <p className="text-sm text-landing-muted">
               Off. With the four ASC_* / TESTFLIGHT_GROUP_ID secrets set, everyone who signs in on
-              /account or buys a Band gets Apple&rsquo;s TestFlight email by themselves.
+              /account or buys an OVOA Fit gets Apple&rsquo;s TestFlight email by themselves.
             </p>
           ) : appInvites === null ? (
             <p className="text-sm text-landing-muted">
@@ -920,7 +920,7 @@ function Admin() {
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        {i.source === "band" ? "Band order" : "Account"}
+                        {i.source === "band" ? "OVOA Fit order" : "Account"}
                       </td>
                       <td className="px-4 py-2.5">
                         <span className={i.state === "failed" ? "font-semibold" : ""}>

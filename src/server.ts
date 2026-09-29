@@ -47,12 +47,14 @@ function isH3SwallowedErrorBody(body: string): boolean {
 // One address per page, so search engines index https://ovoa.ai and nothing
 // else. www and plain http move there for good (301), as do a trailing slash
 // or capitals in a page's path, and the addresses people (and AI assistants)
-// guess for the plans, buying the Band, comparisons and help. (/band is a page
+// guess for the plans, buying OVOA Fit, comparisons and help. (/fit is a page
 // of its own.) ovoa-site.ovoa.workers.dev keeps working (Google sign-in and
 // testing use it) but asks not to be indexed.
 const SITE_HOST = "ovoa.ai";
 
 const PATH_ALIASES: Record<string, string> = {
+  "/band": "/fit",
+  "/ovoa-fit": "/fit",
   "/pricing": "/early-access",
   "/plans": "/early-access",
   "/buy": "/checkout",

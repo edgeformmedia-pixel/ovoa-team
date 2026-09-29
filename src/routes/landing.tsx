@@ -93,7 +93,7 @@ const CAPABILITIES: { icon: LucideIcon; title: string; copy: string }[] = [
   },
   {
     icon: HeartPulse,
-    title: "Health, with Band",
+    title: "Health, with OVOA Fit",
     copy: "Continuous heart rate and motion, with your history in the app.",
   },
   {
@@ -194,10 +194,10 @@ function Landing() {
               Collection
             </Link>
             <Link
-              to="/band"
+              to="/fit"
               className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
             >
-              OVOA Band V1
+              OVOA Fit
             </Link>
             <Link
               to="/early-access"
@@ -319,9 +319,9 @@ function Landing() {
       />
 
       <PhoneFeature
-        eyebrow="Health · with Band"
+        eyebrow="Health · with OVOA Fit"
         title="Knows how you’re really doing."
-        body="Pair Band and OVOA gets a pulse. Ask about today’s run, your heart rate or how active you’ve been, and get a straight answer."
+        body="Pair OVOA Fit and OVOA gets a pulse. Ask about today’s run, your heart rate or how active you’ve been, and get a straight answer."
         points={["Continuous heart rate", "Motion and activity", "History in the app"]}
         script={HEALTH_SCRIPT}
         dark
@@ -362,13 +362,13 @@ function Landing() {
             <span className="text-landing-action-foreground/60"> · {band}</span>
           </p>
           <h2 className="mt-4 text-[clamp(2.75rem,8vw,7rem)] font-semibold leading-[0.96] tracking-normal">
-            OVOA Band
+            OVOA Fit
           </h2>
           <p className="mt-3 text-[clamp(1.5rem,3.2vw,2.75rem)] font-semibold leading-tight text-landing-action-foreground/85">
             Brings OVOA to your wrist.
           </p>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-2xl">
-            Your Jarvis, one press away. OVOA Band is a woven wristband with a single button: press
+            Your Jarvis, one press away. OVOA Fit is a woven wristband with a single button: press
             it and talk. No phone, no screen. It answers in buzzes, reads your heart rate and keeps
             going all day.
           </p>
@@ -399,7 +399,7 @@ function Landing() {
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-10 max-w-4xl sm:mb-14">
             <p className="text-lg font-semibold text-landing-ink sm:text-xl">
-              Band goes where you go
+              OVOA Fit goes where you go
             </p>
             <h2 className="mt-3 text-[clamp(3rem,7vw,6.5rem)] font-semibold leading-[0.96] tracking-normal text-landing-ink">
               Built for the moments you can’t reach for your phone.
@@ -410,7 +410,7 @@ function Landing() {
             {[
               {
                 src: cyclingBand,
-                alt: "Cyclist wearing the OVOA Band during an outdoor ride",
+                alt: "Cyclist wearing the OVOA Fit during an outdoor ride",
                 title: "Ride farther",
                 copy: "Ask OVOA for your pace mid-climb. Heart rate and motion sensing ride along the whole way.",
                 position: "object-center",
@@ -418,7 +418,7 @@ function Landing() {
               },
               {
                 src: runningBand,
-                alt: "Runner wearing the OVOA Band on an outdoor track",
+                alt: "Runner wearing the OVOA Fit on an outdoor track",
                 title: "Find your pace",
                 copy: "A light woven fit and a quick buzz when OVOA has news, so your eyes stay on the next stride.",
                 position: "object-[42%_center]",
@@ -426,7 +426,7 @@ function Landing() {
               },
               {
                 src: swimmingBand,
-                alt: "Swimmer wearing the OVOA Band beside a pool",
+                alt: "Swimmer wearing the OVOA Fit beside a pool",
                 title: "Made to move",
                 copy: "Water-resistant and made for all-day wear, from the pool to everything after.",
                 position: "object-[70%_center]",
@@ -466,7 +466,7 @@ function Landing() {
           <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
             <img
               src={bandFront}
-              alt="The OVOA Band, a black woven wristband with a side button and status light"
+              alt="The OVOA Fit, a black woven wristband with a side button and status light"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -492,14 +492,14 @@ function Landing() {
               Catch the thought before it’s gone.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Double-tap and speak. Band saves what you say word for word, and OVOA finds it again
+              Double-tap and speak. OVOA Fit saves what you say word for word, and OVOA finds it again
               whenever you ask.
             </p>
           </div>
           <div className="relative mx-auto aspect-square w-full max-w-[38rem] lg:order-2">
             <img
               src={bandProfile}
-              alt="Side profile of the OVOA Band showing its single button"
+              alt="Side profile of the OVOA Fit showing its single button"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -512,7 +512,7 @@ function Landing() {
           <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
             <img
               src={bandSensors}
-              alt="Underside of the OVOA Band showing the heart rate sensors"
+              alt="Underside of the OVOA Fit showing the heart rate sensors"
               loading="lazy"
               className="size-full object-contain"
             />
@@ -559,7 +559,7 @@ function Landing() {
 
       <section className="bg-landing-canvas px-6 py-24 text-center sm:py-36">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-landing-muted">OVOA Band · {band} · Beta</p>
+          <p className="text-sm font-medium text-landing-muted">OVOA Fit · {band} · Beta</p>
           <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal text-landing-ink">
             Say hello to your Jarvis.
           </h2>
@@ -571,7 +571,7 @@ function Landing() {
             to="/checkout"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
           >
-            Get the Band
+            Get OVOA Fit
           </Link>
         </div>
       </section>
@@ -593,7 +593,7 @@ function Landing() {
           </Link>
           <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-landing-muted sm:text-lg">
             Earn {AFFILIATE_PERCENT}% of what the people you send pay for {COMMISSION_MONTHS}{" "}
-            months, plus {formatMoney(bandCommissionCents(data.band))} on every Band.
+            months, plus {formatMoney(bandCommissionCents(data.band))} on every OVOA Fit.
           </p>
         </div>
       </section>

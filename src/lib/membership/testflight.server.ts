@@ -3,7 +3,7 @@
 // Optional. With ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY and
 // TESTFLIGHT_GROUP_ID set, everyone who gets the app is added to that external
 // beta group and Apple emails them the invite: members (sync.server.ts), and
-// free accounts and Band buyers (invites.server.ts). The app is free, so
+// free accounts and OVOA Fit buyers (invites.server.ts). The app is free, so
 // nobody is taken out again when a plan ends; the app checks the plan itself.
 // Without them, the pages show TESTFLIGHT_PUBLIC_URL instead.
 

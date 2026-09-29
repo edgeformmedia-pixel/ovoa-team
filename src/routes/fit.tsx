@@ -15,12 +15,12 @@ import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice } from "@/lib/membership/copy";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
-const PAGE_TITLE = "OVOA Band V1: the health tracker with AI";
+const PAGE_TITLE = "OVOA Fit: the health tracker with AI";
 const PAGE_DESCRIPTION =
-  "OVOA Band V1 tracks your heart rate, sleep, activity and recovery, and OVOA's AI reads your data and texts you what it means. Beta hardware.";
+  "OVOA Fit tracks your heart rate, sleep, activity and recovery, and OVOA's AI reads your data and texts you what it means. Beta hardware.";
 
-export const Route = createFileRoute("/band")({
-  component: BandPage,
+export const Route = createFileRoute("/fit")({
+  component: FitPage,
   staticData: { sitemap: true },
   loader: () => getPlans(),
   head: () => ({
@@ -30,11 +30,11 @@ export const Route = createFileRoute("/band")({
       { property: "og:title", content: PAGE_TITLE },
       { property: "og:description", content: PAGE_DESCRIPTION },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://ovoa.ai/band" },
+      { property: "og:url", content: "https://ovoa.ai/fit" },
       ...ogImageMeta,
     ],
-    links: [{ rel: "canonical", href: "https://ovoa.ai/band" }],
-    scripts: [jsonLd(breadcrumbs("OVOA Band V1", "/band"))],
+    links: [{ rel: "canonical", href: "https://ovoa.ai/fit" }],
+    scripts: [jsonLd(breadcrumbs("OVOA Fit", "/fit"))],
   }),
 });
 
@@ -61,7 +61,7 @@ const FEATURES: { icon: LucideIcon; title: string; copy: string }[] = [
   },
 ];
 
-function BandPage() {
+function FitPage() {
   const data = Route.useLoaderData();
   const price = bandPrice(data);
   return (
@@ -83,12 +83,12 @@ function BandPage() {
 
       <section className="px-6 pb-16 pt-16 text-center sm:pt-24">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-landing-muted">OVOA Band V1 · Beta</p>
+          <p className="text-sm font-medium text-landing-muted">OVOA Fit · Beta</p>
           <h1 className="mt-4 text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-normal">
             A health tracker with an AI that texts you.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-            OVOA Band V1 tracks your heart, sleep, activity and recovery around the clock. Then OVOA
+            OVOA Fit tracks your heart, sleep, activity and recovery around the clock. Then OVOA
             reads your data and texts you what it means, in plain English.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -96,21 +96,21 @@ function BandPage() {
               to="/checkout"
               className="inline-flex h-12 items-center rounded-full bg-landing-action px-7 text-[15px] font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
             >
-              Buy OVOA Band V1 · {price}
+              Buy OVOA Fit · {price}
             </Link>
             <Link
               to="/ai-wristband"
               className="inline-flex h-12 items-center rounded-full border border-landing-line px-7 text-[15px] font-semibold transition-colors hover:border-landing-muted"
             >
-              More about the Band
+              More about OVOA Fit
             </Link>
           </div>
         </div>
         <div className="mx-auto mt-12 flex max-w-3xl items-center justify-center gap-6">
-          <img src={bandFront} alt="OVOA Band V1, front view" className="w-1/2 max-w-[320px]" />
+          <img src={bandFront} alt="OVOA Fit, front view" className="w-1/2 max-w-[320px]" />
           <img
             src={bandSensors}
-            alt="OVOA Band V1, rear sensor view"
+            alt="OVOA Fit, rear sensor view"
             className="w-1/2 max-w-[320px]"
           />
         </div>
@@ -145,7 +145,7 @@ function BandPage() {
       <section className="px-6 py-20 text-center sm:py-28">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-semibold leading-[1.05]">
-            Get OVOA Band V1.
+            Get OVOA Fit.
           </h2>
           <p className="mt-4 text-lg text-landing-muted">
             {price}, one time. Beta hardware, shipped to US addresses.

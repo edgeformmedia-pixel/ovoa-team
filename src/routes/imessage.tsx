@@ -20,7 +20,7 @@ function faqsFor(data: PlansResult | undefined): Faq[] {
   return [
     {
       q: "Do I need to download an app?",
-      a: "No. Texting OVOA works on its own, straight from Messages. The iPhone app adds talking out loud, the OVOA Band, and the things that run on your phone itself, like texting someone for you or adding to the Reminders app.",
+      a: "No. Texting OVOA works on its own, straight from Messages. The iPhone app adds talking out loud, the OVOA Fit, and the things that run on your phone itself, like texting someone for you or adding to the Reminders app.",
     },
     {
       q: "Does it work on Android or over SMS?",
@@ -191,11 +191,11 @@ function IMessagePage() {
       <section>
         <h2>The same OVOA as the app</h2>
         <p>
-          Texts and the <a href="/">OVOA iPhone app</a> share one memory, one to-do list, one set
+          Texts and the <a href="/app">OVOA iPhone app</a> share one memory, one to-do list, one set
           of reminders and routines. Start something by text and finish it by voice, or the other
           way around. The app adds what only a phone can do: texting or calling someone for you,
           your iPhone&rsquo;s contacts and Reminders, and the{" "}
-          <a href="/ai-wristband">OVOA Band</a> on your wrist. Those wait for you in the app, and
+          <a href="/ai-wristband">OVOA Fit</a> on your wrist. Those wait for you in the app, and
           the text tells you so.
         </p>
       </section>

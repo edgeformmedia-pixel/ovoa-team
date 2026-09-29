@@ -1,7 +1,7 @@
 {
   "name": "OVOA",
   "short_name": "OVOA",
-  "description": "The AI assistant you text or talk to, and the OVOA Band that brings it to your wrist.",
+  "description": "The AI assistant you text or talk to, and the OVOA Fit that brings it to your wrist.",
   "start_url": "/",
   "display": "browser",
   "background_color": "#0a0a0a",

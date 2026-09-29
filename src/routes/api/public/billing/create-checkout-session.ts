@@ -6,8 +6,8 @@ import { createFileRoute } from "@tanstack/react-router";
 //   { plan: "base_monthly" | ... }   Base, Plus or Pro, from /early-access. Stripe
 //                                    finishes on /early-access/welcome, or
 //                                    back on /text/link with { from: "text" }.
-//   { ai?: boolean }                 The Band, from /checkout: with Base's free
-//                                    days (ai true, the default) or "Band only".
+//   { ai?: boolean }                 OVOA Fit, from /checkout: with Base's free
+//                                    days (ai true, the default) or "OVOA Fit only".
 //                                    Stripe finishes on /order-complete.
 //
 // Also takes { ref }, else the ovoa_ref cookie. The session is the one the

@@ -1,6 +1,6 @@
 // TestFlight invites for the free app. The app is free, so anyone who wants it
 // gets Apple's invite email without asking for it: whoever makes or signs in to
-// an OVOA account on ovoa.ai (which proves the email), and whoever buys a Band.
+// an OVOA account on ovoa.ai (which proves the email), and whoever buys an OVOA Fit.
 // Members get theirs through sync.server.ts.
 //
 // Each invite is kept in D1 (app_invites, migrations/0005_app_invites.sql), so

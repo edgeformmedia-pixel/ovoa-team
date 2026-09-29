@@ -10,10 +10,10 @@ import { createFileRoute } from "@tanstack/react-router";
 const SUMMARY = [
   "OVOA is an AI assistant for iPhone that you text in iMessage or talk to: it schedules, remembers and follows through, then says when it's done or when it needs you.",
   "You can text OVOA with no app (https://ovoa.ai/text, iMessage only): it texts you first with briefs, reminders and check-ins, and builds websites and small games from a text.",
-  "The OVOA Band is a woven wristband with one button, heart rate and motion sensing, a microphone and a vibration motor that brings OVOA to your wrist.",
-  "Everything is in beta: the app ships through Apple TestFlight and the Band is beta hardware. Health tracking and notes are free; the Base, Plus and Pro plans add the assistant. Current prices are at https://ovoa.ai/early-access and https://ovoa.ai/llms.txt.",
+  "The OVOA Fit is a woven wristband with one button, heart rate and motion sensing, a microphone and a vibration motor that brings OVOA to your wrist.",
+  "Everything is in beta: the app ships through Apple TestFlight and OVOA Fit is beta hardware. Health tracking and notes are free; the Base, Plus and Pro plans add the assistant. Current prices are at https://ovoa.ai/early-access and https://ovoa.ai/llms.txt.",
   "Personal data (requests, results, notes, health readings) is private to the signed-in account and is not available through this public endpoint.",
-  "Pages: / (home), /text (text OVOA), /imessage (OVOA in iMessage), /websites (websites by text), /band and /ai-wristband (the Band), /compare (OVOA vs ChatGPT, Siri and other texting assistants), /about, /faq, /early-access (plans), /checkout (buy the Band), /affiliates (the affiliate program), /privacy, /terms, /account (sign in or create an account). Contact: support@ovoa.ai.",
+  "Pages: / (home), /text (text OVOA), /imessage (OVOA in iMessage), /websites (websites by text), /app (the iPhone app), /fit and /ai-wristband (OVOA Fit), /compare (OVOA vs ChatGPT, Siri and other texting assistants), /about, /faq, /early-access (plans), /checkout (buy OVOA Fit), /affiliates (the affiliate program), /privacy, /terms, /account (sign in or create an account). Contact: support@ovoa.ai.",
 ].join("\n");
 
 const TOOLS = [
@@ -21,7 +21,7 @@ const TOOLS = [
     name: "about_ovoa",
     title: "About OVOA",
     description:
-      "Public, non-personal description of OVOA: what the assistant and the OVOA Band are and where to find them. This endpoint deliberately exposes no user data.",
+      "Public, non-personal description of OVOA: what the assistant and the OVOA Fit are and where to find them. This endpoint deliberately exposes no user data.",
     inputSchema: { type: "object", properties: {} },
     outputSchema: {
       type: "object",
@@ -63,7 +63,7 @@ function answer(msg: Message) {
         capabilities: { tools: {} },
         serverInfo: { name: "ovoa", title: "OVOA", version: "0.4.0" },
         instructions:
-          "Public information about OVOA, an AI assistant for iPhone, and the OVOA Band wristband. No personal or account data is available here; requests, results, notes and health readings require signing in to the app.",
+          "Public information about OVOA, an AI assistant for iPhone, and the OVOA Fit wristband. No personal or account data is available here; requests, results, notes and health readings require signing in to the app.",
       });
     }
     case "ping":

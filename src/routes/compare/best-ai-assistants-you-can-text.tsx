@@ -44,7 +44,7 @@ function picksFor(data: PlansResult | undefined): Pick[] {
       name: "OVOA",
       site: `${SITE_URL}/imessage`,
       bestFor: "Running your day from iMessage, with an assistant that texts you first",
-      reach: "iMessage, the OVOA iPhone app, and the OVOA Band wristband",
+      reach: "iMessage, the OVOA iPhone app, and the OVOA Fit wristband",
       price: `First 5 texts free with no account, 5 more with an email, then Base at ${base}`,
       good: "Texts you your brief, reminders, meeting prep and routine check-ins, and follows up when a thread goes quiet. Builds live websites and small games by text, and finds times with friends through their OVOA. Conversations are deleted after 14 days.",
       catch: "iMessage only, so no Android or group chats. It's in beta.",

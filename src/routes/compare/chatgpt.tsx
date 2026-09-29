@@ -119,7 +119,7 @@ function ChatGptPage() {
             {
               label: "How you reach it",
               values: [
-                "Text it in iMessage, talk to it in the OVOA app, or press the OVOA Band",
+                "Text it in iMessage, talk to it in the OVOA app, or press the OVOA Fit",
                 "Its app on iPhone, the web and the desktop",
               ],
             },

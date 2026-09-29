@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { SiteTabs } from "@/components/SiteTabs";
 
 export function MembershipHeader({ children }: { children?: ReactNode }) {
   return (
@@ -11,7 +12,13 @@ export function MembershipHeader({ children }: { children?: ReactNode }) {
         >
           OVOA
         </Link>
+        <div className="hidden sm:block">
+          <SiteTabs />
+        </div>
         <div className="flex items-center gap-5">{children}</div>
+      </div>
+      <div className="flex justify-center border-t border-landing-line/60 py-1.5 sm:hidden">
+        <SiteTabs />
       </div>
     </header>
   );

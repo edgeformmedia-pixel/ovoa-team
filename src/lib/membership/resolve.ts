@@ -60,7 +60,7 @@ function describe(row: MembershipRow): Membership {
     case "lifetime":
       return { tier, status: "active", trialEndsAt: null, renewsAt: null, source: "stripe" };
     // A plan bought on its own has no free days (NO_BAND_TRIAL_DAYS = 0), so a
-    // trial is the Base AI that came with a Band.
+    // trial is the Base AI that came with an OVOA Fit.
     case "trialing":
       return {
         tier,

@@ -1,6 +1,6 @@
 # Exact neumorphic button code
 
-This is the self-contained button used in the Band / checkout UI. Drop the CSS into your project and use the HTML below.
+This is the self-contained button used in OVOA Fit / checkout UI. Drop the CSS into your project and use the HTML below.
 
 ## 1. CSS variables + button
 

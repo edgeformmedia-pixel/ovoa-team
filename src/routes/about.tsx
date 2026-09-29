@@ -4,12 +4,12 @@ import { ORGANIZATION, SITE_URL, breadcrumbs, jsonLd, pageHead } from "@/lib/seo
 
 // Who OVOA is and how it's built, for people and for search engines telling
 // OVOA apart from the other "OVO"s. Only what the privacy policy, terms and FAQ
-// already promise. (How the Band works is /ai-wristband.)
+// already promise. (How OVOA Fit works is /ai-wristband.)
 
 const PATH = "/about";
 const TITLE = "About OVOA: the AI assistant you text or talk to";
 const DESCRIPTION =
-  "OVOA makes an AI assistant for iPhone you text in iMessage or talk to, and the OVOA Band. What it's for, how it treats your data, and how to reach us.";
+  "OVOA makes an AI assistant for iPhone you text in iMessage or talk to, and the OVOA Fit. What it's for, how it treats your data, and how to reach us.";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -40,7 +40,7 @@ function AboutPage() {
         <p>
           OVOA is an AI assistant for iPhone. You text it in
           iMessage or talk to it, and it plans, reminds, remembers and follows through, then tells
-          you when it&rsquo;s done or when it needs you. The OVOA Band puts it on your wrist.
+          you when it&rsquo;s done or when it needs you. The OVOA Fit puts it on your wrist.
         </p>
       }
       related={[
@@ -51,7 +51,7 @@ function AboutPage() {
         },
         {
           to: "/ai-wristband",
-          label: "The OVOA Band",
+          label: "The OVOA Fit",
           blurb: "The wristband you press and talk to.",
         },
         { to: "/faq", label: "FAQ", blurb: "Plans, the beta, TestFlight and privacy." },
@@ -75,7 +75,7 @@ function AboutPage() {
             By voice or typing in the <a href="/">OVOA iPhone app</a>.
           </li>
           <li>
-            With the <a href="/ai-wristband">OVOA Band</a>: press the button and talk.
+            With the <a href="/ai-wristband">OVOA Fit</a>: press the button and talk.
           </li>
         </ul>
       </section>
@@ -85,7 +85,7 @@ function AboutPage() {
         <ul>
           <li>
             <strong>Talking stays on your iPhone.</strong> When you talk to OVOA in the app or on
-            the Band, speech is turned into words on the phone, and only the words go on.
+            OVOA Fit, speech is turned into words on the phone, and only the words go on.
           </li>
           <li>
             <strong>You agree first.</strong> Nothing goes to an AI company until you say it can.
@@ -109,7 +109,7 @@ function AboutPage() {
         <h2>Where things stand</h2>
         <p>
           OVOA is in beta. The iPhone app comes through Apple&rsquo;s TestFlight, texting works
-          today in iMessage, and the OVOA Band is beta hardware shipped to US addresses. New
+          today in iMessage, and the OVOA Fit is beta hardware shipped to US addresses. New
           builds come often, and some things will break along the way.
         </p>
       </section>

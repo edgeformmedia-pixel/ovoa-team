@@ -85,7 +85,7 @@ export type Commission = {
 export type NewCommission = Omit<Commission, "status" | "created_at">;
 
 // What a commission was earned on, from its source_id: a subscription
-// payment (a Stripe invoice or old lifetime checkout), a Band (band:<checkout
+// payment (a Stripe invoice or old lifetime checkout), an OVOA Fit (band:<checkout
 // session>) or views logged on the admin page (views:<random id>).
 export type CommissionKind = "plan" | "band" | "views";
 
@@ -154,10 +154,10 @@ export interface Store {
   voidCommissions(paymentIntentId: string | null, sourceId: string | null): Promise<void>;
   markCommissionsPaid(code: string): Promise<void>;
   listCommissions(code?: string): Promise<Commission[]>;
-  // Records a paid Band once per checkout; later calls fill in payment ids
+  // Records a paid OVOA Fit once per checkout; later calls fill in payment ids
   // that weren't known yet and leave the status alone.
   recordBandOrder(row: NewBandOrder): Promise<BandOrder>;
-  // Marks the Band orders paid through this payment intent or invoice.
+  // Marks OVOA Fit orders paid through this payment intent or invoice.
   bandOrdersByPayment(
     paymentIntentId: string | null,
     invoiceId: string | null,
@@ -450,7 +450,7 @@ const d1Store: Store = {
         ...BAND_COLUMNS.map((c) => order[c]),
         now(),
       );
-      if (!row) throw new Error("Band order insert returned nothing");
+      if (!row) throw new Error("OVOA Fit order insert returned nothing");
       return toBandOrder(row);
     }),
   bandOrdersByPayment: (pi, invoice) =>

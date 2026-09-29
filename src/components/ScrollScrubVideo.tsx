@@ -60,7 +60,7 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
 
   return (
     <section
-      aria-label="Band product demonstration"
+      aria-label="OVOA Fit product demonstration"
       className="relative flex h-[calc(100svh-3.5rem)] min-h-[620px] sm:h-[calc(100svh-4rem)] flex-col items-center overflow-hidden bg-landing-canvas pb-6 pt-7 text-center sm:pb-8 sm:pt-9"
     >
       <div className="shrink-0">
@@ -69,7 +69,7 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
           className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-landing-line px-3.5 py-1 text-xs font-medium text-landing-ink transition-colors hover:bg-landing-control sm:mb-4 sm:text-sm"
         >
           <span className="text-landing-action">Beta</span>
-          OVOA Band brings OVOA to your wrist
+          OVOA Fit brings OVOA to your wrist
           <span aria-hidden="true">›</span>
         </a>
         {/* The page's heading for search engines is this line; the big animated
@@ -115,7 +115,7 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
             muted
             playsInline
             preload="auto"
-            aria-label="Band rotating before being placed on a wrist"
+            aria-label="OVOA Fit rotating before being placed on a wrist"
             className="pointer-events-none absolute inset-0 size-full transform-gpu object-cover mix-blend-multiply will-change-transform"
           />
         </div>
@@ -129,7 +129,7 @@ export function ScrollScrubVideo({ note }: { note?: string }) {
       </a>
 
       <p className="mt-3 px-4 text-[11px] text-landing-muted">
-        {note ?? "Shown with the new OVOA Band"}
+        {note ?? "Shown with the new OVOA Fit"}
       </p>
     </section>
   );

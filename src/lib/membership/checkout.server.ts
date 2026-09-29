@@ -7,17 +7,17 @@
 //
 //   { band: false, plan }   Base, Plus or Pro AI on its own. Paid from day one
 //                           (NO_BAND_TRIAL_DAYS = 0).
-//   { band: true, withAi }  The Band (one-time). With AI, BAND_TRIAL_DAYS of
+//   { band: true, withAi }  OVOA Fit (one-time). With AI, BAND_TRIAL_DAYS of
 //                           Base monthly, which the buyer starts later (the
 //                           link in their order email): one payment for the
-//                           Band with the card saved, and the subscription is
+//                           OVOA Fit with the card saved, and the subscription is
 //                           made when the free days are started (startBandTrial
-//                           in sync.server.ts). Without, "Band only": one
+//                           in sync.server.ts). Without, "OVOA Fit only": one
 //                           payment, nothing saved.
 //
-// Band checkouts collect a US shipping address and a phone number. The partner
+// OVOA Fit checkouts collect a US shipping address and a phone number. The partner
 // code rides along in the metadata so the webhook can credit the partner;
-// partners earn on subscriptions only, never on the Band (see plans.ts).
+// partners earn on subscriptions only, never on OVOA Fit (see plans.ts).
 // Signed in on /account, the checkout is locked to that account's email, so
 // what they buy unlocks the app account they're signed in to.
 
@@ -49,7 +49,7 @@ export async function createCheckoutSession(
 
   const metadata = {
     ...(withAi ? { plan } : {}),
-    // A Band's free days, started later (read by startBandTrial).
+    // An OVOA Fit's free days, started later (read by startBandTrial).
     ...(order.band
       ? { band: "1", ...(withAi ? { trial_days: String(BAND_TRIAL_DAYS) } : {}) }
       : {}),
@@ -61,7 +61,7 @@ export async function createCheckoutSession(
     ? {
         // The pinned API version (stripe.server.ts) calls this "embedded".
         ui_mode: "embedded",
-        // A Band order is confirmed first (/order-complete); a plan goes
+        // An OVOA Fit order is confirmed first (/order-complete); a plan goes
         // straight to setting up the app, which waits for the payment.
         return_url: order.band
           ? `${origin}/order-complete?session_id={CHECKOUT_SESSION_ID}`
@@ -123,7 +123,7 @@ export async function createCheckoutSession(
       ...(withAi
         ? {
             submit: {
-              message: `Today you pay for the Band. Your card is saved for OVOA Base: your ${BAND_TRIAL_DAYS} free days start when you choose, from the link we email you. Then ${base} until you cancel.`,
+              message: `Today you pay for OVOA Fit. Your card is saved for OVOA Base: your ${BAND_TRIAL_DAYS} free days start when you choose, from the link we email you. Then ${base} until you cancel.`,
             },
           }
         : {}),
