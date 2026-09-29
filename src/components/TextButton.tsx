@@ -64,13 +64,17 @@ export function TextButtonPage({
           <div className="mt-10 h-14" />
         )}
 
+        <Link
+          to="/landing"
+          className="mt-5 text-lg font-medium text-[#060606] underline underline-offset-4"
+        >
+          More
+        </Link>
+
         <p className="mt-4 text-xs text-neutral-400">Free to try. iPhone only.</p>
       </div>
 
       <nav className="absolute bottom-6 flex flex-col items-center gap-3 text-neutral-400">
-        <Link to="/landing" className="text-sm underline underline-offset-2">
-          More
-        </Link>
         <div className="flex gap-4 text-xs">
           <Link to="/early-access">Plans</Link>
           <Link to="/privacy">Privacy</Link>
