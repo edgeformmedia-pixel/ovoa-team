@@ -76,6 +76,12 @@ const FEATURES: { title: string; copy: string }[] = [
   },
 ];
 
+const SCREENS = [
+  { src: "/app/listening.webp", alt: "The OVOA app listening, with a sphere of moving dots" },
+  { src: "/app/friends.webp", alt: "The Friends screen, where you add friends by @username" },
+  { src: "/app/apps.webp", alt: "The Apps screen with Create, Morning Brief, Day and Activity" },
+];
+
 const ADDONS: { title: string; copy: string; credits: string }[] = [
   {
     title: "Morning Brief",
@@ -127,6 +133,22 @@ function AppPage() {
         },
       ]}
     >
+      <section>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          {SCREENS.map((s) => (
+            <img
+              key={s.src}
+              src={s.src}
+              alt={s.alt}
+              width={920}
+              height={2000}
+              loading="lazy"
+              className="h-auto w-full rounded-2xl border border-landing-line"
+            />
+          ))}
+        </div>
+      </section>
+
       <section>
         <h2>What the app adds</h2>
         <ul className="!list-none !pl-0">
