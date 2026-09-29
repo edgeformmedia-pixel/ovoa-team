@@ -48,7 +48,19 @@ export const Route = createFileRoute("/app")({
 const FEATURES: { title: string; copy: string }[] = [
   {
     title: "Talk to it",
-    copy: "Say it out loud instead of typing. OVOA gets plain, messy, real-life requests.",
+    copy: "Tap once and OVOA listens. Say it out loud instead of typing; it gets plain, messy, real-life requests, and you tap again to stop.",
+  },
+  {
+    title: "Friends",
+    copy: "Add friends by @username and your OVOA talks to theirs: finding a time, asking something, passing on a reminder. You choose how much each friend's OVOA can reach, and anything beyond that comes to you first.",
+  },
+  {
+    title: "Apps",
+    copy: "Add-ons made by OVOA, like Morning Brief, Day and Activity, install in a tap. Each one says up front whether it uses credits.",
+  },
+  {
+    title: "Create your own app",
+    copy: "Say or type what you want, and OVOA makes it into an app.",
   },
   {
     title: "Your phone, handled",
@@ -61,6 +73,24 @@ const FEATURES: { title: string; copy: string }[] = [
   {
     title: "Everything in one place",
     copy: "Your tasks, notes saved word for word, and the standing rules that run in the background.",
+  },
+];
+
+const ADDONS: { title: string; copy: string; credits: string }[] = [
+  {
+    title: "Morning Brief",
+    copy: "Your day, read out to you each morning.",
+    credits: "Uses some credits: a few moments of it each morning.",
+  },
+  {
+    title: "Day",
+    copy: "Today on one timeline: what's next and what's done.",
+    credits: "Uses no credits",
+  },
+  {
+    title: "Activity",
+    copy: "Steps, heart rate and sleep from your band and Health.",
+    credits: "Uses no credits",
   },
 ];
 
@@ -104,6 +134,19 @@ function AppPage() {
             <li key={f.title} className="rounded-2xl border border-landing-line px-4 py-3">
               <span className="font-semibold text-landing-ink">{f.title}</span>
               <span className="mt-0.5 block text-[15px]">{f.copy}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Add-ons</h2>
+        <ul className="!list-none !pl-0">
+          {ADDONS.map((a) => (
+            <li key={a.title} className="rounded-2xl border border-landing-line px-4 py-3">
+              <span className="font-semibold text-landing-ink">{a.title}</span>
+              <span className="mt-0.5 block text-[15px]">{a.copy}</span>
+              <span className="mt-0.5 block text-[13px] opacity-70">{a.credits}</span>
             </li>
           ))}
         </ul>
