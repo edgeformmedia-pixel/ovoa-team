@@ -11,7 +11,10 @@ export const secondaryButton =
 export const pretty = (e164: string) =>
   /^\+1\d{10}$/.test(e164) ? `(${e164.slice(2, 5)}) ${e164.slice(5, 8)}-${e164.slice(8)}` : e164;
 
-export type Device = "iphone" | "android" | "desktop";
+/** The text the Text OVOA buttons put in Messages, ready to send. */
+export const HELLO = "Hi OVOA!";
+
+export type Device ="iphone" | "android" | "desktop";
 
 export function useDevice(): Device | null {
   const [device, setDevice] = useState<Device | null>(null);

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SiteTabs } from "@/components/SiteTabs";
+import { TextOvoaLink } from "@/components/TextOvoaLink";
 
 export function MembershipHeader({
   children,
@@ -36,12 +37,7 @@ export function MembershipHeader({
             Account
           </Link>
           {!hideText && (
-            <Link
-              to="/text"
-              className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-            >
-              Text OVOA
-            </Link>
+            <TextOvoaLink className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5" />
           )}
         </div>
       </div>

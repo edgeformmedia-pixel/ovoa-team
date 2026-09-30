@@ -45,7 +45,7 @@ function Privacy() {
   return (
     <LegalPage
       title="Privacy policy"
-      updated="September 25, 2026"
+      updated="September 30, 2026"
       intro={
         <p>
           This covers the OVOA iPhone app, the OVOA Fit and ovoa.ai. OVOA is in beta, so this page
@@ -233,6 +233,11 @@ function Privacy() {
           random id in your browser&rsquo;s storage ties your visits together. This stays with OVOA,
           no analytics company sees it. If your browser sends Global Privacy Control, none of it is
           recorded.
+        </p>
+        <p>
+          If OVOA doesn&rsquo;t work on your phone yet and you leave your email to be told when it
+          does, we keep that email with your device type and country, and use it only for that.
+          Email <a href="mailto:support@ovoa.ai">support@ovoa.ai</a> to be taken off.
         </p>
 
         <h3>Affiliates</h3>

@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 
 import { BandProvider } from "@/components/band/BandStore";
+import { TextOvoaLink } from "@/components/TextOvoaLink";
 import { useAnalytics } from "@/lib/analytics/track";
 import { useReferralCapture } from "@/lib/membership/referral";
 import { ogImageMeta } from "@/lib/seo";
@@ -22,12 +23,14 @@ function NotFoundComponent() {
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          The page you're looking for doesn't exist or has been moved. OVOA is the AI assistant
+          you text: it plans, remembers and follows through.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <TextOvoaLink className="inline-flex items-center justify-center rounded-md bg-[#0a84ff] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90" />
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
           </Link>

@@ -3,6 +3,7 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { TextOvoaLink } from "@/components/TextOvoaLink";
 import type { Crumb, Faq } from "@/lib/seo";
 
 // The layout for the pages written to be found: what OVOA does in iMessage,
@@ -60,13 +61,10 @@ export function ContentPage({
         {updated && <p className="mt-4 text-xs text-landing-muted">Updated {updated}</p>}
 
         <div className="mt-8">
-          <Link
-            to="/text"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
-          >
+          <TextOvoaLink className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
             <MessageCircle className="size-5" aria-hidden="true" />
             Text OVOA
-          </Link>
+          </TextOvoaLink>
         </div>
 
         <div className="content mt-12 space-y-10 text-[16px] leading-relaxed text-landing-muted [&_a]:font-semibold [&_a]:text-landing-ink [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-[1.6rem] [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-landing-ink [&_h3]:mt-6 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-landing-ink [&_li]:mt-2 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_strong]:font-semibold [&_strong]:text-landing-ink [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
@@ -100,13 +98,10 @@ export function ContentPage({
             sign-up.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/text"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
-            >
+            <TextOvoaLink className="inline-flex h-11 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5">
               <MessageCircle className="size-4" aria-hidden="true" />
               Text OVOA
-            </Link>
+            </TextOvoaLink>
             <Link
               to="/early-access"
               className="inline-flex h-11 items-center rounded-full border border-landing-line px-6 text-sm font-semibold transition-colors hover:border-landing-muted"

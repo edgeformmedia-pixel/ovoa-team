@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
-import { Qr, pretty, smsHref, smsQr, useDevice } from "@/components/texting";
+import { HELLO, Qr, pretty, smsHref, smsQr, useDevice } from "@/components/texting";
+import { joinWaitlist } from "@/lib/waitlist.functions";
 
-// The whole front door: one line and one blue button that opens Messages with
-// a hello to OVOA (a QR code for it on a computer). Nothing else to read.
-
-export const HELLO = "Hi OVOA!";
+// The whole front door: one line, one example of what a text to OVOA gets
+// back, and one blue button that opens Messages with a hello to OVOA (a QR
+// code for it on a computer). A phone that isn't an iPhone gets an email box
+// instead: OVOA tells them when it works there.
 
 export function TextButtonPage({
   number,
@@ -16,48 +17,59 @@ export function TextButtonPage({
   autoOpen?: boolean;
 }) {
   const device = useDevice();
-  const phone = device === "iphone" || device === "android";
   const opened = useRef(false);
+  const [notify, setNotify] = useState(false);
 
-  // On /text, a phone goes straight to Messages once. A browser may block
+  // On /text, an iPhone goes straight to Messages once. A browser may block
   // that; the button does the same thing.
   useEffect(() => {
-    if (!autoOpen || !number || !phone || !device || opened.current) return;
+    if (!autoOpen || !number || device !== "iphone" || opened.current) return;
     opened.current = true;
     window.location.href = smsHref(number, HELLO, device);
-  }, [autoOpen, number, phone, device]);
+  }, [autoOpen, number, device]);
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-5 text-[#060606]">
-      <div className="absolute inset-x-0 top-0">
+    <main className="flex min-h-dvh flex-col items-center bg-white text-[#060606]">
+      <div className="w-full">
         <MembershipHeader hideText />
       </div>
-      <div className="flex w-full max-w-[360px] flex-col items-center text-center">
+      <div className="flex w-full max-w-[360px] flex-1 flex-col items-center justify-center px-5 py-8 text-center">
         <h1 className="text-[34px] font-semibold leading-tight">Just text OVOA.</h1>
         <p className="mt-3 text-base text-neutral-500">
           The AI assistant in iMessage. It plans, remembers and follows through. No app needed.
         </p>
 
-        {!number ? (
-          <p role="status" className="mt-10 text-sm text-neutral-500">
+        <Example />
+
+        {device === "android" ? (
+          <div className="mt-8 w-full">
+            <p className="text-sm text-neutral-500">
+              OVOA works in iMessage on iPhone today. Leave your email and we&rsquo;ll tell you when
+              it works on your phone.
+            </p>
+            <NotifyForm />
+          </div>
+        ) : !number ? (
+          <p role="status" className="mt-8 text-sm text-neutral-500">
             Opening soon.
           </p>
-        ) : phone && device ? (
+        ) : device === "iphone" ? (
           <a
             href={smsHref(number, HELLO, device)}
-            className="mt-10 flex h-14 w-full items-center justify-center rounded-full bg-[#0a84ff] text-[17px] font-semibold text-white"
+            data-track="Text OVOA"
+            className="mt-8 flex h-14 w-full items-center justify-center rounded-full bg-[#0a84ff] text-[17px] font-semibold text-white"
           >
             Text OVOA
           </a>
         ) : device === "desktop" ? (
-          <div className="mt-10 flex flex-col items-center">
+          <div className="mt-8 flex flex-col items-center">
             <Qr text={smsQr(number, HELLO)} />
             <p className="mt-4 text-sm text-neutral-500">
               Scan with your iPhone, or text {pretty(number)}.
             </p>
           </div>
         ) : (
-          <div className="mt-10 h-14" />
+          <div className="mt-8 h-14" />
         )}
 
         <Link
@@ -67,10 +79,29 @@ export function TextButtonPage({
           More
         </Link>
 
-        <p className="mt-4 text-xs text-neutral-400">Free to try. iPhone only.</p>
+        {device !== "android" && (
+          <>
+            <p className="mt-4 text-xs text-neutral-400">
+              Free to try. iPhone only.{" "}
+              {!notify && (
+                <button type="button" onClick={() => setNotify(true)} className="underline">
+                  Not on iPhone?
+                </button>
+              )}
+            </p>
+            {notify && (
+              <div className="w-full">
+                <p className="mt-3 text-sm text-neutral-500">
+                  Leave your email and we&rsquo;ll tell you when OVOA works on your phone.
+                </p>
+                <NotifyForm />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      <nav className="absolute bottom-6 flex flex-col items-center gap-3 text-neutral-400">
+      <nav className="flex flex-col items-center gap-3 pb-6 text-neutral-400">
         <div className="flex gap-4 text-xs">
           <Link to="/early-access">Plans</Link>
           <Link to="/privacy">Privacy</Link>
@@ -78,5 +109,85 @@ export function TextButtonPage({
         </div>
       </nav>
     </main>
+  );
+}
+
+// One request and its answer, as Messages shows them.
+function Example() {
+  return (
+    <div
+      role="img"
+      aria-label="An example: you text “Find a time for coffee with Sam next week and send the invite.” OVOA replies “Sam’s free Tuesday at 10 or Thursday at 2. Which works for you?”"
+      className="mt-7 flex w-full flex-col gap-1.5 text-left text-[15px] leading-snug"
+    >
+      <p className="max-w-[82%] self-end rounded-[20px] rounded-br-md bg-[#0a84ff] px-3.5 py-2 text-white">
+        Find a time for coffee with Sam next week and send the invite.
+      </p>
+      <p className="max-w-[82%] self-start rounded-[20px] rounded-bl-md bg-[#e9e9eb] px-3.5 py-2">
+        Sam&rsquo;s free Tuesday at 10 or Thursday at 2. Which works for you?
+      </p>
+    </div>
+  );
+}
+
+function NotifyForm() {
+  const [email, setEmail] = useState("");
+  const [trap, setTrap] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (state === "sending") return;
+    setState("sending");
+    try {
+      const res = await joinWaitlist({ data: { email, company: trap } });
+      setState(res.ok ? "done" : "error");
+    } catch {
+      setState("error");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <p role="status" className="mt-4 text-sm font-medium">
+        Got it. We&rsquo;ll email you when it&rsquo;s ready.
+      </p>
+    );
+  }
+  return (
+    <form onSubmit={submit} className="mt-4 flex w-full flex-col gap-2">
+      <input
+        type="email"
+        required
+        autoComplete="email"
+        aria-label="Your email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="h-12 w-full rounded-full border border-neutral-300 px-5 text-base outline-none focus:border-[#0a84ff]"
+      />
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        value={trap}
+        onChange={(e) => setTrap(e.target.value)}
+        className="hidden"
+      />
+      <button
+        type="submit"
+        disabled={state === "sending"}
+        className="h-12 w-full rounded-full bg-[#060606] text-[15px] font-semibold text-white disabled:opacity-60"
+      >
+        {state === "sending" ? "Sending…" : "Tell me"}
+      </button>
+      {state === "error" && (
+        <p role="alert" className="text-xs text-red-600">
+          That didn&rsquo;t go through. Check the email and try again.
+        </p>
+      )}
+    </form>
   );
 }

@@ -11,6 +11,7 @@ import bandFront from "@/assets/product/band-front-cutout.webp";
 import bandSensors from "@/assets/product/band-sensors-cutout.webp";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { TextOvoaLink } from "@/components/TextOvoaLink";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice } from "@/lib/membership/copy";
 import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
@@ -143,6 +144,10 @@ function FitPage() {
           >
             Buy now
           </Link>
+          <p className="mt-10 text-lg text-landing-muted">
+            No band yet? OVOA works by text on its own, free to try.
+          </p>
+          <TextOvoaLink className="mt-4 inline-flex h-12 items-center rounded-full bg-[#0a84ff] px-7 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5" />
           <p className="mt-4 text-sm text-landing-muted">
             Want the app first?{" "}
             <Link to="/early-access" className="underline underline-offset-2">
