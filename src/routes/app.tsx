@@ -26,7 +26,7 @@ function faqsFor(data: PlansResult | undefined): Faq[] {
     },
     {
       q: "How do I get the beta?",
-      a: "Make a free OVOA account. Apple emails you a TestFlight invite; open it on your iPhone, tap View in TestFlight, then Install.",
+      a: "Make a free OVOA account at ovoa.ai/account. It shows your link to the beta: install TestFlight, Apple's app for betas, tap Join the OVOA beta, then Install.",
     },
     {
       q: "Is it the same OVOA as the one I text?",
@@ -179,13 +179,13 @@ function AppPage() {
         <ol>
           <li>
             <strong>Make a free account.</strong> <a href="/account">Sign in or sign up</a> with
-            your email.
+            your email, on your iPhone.
           </li>
           <li>
-            <strong>Open Apple&rsquo;s invite.</strong> It comes from TestFlight, on your iPhone.
+            <strong>Install TestFlight</strong>, Apple&rsquo;s app for betas, from the link there.
           </li>
           <li>
-            <strong>Install.</strong> Tap View in TestFlight, then Install.
+            <strong>Join the beta.</strong> Tap Join the OVOA beta, then Install.
           </li>
         </ol>
         <p>
