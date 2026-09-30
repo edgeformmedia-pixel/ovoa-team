@@ -2,30 +2,47 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { AccountSettings, DeleteAccount, creditsToday } from "@/components/account/AccountSettings";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { GoogleMark } from "@/components/SignInMarks";
 import { getAccount, sendInviteAgain, type AccountPage } from "@/lib/account/account.functions";
+import {
+  getAccountSettings,
+  type AccountSettings as Settings,
+} from "@/lib/account/settings.functions";
 import { PLAN_BLURBS, PLAN_NAMES } from "@/lib/membership/copy";
 import { TESTFLIGHT_APP_URL } from "@/lib/membership/plans";
 import type { Membership } from "@/lib/membership/resolve";
 
-// One OVOA account for the app and this site (src/lib/account/account.server.ts).
+// One OVOA account for texting, the app and this site (src/lib/account/account.server.ts).
 // Signed out: Google, or an emailed code, then a name and a password for new
-// accounts. Signed in: the account, its plan, and how to get the app.
+// accounts. Signed in: the account and its plan, then everything the app keeps
+// under Settings that isn't about the phone itself (the number you text from,
+// the assistant, Google, agreeing to AI, what it remembers: components/account),
+// so nobody needs the app to run their account. The app is last, and optional.
 
 export const Route = createFileRoute("/account")({
   component: Account,
   staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { error?: string | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { error?: string | undefined; google?: string | undefined; message?: string | undefined } => ({
     error: typeof search["error"] === "string" ? search["error"] : undefined,
+    // Back from connecting Google (the app's server, google/oauth.ts finish).
+    google: typeof search["google"] === "string" ? search["google"] : undefined,
+    message: typeof search["message"] === "string" ? search["message"].slice(0, 200) : undefined,
   }),
-  loader: () => getAccount(),
+  loader: async () => {
+    const [account, settings] = await Promise.all([getAccount(), getAccountSettings()]);
+    return { account, settings };
+  },
   head: () => ({
     meta: [
       { title: "Your OVOA account" },
       {
         name: "description",
-        content: "Sign in or create your OVOA account: one account for the OVOA app and ovoa.ai.",
+        content:
+          "Sign in or create your OVOA account: one account for texting OVOA, ovoa.ai and the app.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -47,11 +64,15 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 });
 const formatDate = (value: string | null) => (value ? dateFormat.format(new Date(value)) : null);
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({ wide, children }: { wide: boolean; children: ReactNode }) {
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
       <MembershipHeader />
-      <div className="mx-auto max-w-[460px] px-5 pb-24 pt-12 sm:pt-16">{children}</div>
+      <div
+        className={`mx-auto px-5 pb-24 pt-12 sm:pt-16 ${wide ? "max-w-[560px]" : "max-w-[460px]"}`}
+      >
+        {children}
+      </div>
     </main>
   );
 }
@@ -73,13 +94,19 @@ const SEARCH_ERRORS: Record<string, string> = {
 };
 
 function Account() {
-  const data = Route.useLoaderData();
-  const { error } = Route.useSearch();
-  const notice = error ? (SEARCH_ERRORS[error] ?? null) : null;
+  const { account: data, settings } = Route.useLoaderData();
+  const { error, google, message } = Route.useSearch();
+  const notice = error
+    ? (SEARCH_ERRORS[error] ?? null)
+    : google === "connected"
+      ? "Google is connected. OVOA can use it from your next text."
+      : google === "error"
+        ? `Google didn't connect${message ? `: ${message}` : ""}. Nothing changed.`
+        : null;
   return (
-    <Shell>
+    <Shell wide={data.state === "in"}>
       {data.state === "in" ? (
-        <SignedIn data={data} notice={notice} />
+        <SignedIn data={data} settings={settings} notice={notice} />
       ) : (
         <SignIn data={data} notice={notice} />
       )}
@@ -252,8 +279,8 @@ function EmailStep({ data, onSent }: { data: SignInData; onSent: (email: string)
         Sign in or create your account
       </h1>
       <p className="mt-3 text-[15px] leading-relaxed text-landing-muted">
-        One OVOA account for the app and this site. Already use the OVOA app? Use the same email and
-        you&rsquo;re in.
+        One OVOA account for texting OVOA, this site and the app. Already have one? Use the same
+        email and you&rsquo;re in.
       </p>
 
       <div className="mt-8">
@@ -554,7 +581,7 @@ function FinishStep({
           />
           <span className="font-normal text-landing-muted">
             {fields["password"] ??
-              `At least 8 characters. You'll sign in to the OVOA app with ${step.email} and this password.`}
+              `At least 8 characters. Here you sign in with a code; the OVOA app, if you use it, takes ${step.email} and this password.`}
           </span>
         </label>
         {error && (
@@ -596,8 +623,8 @@ function planSummary(m: Membership | null): { name: string; detail: string } {
       name,
       detail:
         m.status === "canceled"
-          ? `Your plan has ended. ${PLAN_BLURBS.free}`
-          : `${PLAN_BLURBS.free} The assistant comes with Base, Plus and Pro.`,
+          ? "Your plan has ended. Texting OVOA comes with Base, Plus and Pro."
+          : "Texting OVOA, and the assistant in the app, come with Base, Plus and Pro.",
     };
   }
   switch (m.status) {
@@ -626,9 +653,12 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function SignedIn({
   data,
+  settings,
   notice,
 }: {
   data: Extract<AccountPage, { state: "in" }>;
+  // Null when the app's server didn't give them just now.
+  settings: Settings | null;
   notice: string | null;
 }) {
   const router = useRouter();
@@ -636,6 +666,7 @@ function SignedIn({
   const first = data.name.trim().split(/\s+/)[0];
   const plan = planSummary(data.membership);
   const paid = data.membership && data.membership.tier !== "free";
+  const today = paid ? creditsToday(settings?.usage ?? null) : null;
 
   async function signOut() {
     setLeaving(true);
@@ -653,17 +684,18 @@ function SignedIn({
         {first ? `Hi, ${first}.` : "Your OVOA account"}
       </h1>
       <p className="mt-3 text-[15px] leading-relaxed text-landing-muted">
-        This is the account you use in the OVOA app. Plans you buy on ovoa.ai while signed in go to
-        it.
+        Your OVOA account, for texting OVOA and for the app. Everything about it is on this page;
+        plans you buy on ovoa.ai while signed in go to it.
       </p>
       {notice && <Notice>{notice}</Notice>}
 
       <dl className="mt-8 rounded-2xl border border-landing-line px-5">
-        <Row label="Name">{data.name || "Not set"}</Row>
+        {!settings && <Row label="Name">{data.name || "Not set"}</Row>}
         <Row label="Email">{data.email}</Row>
         <Row label="Plan">
           <span className="font-semibold">{plan.name}</span>
           <span className="mt-0.5 block text-sm text-landing-muted">{plan.detail}</span>
+          {today && <span className="mt-0.5 block text-sm text-landing-muted">{today}</span>}
         </Row>
       </dl>
 
@@ -682,23 +714,32 @@ function SignedIn({
         )}
       </div>
 
+      {settings ? (
+        <AccountSettings settings={settings} email={data.email} />
+      ) : (
+        <Notice>Your settings didn&rsquo;t load just now. Refresh to try again.</Notice>
+      )}
+
       <GetTheApp data={data} />
 
-      <button
-        type="button"
-        onClick={() => void signOut()}
-        disabled={leaving}
-        className={`${secondaryButton} mt-10`}
-      >
-        {leaving ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : null}
-        Sign out
-      </button>
+      <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          disabled={leaving}
+          className={secondaryButton}
+        >
+          {leaving ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : null}
+          Sign out
+        </button>
+        <DeleteAccount paid={Boolean(data.billing)} />
+      </div>
     </>
   );
 }
 
-// Install TestFlight → open Apple's invite (sent when the account first came
-// here) or the public link → sign in.
+// Optional: texting OVOA needs no app. Install TestFlight → open Apple's invite
+// (sent when the account first came here) or the public link → sign in.
 function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
   const again = useServerFn(sendInviteAgain);
   const [invite, setInvite] = useState(data.invite);
@@ -723,7 +764,11 @@ function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
 
   return (
     <section className="mt-10 rounded-[1.75rem] bg-landing-control/70 px-6 py-6 sm:px-7">
-      <h2 className="text-lg font-semibold">Get the app</h2>
+      <h2 className="text-lg font-semibold">The iPhone app, if you want it</h2>
+      <p className="mt-1 text-sm leading-relaxed text-landing-muted">
+        You don&rsquo;t need it to text OVOA. It adds talking out loud, health, and what only your
+        iPhone can do: its contacts, calendar, Reminders and shortcuts.
+      </p>
       <ol className="mt-3 grid list-decimal gap-2 pl-5 text-[15px] leading-relaxed text-landing-muted">
         <li>
           On your iPhone, install{" "}

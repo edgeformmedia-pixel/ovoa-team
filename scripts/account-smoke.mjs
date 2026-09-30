@@ -5,6 +5,10 @@
 //
 //   npm run build && node scripts/account-smoke.mjs
 //
+// With --hold, both servers stay up after the checks, to look at the account
+// page by hand: it prints Bo's session, which POST /api/public/account/session
+// on the local site turns into the cookie.
+//
 // It needs the ovoa-app repo next to this one (or OVOA_API_DIR pointing at its
 // jarvis/api folder). It starts scripts/fake-stripe.mjs (which also stands in
 // for Resend), gives the app server and the site each a fresh local D1 with
@@ -19,6 +23,9 @@
 //   - checks the account page shows the plan, and Manage billing opens
 //   - checks signing in has Apple (the fake one) email the TestFlight invite
 //     once, and not to someone already in the beta group
+//   - checks the account page does what the app's Settings does, for someone
+//     with no app: agreeing to AI, the assistant's name, linking the number
+//     they text from (the text arrives on the app server's Sendblue webhook)
 
 import { spawn, spawnSync } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
@@ -36,11 +43,18 @@ const STRIPE = `http://127.0.0.1:${STRIPE_PORT}`;
 const SITE = `http://127.0.0.1:${SITE_PORT}`;
 const API = `http://127.0.0.1:${API_PORT}`;
 const WHSEC = "whsec_fake_local_only";
+// Texting, switched on at the local app server: OVOA's number, and the secret
+// its webhook wants. What it sends goes to the fake (which has no Sendblue, so
+// nothing is sent anywhere).
+const OVOA_NUMBER = "+15125550000";
+const SENDBLUE_SECRET = "whsec-sendblue-local";
 // Short paths: Windows can't open miniflare's files under a long one.
 const sitePersist = mkdtempSync(join(tmpdir(), "ovoa-acct-site-"));
 const apiPersist = mkdtempSync(join(tmpdir(), "ovoa-acct-api-"));
 const children = [];
 let failures = 0;
+const HOLD = process.argv.includes("--hold");
+let holdSession = null;
 
 // A kept-alive connection can be closed by wrangler while a slow `wrangler d1
 // execute` runs between requests (as in billing-smoke.mjs): retry once fresh.
@@ -189,6 +203,9 @@ async function main() {
     [
       `npx wrangler dev --local --port ${API_PORT} --persist-to "${apiPersist}"`,
       `--var RESEND_API_KEY:re_fake --var RESEND_API_BASE:${STRIPE}`,
+      `--var SENDBLUE_API_KEY_ID:key-id --var SENDBLUE_API_SECRET:key-secret`,
+      `--var SENDBLUE_NUMBER:${OVOA_NUMBER} --var SENDBLUE_WEBHOOK_SECRET:${SENDBLUE_SECRET}`,
+      `--var SENDBLUE_API_BASE:${STRIPE}/sendblue`,
     ].join(" "),
     "Ready on",
     API_DIR,
@@ -401,6 +418,7 @@ async function main() {
     body: JSON.stringify({ email: bo, groups: ["grp_members"] }),
   });
   const boKept = await keepSession(made.body.token);
+  holdSession = made.body.token;
   siteSql(
     `INSERT INTO members (email, plan, tier, status, stripe_customer_id) VALUES ('${bo}', 'monthly', 'base', 'active', 'cus_fake_bo')`,
   );
@@ -423,6 +441,74 @@ async function main() {
     "Manage billing opens Stripe's portal",
     billing.status === 303 && !(billing.headers.get("location") ?? "").includes("/account"),
     billing.headers.get("location"),
+  );
+
+  // ---- The account's settings, with no app ----
+  const boApi = (path, method, body) =>
+    fetch(`${API}${path}`, {
+      method,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${made.body.token}`,
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  check(
+    "an account made on the site is asked to agree to AI, on the page",
+    boPage.includes("agree to how it uses AI") && /<button[^>]*>(?:<!-- -->)?Agree</.test(boPage),
+  );
+  check(
+    "and offered its number, Google and the way out",
+    boPage.includes("Link my number") &&
+      boPage.includes("Connect Google") &&
+      boPage.includes("Delete account"),
+  );
+  check("with the day's credits under the plan", boPage.includes("credits left today"));
+  const agreed = await boApi("/me/consent", "POST", { version: 2 });
+  await boApi("/me", "PATCH", { assistantName: "Jeeves" });
+  let boNow = await page("/account", boKept.cookie);
+  check(
+    "once agreed, the page says so and stops asking",
+    agreed.status === 200 &&
+      boNow.includes("You agreed") &&
+      !boNow.includes("agree to how it uses AI"),
+  );
+  check("the assistant's name is there to change", boNow.includes('value="Jeeves"'));
+
+  const linkCode = await (await boApi("/texting/link", "POST")).json();
+  check(
+    "a link code comes with the text that carries it",
+    linkCode.number === OVOA_NUMBER && linkCode.body?.includes(linkCode.code),
+    linkCode,
+  );
+  const texted = await fetch(`${API}/texting/webhook`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "sb-signing-secret": SENDBLUE_SECRET },
+    body: JSON.stringify({
+      content: linkCode.body,
+      is_outbound: false,
+      status: "RECEIVED",
+      message_handle: `smoke-${Date.now()}`,
+      from_number: "+15865550100",
+      number: "+15865550100",
+      to_number: OVOA_NUMBER,
+      sendblue_number: OVOA_NUMBER,
+      media_url: "",
+      message_type: "message",
+      group_id: "",
+      participants: ["+15865550100", OVOA_NUMBER],
+      service: "iMessage",
+      opted_out: false,
+    }),
+  });
+  boNow = await page("/account", boKept.cookie);
+  check(
+    "texting the code links the number, and the page shows it",
+    texted.status === 200 &&
+      boNow.includes("(586) 555-0100") &&
+      boNow.includes("Let OVOA text me first") &&
+      !boNow.includes("Link my number"),
+    texted.status,
   );
 
   // ---- Sign out ----
@@ -454,6 +540,11 @@ try {
   failures++;
   console.error(error);
 } finally {
+  if (HOLD && holdSession) {
+    console.log(failures ? `\n${failures} check(s) failed` : "\nAll account checks passed");
+    console.log(`\nHolding: ${SITE}/account, signed in as Bo with session ${holdSession}`);
+    await new Promise((stop) => process.once("SIGINT", stop));
+  }
   for (const child of children) {
     if (process.platform === "win32")
       spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);

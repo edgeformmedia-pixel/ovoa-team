@@ -112,6 +112,49 @@ export async function lookupAccount(token: string, timeoutMs = 6000): Promise<Lo
   }
 }
 
+export type AppReply<T> = { ok: true; data: T } | { ok: false; status: number; error: string };
+
+/**
+ * One signed-in request to the app's server, for the account page's settings
+ * (settings.functions.ts). Its own sentence comes back when it has one; status
+ * 0 means it didn't answer.
+ */
+export async function appApi<T>(
+  token: string,
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+  timeoutMs = 8000,
+): Promise<AppReply<T>> {
+  try {
+    const res = await fetch(`${accountApiUrl()}${path}`, {
+      method: init.method ?? (init.body === undefined ? "GET" : "POST"),
+      headers: {
+        authorization: `Bearer ${token}`,
+        accept: "application/json",
+        ...(init.body === undefined ? {} : { "content-type": "application/json" }),
+      },
+      ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const data = (await res.json().catch(() => ({}))) as T & { error?: unknown; message?: unknown };
+    if (res.ok) return { ok: true, data };
+    const said = typeof data.message === "string" ? data.message : data.error;
+    return {
+      ok: false,
+      status: res.status,
+      error:
+        res.status === 401
+          ? "You're signed out. Sign in again."
+          : typeof said === "string" && said.includes(" ")
+            ? said
+            : "That didn't work. Try again.",
+    };
+  } catch (error) {
+    console.error(`[account] ${init.method ?? "GET"} ${path}`, error);
+    return { ok: false, status: 0, error: "Can't reach OVOA right now. Try again in a minute." };
+  }
+}
+
 /**
  * The signed-in account's email, for checkout: a plan bought while signed in
  * goes to that account. Null when signed out, or when the app's server is slow
