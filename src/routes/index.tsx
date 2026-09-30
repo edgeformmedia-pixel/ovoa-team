@@ -4,13 +4,17 @@ import bandFront from "@/assets/product/band-front-cutout.webp";
 import bandProfile from "@/assets/product/band-profile-cutout.webp";
 import bandSensors from "@/assets/product/band-sensors-cutout.webp";
 import { getPublicTextNumber } from "@/lib/account/texting.functions";
+import { isVariant, type Variant } from "@/lib/ab";
+import { getVariant } from "@/lib/ab.functions";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
 import type { PlansResult } from "@/lib/membership/plans";
 import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
 
 // The home page is one blue button that opens Messages to OVOA. Everything
-// else (plans, OVOA Fit, what OVOA does) has its own page.
+// else (plans, OVOA Fit, what OVOA does) has its own page. It comes in two
+// versions under an A/B test (lib/ab.ts); ovoa.ai/?ab=a or ?ab=b shows one on
+// purpose.
 
 const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
 
@@ -22,7 +26,14 @@ function describe(data: PlansResult | undefined) {
 export const Route = createFileRoute("/")({
   component: Landing,
   staticData: { sitemap: true },
-  loader: async () => ({ ...(await getPlans()), ...(await getPublicTextNumber()) }),
+  validateSearch: (search: { ab?: unknown }): { ab?: Variant } =>
+    isVariant(search.ab) ? { ab: search.ab } : {},
+  loaderDeps: ({ search }) => ({ ab: search.ab }),
+  loader: async ({ deps }) => ({
+    ...(await getPlans()),
+    ...(await getPublicTextNumber()),
+    ...(await getVariant({ data: { force: deps.ab } })),
+  }),
   head: ({ loaderData }) => ({
     meta: [
       { title: PAGE_TITLE },
@@ -50,6 +61,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { number } = Route.useLoaderData();
-  return <TextButtonPage number={number} />;
+  const { number, variant } = Route.useLoaderData();
+  return <TextButtonPage number={number} variant={variant} />;
 }

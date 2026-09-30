@@ -1,11 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { HELLO, smsHref, useDevice } from "@/components/texting";
+import { smsHref, useDevice } from "@/components/texting";
+import { cookieVariant, helloFor } from "@/lib/ab";
 import { getPublicTextNumber } from "@/lib/account/texting.functions";
 
 // Every "Text OVOA" button off the homepage. On an iPhone it opens Messages in
 // one tap; anywhere else (and until the number has loaded) it goes to /text,
-// which has the QR code and the email box for other phones.
+// which has the QR code and the email box for other phones. The hello it sends
+// is the one for this browser's version of the front door, if it has seen it
+// (lib/ab.ts).
 
 // Asked once per page load, shared by every button on the page.
 let asked: Promise<string | null> | null = null;
@@ -39,7 +42,11 @@ export function TextOvoaLink({
   const number = useTextNumber();
   if (number && device === "iphone") {
     return (
-      <a href={smsHref(number, HELLO, device)} data-track="Text OVOA" className={className}>
+      <a
+        href={smsHref(number, helloFor(cookieVariant(document.cookie)), device)}
+        data-track="Text OVOA"
+        className={className}
+      >
         {children}
       </a>
     );

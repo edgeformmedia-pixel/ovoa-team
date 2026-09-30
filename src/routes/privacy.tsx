@@ -235,6 +235,10 @@ function Privacy() {
           recorded.
         </p>
         <p>
+          ovoa.ai sometimes shows two versions of a page to see which is clearer. A cookie remembers
+          which one you were shown, so you keep seeing the same one.
+        </p>
+        <p>
           If OVOA doesn&rsquo;t work on your phone yet and you leave your email to be told when it
           does, we keep that email with your device type and country, and use it only for that.
           Email <a href="mailto:support@ovoa.ai">support@ovoa.ai</a> to be taken off.

@@ -1,7 +1,9 @@
-// Stores what src/lib/analytics/track.ts sends (migrations/0009_analytics.sql).
+// Stores what src/lib/analytics/track.ts sends (migrations/0009_analytics.sql),
+// with the A/B version the browser is on (migrations/0012_ab_test.sql).
 // Everything is trimmed and capped here: the browser is not trusted.
 
 import { accountEmail } from "@/lib/account/account.server";
+import { AB_TEST, cookieVariant } from "@/lib/ab";
 import { now, run } from "@/lib/membership/db.server";
 
 const TYPES = new Set(["pageview", "click", "scroll", "leave", "rage"]);
@@ -65,6 +67,9 @@ export async function collect(request: Request, body: Incoming): Promise<void> {
   if (!events.length) return;
 
   const stamp = now();
+  // The version of the front door this browser is on, if it has been given one.
+  const variant = cookieVariant(request.headers.get("cookie"));
+  const test = variant ? AB_TEST : null;
   const pageviews = events.filter((e) => e.type === "pageview").length;
   const maxScroll = Math.max(0, ...events.filter((e) => e.type === "scroll").map((e) => e.value ?? 0));
   const seconds = events.filter((e) => e.type === "leave").reduce((s, e) => s + (e.value ?? 0), 0);
@@ -79,19 +84,20 @@ export async function collect(request: Request, body: Incoming): Promise<void> {
     const cf = (request as Request & { cf?: { country?: string; city?: string } }).cf;
     await run(
       `INSERT INTO analytics_sessions (id, visitor_id, email, started_at, last_seen_at, landing_path, referrer,
-         utm_source, utm_medium, utm_campaign, ref, device, browser, os, country, city)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         utm_source, utm_medium, utm_campaign, ref, device, browser, os, country, city, ab_test, ab_variant)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO NOTHING`,
       sid, vid, email, stamp, stamp, events[0]?.path, text(start.referrer, 300),
       text(start.utm_source, 100), text(start.utm_medium, 100), text(start.utm_campaign, 100), text(start.ref, 60),
-      d, b, o, cf?.country ?? request.headers.get("cf-ipcountry"), cf?.city ?? null,
+      d, b, o, cf?.country ?? request.headers.get("cf-ipcountry"), cf?.city ?? null, test, variant,
     );
   }
 
   await run(
     `UPDATE analytics_sessions SET last_seen_at = ?, pageviews = pageviews + ?, events = events + ?,
-       max_scroll = MAX(max_scroll, ?), seconds = seconds + ?, email = COALESCE(email, ?) WHERE id = ?`,
-    stamp, pageviews, events.length, maxScroll, seconds, email, sid,
+       max_scroll = MAX(max_scroll, ?), seconds = seconds + ?, email = COALESCE(email, ?),
+       ab_test = COALESCE(ab_test, ?), ab_variant = COALESCE(ab_variant, ?) WHERE id = ?`,
+    stamp, pageviews, events.length, maxScroll, seconds, email, test, variant, sid,
   );
 
   // One statement per batch keeps it to a single D1 round trip.
