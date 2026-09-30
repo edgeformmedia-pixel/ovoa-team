@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
+import { LanguageMenu } from "@/components/LanguagePrompt";
+
 // Every public page is linked from here, so search engines (and people) can
 // reach each one from any other.
 const links = [
@@ -38,6 +40,7 @@ export function SiteFooter() {
       <p className="mt-3 text-[11px] text-muted-foreground/70">
         OVOA is in beta: the iPhone app comes through TestFlight, and OVOA Fit is beta hardware.
       </p>
+      <LanguageMenu />
     </footer>
   );
 }

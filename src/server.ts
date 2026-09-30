@@ -2,6 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { langPath, splitLangPath } from "./lib/i18n/langs";
+import { handleI18n, type I18nEnv } from "./lib/i18n/server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -95,8 +97,10 @@ function canonicalRedirect(request: Request): Response | null {
   }
   // Pages only: not the API, server functions (/_serverFn/…) or files.
   if (!/^\/(api\/|_)/.test(url.pathname) && !url.pathname.includes(".")) {
-    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
-    target.pathname = PATH_ALIASES[path] ?? path;
+    // ovoa.ai/es/pricing goes to /es/early-access, as /pricing does.
+    const { lang, path: bare } = splitLangPath(url.pathname.toLowerCase());
+    const path = bare.replace(/\/+$/, "") || "/";
+    target.pathname = langPath(lang, PATH_ALIASES[path] ?? path);
   }
   return target.href === url.href ? null : Response.redirect(target.href, 301);
 }
@@ -114,7 +118,15 @@ export default {
       const redirect = canonicalRedirect(request);
       if (redirect) return redirect;
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      // In the page's language (ovoa.ai/es/…), and the i18n addresses.
+      const response = await handleI18n(
+        request,
+        // Nitro keeps the Worker's bindings on globalThis.__env__ (as db.server.ts reads them).
+        ((globalThis as { __env__?: I18nEnv }).__env__ ?? env ?? {}) as I18nEnv,
+        // …and the request's waitUntil on the request itself.
+        { waitUntil: (request as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil },
+        async () => handler.fetch(request, env, ctx),
+      );
       return noindexWorkersDev(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);

@@ -10,8 +10,10 @@ import {
 import type { ReactNode } from "react";
 
 import { BandProvider } from "@/components/band/BandStore";
+import { LanguagePrompt } from "@/components/LanguagePrompt";
 import { TextOvoaLink } from "@/components/TextOvoaLink";
 import { useAnalytics } from "@/lib/analytics/track";
+import { currentLang } from "@/lib/i18n/langs";
 import { useReferralCapture } from "@/lib/membership/referral";
 import { ogImageMeta } from "@/lib/seo";
 import appCss from "../styles.css?url";
@@ -127,7 +129,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="clear-text">
+    <html lang={currentLang()} className="clear-text">
       <head>
         <HeadContent />
       </head>
@@ -149,6 +151,7 @@ function RootComponent() {
       <BandProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <LanguagePrompt />
       </BandProvider>
     </QueryClientProvider>
   );

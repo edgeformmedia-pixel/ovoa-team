@@ -27,6 +27,8 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Workers AI translates the site into other languages (src/lib/i18n).
+  "ai": { "binding": "AI" },
   "vars": {
     // Same Google client as ovoa.ai. Its secret isn't set here, so
     // "Continue with Google" is off on the test site; the emailed code works.

@@ -40,6 +40,8 @@
       "migrations_dir": "migrations-replay"
     }
   ],
+  // Workers AI translates the site into other languages (src/lib/i18n).
+  "ai": { "binding": "AI" },
   "vars": {
     // "Continue with Google" on /account: the Web client in Google Cloud project
     // ovoa-509511 (admin@ovoa.ai). GOOGLE_CLIENT_SECRET is a secret.
