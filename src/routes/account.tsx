@@ -9,6 +9,7 @@ import { getAccount, sendInviteAgain, type AccountPage } from "@/lib/account/acc
 import {
   getAccountSettings,
   type AccountSettings as Settings,
+  type AppState,
 } from "@/lib/account/settings.functions";
 import { PLAN_BLURBS, PLAN_NAMES } from "@/lib/membership/copy";
 import { TESTFLIGHT_APP_URL } from "@/lib/membership/plans";
@@ -248,7 +249,6 @@ function SignIn({ data, notice }: { data: SignInData; notice: string | null }) {
     </>
   );
 }
-
 
 function EmailStep({ data, onSent }: { data: SignInData; onSent: (email: string) => void }) {
   const [email, setEmail] = useState("");
@@ -714,13 +714,13 @@ function SignedIn({
         )}
       </div>
 
+      <GetTheApp data={data} app={settings?.app ?? null} />
+
       {settings ? (
         <AccountSettings settings={settings} email={data.email} />
       ) : (
         <Notice>Your settings didn&rsquo;t load just now. Refresh to try again.</Notice>
       )}
-
-      <GetTheApp data={data} />
 
       <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
         <button
@@ -740,7 +740,38 @@ function SignedIn({
 
 // Optional: texting OVOA needs no app. Install TestFlight → open Apple's invite
 // (sent when the account first came here) or the public link → sign in.
-function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
+// Near the top while the app is in beta (temporary); once the app has spoken to
+// the server (jarvis api appSeen.ts) it shrinks to one "installed" line.
+function GetTheApp({
+  data,
+  app,
+}: {
+  data: Extract<AccountPage, { state: "in" }>;
+  app: AppState | null;
+}) {
+  if (app?.installed) {
+    return (
+      <p
+        role="status"
+        className="mt-8 flex items-center gap-3 rounded-2xl border border-landing-line px-5 py-4 text-[15px]"
+      >
+        <img src="/img/ovoa-app-icon.svg" alt="" className="size-9 shrink-0 rounded-[0.6rem]" />
+        <span>
+          <span className="font-semibold">The OVOA app is on your iPhone.</span>
+          {app.lastSeenAt && (
+            <span className="block text-sm text-landing-muted">
+              Last opened {formatDate(new Date(app.lastSeenAt).toISOString())}
+              {app.version && app.version !== "?" ? `, version ${app.version}` : ""}.
+            </span>
+          )}
+        </span>
+      </p>
+    );
+  }
+  return <GetTheAppSteps data={data} />;
+}
+
+function GetTheAppSteps({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
   const again = useServerFn(sendInviteAgain);
   const [invite, setInvite] = useState(data.invite);
   const [busy, setBusy] = useState(false);
@@ -763,9 +794,17 @@ function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
   }
 
   return (
-    <section className="mt-10 rounded-[1.75rem] bg-landing-control/70 px-6 py-6 sm:px-7">
-      <h2 className="text-lg font-semibold">The iPhone app, if you want it</h2>
-      <p className="mt-1 text-sm leading-relaxed text-landing-muted">
+    <section className="mt-8 rounded-[1.75rem] bg-landing-control/70 px-6 py-6 sm:px-7">
+      <div className="flex items-center gap-3">
+        <img src="/img/ovoa-app-icon.svg" alt="" className="size-11 shrink-0 rounded-xl" />
+        <h2 className="text-lg font-semibold">Get the OVOA iPhone app</h2>
+        <img
+          src="/img/testflight-icon.png"
+          alt="TestFlight"
+          className="ml-auto size-8 shrink-0 rounded-lg"
+        />
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-landing-muted">
         You don&rsquo;t need it to text OVOA. It adds talking out loud, health, and what only your
         iPhone can do: its contacts, calendar, Reminders and shortcuts.
       </p>
@@ -792,8 +831,8 @@ function GetTheApp({ data }: { data: Extract<AccountPage, { state: "in" }> }) {
             </>
           ) : data.betaFull ? (
             <>
-              The beta is full for now (Apple allows 10,000 testers). We&rsquo;ll email {email}{" "}
-              when there&rsquo;s room.
+              The beta is full for now (Apple allows 10,000 testers). We&rsquo;ll email {email} when
+              there&rsquo;s room.
             </>
           ) : invite.state === "failed" ? (
             <>

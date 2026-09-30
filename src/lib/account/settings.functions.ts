@@ -45,7 +45,17 @@ export type UsernameState = {
   suggestion: string | null;
 };
 
-export type GoogleAccount = { id: string; email: string; name: string | null; isDefault: boolean };
+export type GoogleAccount = {
+  id: string;
+  email: string;
+  name: string | null;
+  // Their own tag ("Work", "Personal"), so OVOA can be told which one.
+  label: string | null;
+  isDefault: boolean;
+};
+// Whether they have the iPhone app (jarvis api appSeen.ts): the app says so on
+// every request, and older builds through their push token.
+export type AppState = { installed: boolean; lastSeenAt: number | null; version: string | null };
 export type Memory = { id: string; content: string };
 export type Website = { id: string; name: string; address: string; link: string; status: string };
 
@@ -68,6 +78,7 @@ export type AccountSettings = {
   texting: TextingState | null;
   username: UsernameState | null;
   google: GoogleAccount[] | null;
+  app: AppState | null;
   memories: Memory[] | null;
   websites: Website[] | null;
 };
@@ -135,13 +146,14 @@ export const getAccountSettings = createServerFn({ method: "GET" }).handler(
       const res = await appApi<T>(token, path, {}, 6000);
       return res.ok ? res.data : null;
     };
-    const [me, texting, username, google, memories, sites] = await Promise.all([
+    const [me, texting, username, google, memories, sites, app] = await Promise.all([
       part<Me>("/me"),
       part<TextingState>("/texting"),
       part<UsernameState>("/me/username"),
       part<{ accounts: GoogleAccount[] }>("/google/status"),
       part<{ memories: Memory[] }>("/memories"),
       part<{ sites: Website[] }>("/sites"),
+      part<AppState>("/me/app"),
     ]);
     if (!me?.user) return null;
 
@@ -174,8 +186,12 @@ export const getAccountSettings = createServerFn({ method: "GET" }).handler(
           id: a.id,
           email: a.email,
           name: a.name,
+          label: a.label ?? null,
           isDefault: a.isDefault,
         })) ?? null,
+      app: app
+        ? { installed: app.installed, lastSeenAt: app.lastSeenAt, version: app.version }
+        : null,
       memories: memories?.memories.map((m) => ({ id: m.id, content: m.content })) ?? null,
       websites:
         sites?.sites.map((s) => ({
@@ -349,6 +365,32 @@ export const disconnectGoogle = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<Done> => {
     const res = await change(`/google/accounts/${data.id}`, { method: "DELETE" });
     return res.ok ? { ok: true } : res;
+  });
+
+/** Tags one Google account ("Work", "Personal"); "" removes the tag. */
+export const labelGoogle = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; label: string }) => {
+    const { id } = memoryId(data);
+    if (typeof data.label !== "string") throw new Error("A tag is text.");
+    // The app's server keeps 24 characters (google/oauth.ts LABEL_MAX).
+    return { id, label: data.label.trim().slice(0, 24) };
+  })
+  .handler(async ({ data }): Promise<Done<{ accounts: GoogleAccount[] }>> => {
+    const res = await change<{ accounts: GoogleAccount[] }>(`/google/accounts/${data.id}`, {
+      method: "PATCH",
+      body: { label: data.label },
+    });
+    if (!res.ok) return res;
+    return {
+      ok: true,
+      accounts: res.data.accounts.map((a) => ({
+        id: a.id,
+        email: a.email,
+        name: a.name,
+        label: a.label ?? null,
+        isDefault: a.isDefault,
+      })),
+    };
   });
 
 // ---------- Websites ----------

@@ -10,6 +10,7 @@ import {
   deleteAccount,
   deleteWebsite,
   disconnectGoogle,
+  labelGoogle,
   forgetEverything,
   forgetMemory,
   saveSettings,
@@ -233,7 +234,7 @@ function Texting({ initial, agreed }: { initial: TextingState | null; agreed: bo
               Text OVOA
             </a>
             <button type="button" onClick={() => void link()} disabled={busy} className={quietLink}>
-              Use a different number
+              Switch number
             </button>
             <button
               type="button"
@@ -728,11 +729,54 @@ function Assistant({ initial, canAgent }: { initial: AssistantSettings; canAgent
   );
 }
 
-// ---------- Google ----------
+// ---------- Connections ----------
 
-function Google({ initial }: { initial: Settings["google"] }) {
+const GoogleLogo = () => (
+  <svg viewBox="0 0 48 48" aria-hidden="true" className="size-6 shrink-0">
+    <path
+      fill="#EA4335"
+      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+    />
+    <path
+      fill="#4285F4"
+      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+    />
+    <path
+      fill="#34A853"
+      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+    />
+  </svg>
+);
+
+const InstagramLogo = () => (
+  <svg viewBox="0 0 48 48" aria-hidden="true" className="size-6 shrink-0">
+    <defs>
+      <radialGradient id="ig-gradient" cx="0.3" cy="1.07" r="1.2">
+        <stop offset="0" stopColor="#FDDB74" />
+        <stop offset="0.25" stopColor="#F9A33C" />
+        <stop offset="0.5" stopColor="#E1306C" />
+        <stop offset="0.75" stopColor="#C13584" />
+        <stop offset="1" stopColor="#5B51D8" />
+      </radialGradient>
+    </defs>
+    <rect width="48" height="48" rx="12" fill="url(#ig-gradient)" />
+    <rect x="11" y="11" width="26" height="26" rx="8" fill="none" stroke="#fff" strokeWidth="3.4" />
+    <circle cx="24" cy="24" r="6.2" fill="none" stroke="#fff" strokeWidth="3.4" />
+    <circle cx="32.3" cy="15.7" r="2" fill="#fff" />
+  </svg>
+);
+
+const TAG_IDEAS = ["Work", "Personal", "School", "Business"];
+
+function Connections({ initial }: { initial: Settings["google"] }) {
   const { busy, error, run } = useChange();
   const [accounts, setAccounts] = useState(initial ?? []);
+  // The account whose tag is being written, and what's typed so far.
+  const [tagging, setTagging] = useState<{ id: string; text: string } | null>(null);
 
   async function connect() {
     const got = await run(() => connectGoogle());
@@ -746,48 +790,159 @@ function Google({ initial }: { initial: Settings["google"] }) {
       setAccounts((list) => list.filter((a) => a.id !== id));
   }
 
+  async function saveTag(id: string, label: string) {
+    const got = await run(() => labelGoogle({ data: { id, label } }));
+    if (got) {
+      setAccounts(got.accounts);
+      setTagging(null);
+    }
+  }
+
   return (
-    <Section id="google" title="Google">
+    <Section id="connections" title="Connections">
       <Muted>
-        Connect Gmail, Calendar, Contacts, Drive and Tasks, so OVOA can answer &ldquo;what&rsquo;s
-        on tomorrow?&rdquo; and do things there for you. Anything it would send or delete waits for
-        your YES.
+        Connect your accounts here, no app needed. OVOA reads and does things in them when you ask,
+        and anything it would send, post or delete waits for your YES.
       </Muted>
-      {initial === null ? (
-        <Muted>Your Google accounts didn&rsquo;t load just now. Refresh to try again.</Muted>
-      ) : (
-        accounts.length > 0 && (
-          <ul className="grid gap-3">
-            {accounts.map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 break-words text-[15px]">
-                  {a.email}
-                  {accounts.length > 1 && a.isDefault && (
-                    <span className="ml-2 text-sm text-landing-muted">main</span>
+
+      {/* Google: as many accounts as they like, each with its own tag. */}
+      <div id="google" className="grid scroll-mt-32 gap-3">
+        <div className="flex items-center gap-3">
+          <GoogleLogo />
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold">Google</p>
+            <p className="text-sm text-landing-muted">Gmail, Calendar, Contacts, Drive and Tasks</p>
+          </div>
+        </div>
+        {initial === null ? (
+          <Muted>Your Google accounts didn&rsquo;t load just now. Refresh to try again.</Muted>
+        ) : (
+          accounts.length > 0 && (
+            <ul className="grid gap-2">
+              {accounts.map((a) => (
+                <li key={a.id} className="rounded-xl border border-landing-line px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <span className="flex min-w-0 flex-wrap items-center gap-2 text-[15px]">
+                      <span className="break-all">{a.email}</span>
+                      {a.label && (
+                        <span className="rounded-full bg-landing-control px-2.5 py-0.5 text-xs font-semibold">
+                          {a.label}
+                        </span>
+                      )}
+                      {accounts.length > 1 && a.isDefault && (
+                        <span className="text-sm text-landing-muted">main</span>
+                      )}
+                    </span>
+                    <span className="flex gap-4">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          setTagging(
+                            tagging?.id === a.id ? null : { id: a.id, text: a.label ?? "" },
+                          )
+                        }
+                        className={quietLink}
+                      >
+                        {a.label ? "Change tag" : "Add a tag"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void disconnect(a.id, a.email)}
+                        className={quietLink}
+                      >
+                        Disconnect
+                      </button>
+                    </span>
+                  </div>
+                  {tagging?.id === a.id && (
+                    <form
+                      className="mt-3 grid gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void saveTag(a.id, tagging.text);
+                      }}
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {TAG_IDEAS.map((idea) => (
+                          <button
+                            key={idea}
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void saveTag(a.id, idea)}
+                            className={smallButton}
+                          >
+                            {idea}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          value={tagging.text}
+                          onChange={(e) => setTagging({ id: a.id, text: e.target.value })}
+                          maxLength={24}
+                          placeholder="Or your own, like Side hustle"
+                          aria-label={`Tag for ${a.email}`}
+                          className={field}
+                        />
+                        <button type="submit" disabled={busy} className={secondaryButton}>
+                          {busy ? <Spinner /> : null}
+                          Save
+                        </button>
+                      </div>
+                      {a.label && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void saveTag(a.id, "")}
+                          className={`${quietLink} justify-self-start`}
+                        >
+                          Remove the tag
+                        </button>
+                      )}
+                    </form>
                   )}
-                </span>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void disconnect(a.id, a.email)}
-                  className={quietLink}
-                >
-                  Disconnect
-                </button>
-              </li>
-            ))}
-          </ul>
-        )
-      )}
-      <div>
-        <button
-          type="button"
-          onClick={() => void connect()}
-          disabled={busy}
-          className={secondaryButton}
-        >
-          {busy ? <Spinner /> : null}
-          {accounts.length ? "Connect another Google account" : "Connect Google"}
+                </li>
+              ))}
+            </ul>
+          )
+        )}
+        {accounts.length > 1 && (
+          <Muted>
+            Tags let you say which one: &ldquo;what&rsquo;s on my work calendar?&rdquo; or
+            &ldquo;email Sam from personal&rdquo;.
+          </Muted>
+        )}
+        <div>
+          <button
+            type="button"
+            onClick={() => void connect()}
+            disabled={busy}
+            className={secondaryButton}
+          >
+            {busy ? <Spinner /> : null}
+            {accounts.length ? "Connect another Google account" : "Connect Google"}
+          </button>
+        </div>
+      </div>
+
+      {/* Instagram: built (jarvis api instagram.ts), still being tested, so locked here. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-landing-line pt-5">
+        <div className="flex items-center gap-3">
+          <InstagramLogo />
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
+              Instagram
+              <span className="rounded-full bg-landing-control px-2.5 py-0.5 text-xs font-semibold text-landing-muted">
+                Currently testing
+              </span>
+            </p>
+            <p className="text-sm text-landing-muted">DMs, comments and posts</p>
+          </div>
+        </div>
+        <button type="button" disabled className={secondaryButton}>
+          Connect
         </button>
       </div>
       <Problem>{error}</Problem>
@@ -1117,7 +1272,7 @@ export function AccountSettings({ settings, email }: { settings: Settings; email
       <Texting initial={settings.texting} agreed={consent.given} />
       <You name={settings.name} email={email} username={settings.username} />
       <Assistant initial={settings.assistant} canAgent={Boolean(settings.usage?.agent)} />
-      <Google initial={settings.google} />
+      <Connections initial={settings.google} />
       {settings.websites && <Websites initial={settings.websites} />}
       <Privacy
         consent={consent}
