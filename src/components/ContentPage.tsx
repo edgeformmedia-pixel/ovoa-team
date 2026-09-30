@@ -19,6 +19,7 @@ export function ContentPage({
   children,
   faqs,
   related,
+  cta,
 }: {
   crumbs?: Crumb[];
   eyebrow?: string;
@@ -28,6 +29,8 @@ export function ContentPage({
   children: ReactNode;
   faqs?: Faq[];
   related?: { to: string; label: string; blurb: string }[];
+  // The page's own first button, in place of Text OVOA.
+  cta?: ReactNode;
 }) {
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
@@ -61,10 +64,12 @@ export function ContentPage({
         {updated && <p className="mt-4 text-xs text-landing-muted">Updated {updated}</p>}
 
         <div className="mt-8">
-          <TextOvoaLink className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
-            <MessageCircle className="size-5" aria-hidden="true" />
-            Text OVOA
-          </TextOvoaLink>
+          {cta ?? (
+            <TextOvoaLink className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
+              <MessageCircle className="size-5" aria-hidden="true" />
+              Text OVOA
+            </TextOvoaLink>
+          )}
         </div>
 
         <div className="content mt-12 space-y-10 text-[16px] leading-relaxed text-landing-muted [&_a]:font-semibold [&_a]:text-landing-ink [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-[1.6rem] [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-landing-ink [&_h3]:mt-6 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-landing-ink [&_li]:mt-2 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_strong]:font-semibold [&_strong]:text-landing-ink [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
