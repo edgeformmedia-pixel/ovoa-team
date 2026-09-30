@@ -184,14 +184,7 @@ function Affiliates() {
 
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/early-access"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Early access
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <section className="px-5 pb-16 pt-14 sm:px-8 sm:pt-20">
         <div className="mx-auto max-w-[1200px]">

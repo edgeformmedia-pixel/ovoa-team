@@ -371,26 +371,7 @@ function EarlyAccess() {
 
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/affiliates"
-          className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
-        >
-          Affiliates
-        </Link>
-        <Link
-          to="/account"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Account
-        </Link>
-        <a
-          href="#plans"
-          className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-        >
-          See plans
-        </a>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <section className="px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:pb-28">
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">

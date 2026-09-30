@@ -82,20 +82,7 @@ function TextPageView() {
   const needsPlan = data.state === "in" && data.paid === false && !paid;
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/text"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Just text OVOA
-        </Link>
-        <Link
-          to="/account"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Account
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
       <div className="mx-auto max-w-[480px] px-5 pb-24 pt-12 sm:pt-16">
         <Steps at={data.state !== "in" ? 1 : needsPlan ? 2 : data.linked ? 4 : 3} />
         {notice && <Notice>{notice}</Notice>}

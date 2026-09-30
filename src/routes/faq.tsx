@@ -130,14 +130,7 @@ function FaqPage() {
   const faqs = faqsFor(data);
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/early-access"
-          className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-        >
-          See plans
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <section className="px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.8fr_1.2fr]">

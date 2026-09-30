@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { SiteTabs } from "@/components/SiteTabs";
+import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { Qr, pretty, smsHref, smsQr, useDevice } from "@/components/texting";
 
 // The whole front door: one line and one blue button that opens Messages with
@@ -29,12 +29,8 @@ export function TextButtonPage({
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-5 text-[#060606]">
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 sm:px-8">
-        <span className="text-sm font-bold tracking-[0.12em]">OVOA</span>
-        <SiteTabs tone="plain" />
-        <Link to="/account" className="text-xs text-neutral-500">
-          Account
-        </Link>
+      <div className="absolute inset-x-0 top-0">
+        <MembershipHeader />
       </div>
       <div className="flex w-full max-w-[360px] flex-col items-center text-center">
         <h1 className="text-[34px] font-semibold leading-tight">Just text OVOA.</h1>

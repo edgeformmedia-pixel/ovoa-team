@@ -52,14 +52,7 @@ const formatDate = (value: string | null) => {
 function Shell({ children }: { children: ReactNode }) {
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <a
-          href="mailto:support@ovoa.ai"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Help
-        </a>
-      </MembershipHeader>
+      <MembershipHeader />
       <div className="mx-auto max-w-[620px] px-5 pb-24 pt-12 sm:pt-16">{children}</div>
     </main>
   );

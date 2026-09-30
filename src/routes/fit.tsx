@@ -66,20 +66,7 @@ function FitPage() {
   const price = bandPrice(data);
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/text"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Text OVOA
-        </Link>
-        <Link
-          to="/checkout"
-          className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-        >
-          Buy
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <section className="px-6 pb-16 pt-16 text-center sm:pt-24">
         <div className="mx-auto max-w-3xl">

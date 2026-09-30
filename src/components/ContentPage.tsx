@@ -30,20 +30,7 @@ export function ContentPage({
 }) {
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/early-access"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Plans
-        </Link>
-        <Link
-          to="/text"
-          className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-        >
-          Text OVOA
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <article className="mx-auto max-w-[760px] px-5 pb-10 pt-10 sm:px-8 sm:pt-14">
         {crumbs && crumbs.length > 0 && (

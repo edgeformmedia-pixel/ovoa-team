@@ -14,6 +14,7 @@ import {
 import OvoaIphoneDemo, { type DemoStep } from "@/components/OvoaIphoneDemo";
 import { HowItWorksDemo } from "@/components/HowItWorksDemo";
 import { ScrollScrubVideo } from "@/components/ScrollScrubVideo";
+import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import bandFront from "@/assets/product/band-front-cutout.webp";
 import bandProfile from "@/assets/product/band-profile-cutout.webp";
@@ -184,51 +185,7 @@ function Landing() {
   const base = perLabel(planOf(data, "base", "monthly"));
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <header className="h-14 border-b border-landing-line sm:h-16">
-        <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-5 sm:px-10 lg:px-14">
-          <nav aria-label="Main navigation" className="flex h-full items-center gap-6 sm:gap-10">
-            <Link
-              to="/"
-              className="relative flex h-full items-center text-xs font-medium text-landing-ink after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-landing-ink"
-            >
-              Collection
-            </Link>
-            <Link
-              to="/fit"
-              className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-            >
-              OVOA Fit
-            </Link>
-            <Link
-              to="/early-access"
-              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
-            >
-              Plans
-            </Link>
-            <Link
-              to="/faq"
-              className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-            >
-              Support
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-5 sm:gap-7">
-            <Link
-              to="/account"
-              className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
-            >
-              Account
-            </Link>
-            <Link
-              to="/text"
-              className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-            >
-              Text OVOA
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MembershipHeader />
 
       <section className="px-6 pb-16 pt-14 text-center sm:pb-24 sm:pt-20">
         <div className="mx-auto max-w-4xl">

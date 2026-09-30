@@ -53,14 +53,7 @@ function OrderComplete() {
 
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <a
-          href="mailto:support@ovoa.ai"
-          className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          Help
-        </a>
-      </MembershipHeader>
+      <MembershipHeader />
       <div className="mx-auto max-w-[480px] px-5 py-16 text-center">
         {status.state === "loading" && (
           <p className="flex items-center justify-center gap-2 text-sm text-landing-muted">

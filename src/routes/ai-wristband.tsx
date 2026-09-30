@@ -82,14 +82,7 @@ function WristbandPage() {
   const band = bandPrice(data);
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
-      <MembershipHeader>
-        <Link
-          to="/checkout"
-          className="inline-flex h-9 items-center rounded-full bg-landing-action px-4 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-        >
-          Buy OVOA Fit
-        </Link>
-      </MembershipHeader>
+      <MembershipHeader />
 
       <section className="px-6 py-16 sm:px-10 sm:py-24 lg:px-14">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
