@@ -75,6 +75,7 @@ function i18nSources(): string[] {
     /\p{L}{2}/u.test(s) &&
     !/^(https?:|mailto:|sms:|tel:|\/|#|@|\.)/.test(s) &&
     !/^[\w.-]+@[\w.-]+$/.test(s) &&
+    !/^&#?\w+;$/.test(s) &&
     !codeLike(s) &&
     !/^[A-Z0-9_]+$/.test(s) &&
     // camelCase and PascalCase names (FormControl, FAQPage).
