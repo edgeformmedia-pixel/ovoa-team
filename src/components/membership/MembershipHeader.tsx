@@ -2,7 +2,13 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SiteTabs } from "@/components/SiteTabs";
 
-export function MembershipHeader({ children }: { children?: ReactNode }) {
+export function MembershipHeader({
+  children,
+  hideText = false,
+}: {
+  children?: ReactNode;
+  hideText?: boolean;
+}) {
   return (
     <header className="sticky top-0 z-20 border-b border-landing-line bg-landing-canvas/90 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-4 px-5 sm:px-8">
@@ -29,12 +35,14 @@ export function MembershipHeader({ children }: { children?: ReactNode }) {
           >
             Account
           </Link>
-          <Link
-            to="/text"
-            className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-          >
-            Text OVOA
-          </Link>
+          {!hideText && (
+            <Link
+              to="/text"
+              className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+            >
+              Text OVOA
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex justify-center border-t border-landing-line/60 py-1.5 sm:hidden">

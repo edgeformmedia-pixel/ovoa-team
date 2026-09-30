@@ -30,7 +30,7 @@ export function TextButtonPage({
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-5 text-[#060606]">
       <div className="absolute inset-x-0 top-0">
-        <MembershipHeader />
+        <MembershipHeader hideText />
       </div>
       <div className="flex w-full max-w-[360px] flex-col items-center text-center">
         <h1 className="text-[34px] font-semibold leading-tight">Just text OVOA.</h1>
