@@ -263,7 +263,7 @@ function AppPage() {
               </>
             )}
           </Step>
-          <Step n={3} title="Open OVOA and sign in" icon="/img/ovoa-app-icon.svg">
+          <Step n={3} title="Open OVOA and sign in" icon="/img/ovoa-app-icon.png">
             Use your email. New to OVOA? The app makes your free account, or{" "}
             <a href="/account">make it here first</a>.
           </Step>
