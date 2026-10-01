@@ -5,7 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 //
 //   { plan: "base_monthly" | ... }   Base, Plus or Pro, from /early-access. Stripe
 //                                    finishes on /early-access/welcome, or
-//                                    back on /text/link with { from: "text" }.
+//                                    back on /text/link with { from: "text" }, or on
+//                                    /join with { from: "join" }.
 //   { ai?: boolean }                 OVOA Fit, from /checkout: with Base's free
 //                                    days (ai true, the default) or "OVOA Fit only".
 //                                    Stripe finishes on /order-complete.
@@ -42,7 +43,7 @@ async function createSession(request: Request): Promise<Response> {
         ? {
             band: false,
             plan: body.plan,
-            ...(body.from === "text" ? { from: "text" as const } : {}),
+            ...(body.from === "text" || body.from === "join" ? { from: body.from } : {}),
           }
         : { band: true, withAi: body.ai !== false },
       { ref, embedded: true },

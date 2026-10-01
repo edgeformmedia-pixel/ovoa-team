@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, MessageCircle } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { EmbeddedCheckout } from "@/components/membership/EmbeddedCheckout";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
+import { PickPlan } from "@/components/membership/PickPlan";
 import {
   type Device,
   Qr,
@@ -23,9 +23,7 @@ import {
   type Linked,
   type TextPage,
 } from "@/lib/account/texting.functions";
-import { PLAN_BLURBS, PLAN_NAMES, isSold, perLabel, planOf } from "@/lib/membership/copy";
 import { getPlans } from "@/lib/membership/membership.functions";
-import type { PaidTier, PlansResult } from "@/lib/membership/plans";
 
 // /text/link: link your number to an OVOA account (reached from /text, which
 // now lets anyone just text OVOA). Sign in with Apple or Google, pick Base, Plus or Pro
@@ -94,7 +92,11 @@ function TextPageView() {
           <Notice>We can&rsquo;t reach OVOA right now. Try again in a minute.</Notice>
         )}
         {data.state === "in" &&
-          (needsPlan ? <PickPlan plans={plans} name={data.name} /> : <Connect data={data} />)}
+          (needsPlan ? (
+            <PickPlan plans={plans} name={data.name} from="text" />
+          ) : (
+            <Connect data={data} />
+          ))}
       </div>
     </main>
   );
@@ -194,71 +196,6 @@ function SignInButton({
     <button type="button" disabled title="Coming soon" className={`${style} opacity-50`}>
       {children}
     </button>
-  );
-}
-
-// ---------- 2. Plan ----------
-
-function PickPlan({ plans, name }: { plans: PlansResult; name: string }) {
-  const [tier, setTier] = useState<PaidTier | null>(null);
-  const first = name.split(" ")[0];
-  if (tier) {
-    const plan = planOf(plans, tier, "monthly");
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => setTier(null)}
-          className="mt-8 text-sm font-medium text-landing-muted transition-colors hover:text-landing-ink"
-        >
-          &larr; Plans
-        </button>
-        <h1 className="mt-3 text-2xl font-semibold">
-          OVOA {PLAN_NAMES[tier]}, {perLabel(plan)}
-        </h1>
-        <p className="mt-1 text-sm text-landing-muted">Cancel anytime.</p>
-        <div className="mt-6 rounded-[1.25rem] bg-white p-2">
-          <EmbeddedCheckout order={{ plan: plan.id, from: "text" }} />
-        </div>
-      </>
-    );
-  }
-  return (
-    <>
-      <h1 className="mt-8 text-[clamp(2rem,6vw,2.75rem)] font-semibold leading-[1.05]">
-        Pick a plan{first ? `, ${first}` : ""}.
-      </h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-landing-muted">
-        Texting OVOA is the assistant, and the assistant comes with Base, Plus or Pro. Pay here, then add
-        your number. No app needed.
-      </p>
-      {!plans.configured && (
-        <Notice>Plans open shortly. Check back in a little while, or email support@ovoa.ai.</Notice>
-      )}
-      <div className="mt-8 grid gap-3">
-        {(["base", "plus", "pro"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            disabled={!isSold(plans, t, "monthly")}
-            onClick={() => setTier(t)}
-            className="rounded-2xl border border-landing-line p-5 text-left transition-colors hover:border-landing-action disabled:pointer-events-none disabled:opacity-50"
-          >
-            <span className="flex items-baseline justify-between gap-3">
-              <span className="text-lg font-semibold">OVOA {PLAN_NAMES[t]}</span>
-              <span className="text-sm font-semibold">{perLabel(planOf(plans, t, "monthly"))}</span>
-            </span>
-            <span className="mt-1 block text-sm text-landing-muted">{PLAN_BLURBS[t]}</span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-5 text-center text-xs leading-relaxed text-landing-muted">
-        Already paid with another email?{" "}
-        <Link to="/account" className="underline underline-offset-2">
-          Your account
-        </Link>
-      </p>
-    </>
   );
 }
 

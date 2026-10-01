@@ -27,8 +27,9 @@ import { stripe } from "./stripe.server";
 import { loadPrices } from "./sync.server";
 
 // `from: "text"`: bought on /text/link, so Stripe sends them back there to add their number.
+// `from: "join"`: bought on /join (the link a trial number is texted), so back there and on to Messages.
 export type CheckoutOrder =
-  { band: true; withAi: boolean } | { band: false; plan: PlanId; from?: "text" };
+  { band: true; withAi: boolean } | { band: false; plan: PlanId; from?: "text" | "join" };
 
 // url is set for the hosted page, client_secret for the embedded one.
 export type CheckoutSession = { id: string; url: string | null; client_secret: string | null };
@@ -65,9 +66,11 @@ export async function createCheckoutSession(
         // straight to setting up the app, which waits for the payment.
         return_url: order.band
           ? `${origin}/order-complete?session_id={CHECKOUT_SESSION_ID}`
-          : order.from === "text"
-            ? `${origin}/text/link?paid={CHECKOUT_SESSION_ID}`
-            : welcome,
+          : order.from === "join"
+            ? `${origin}/join?paid={CHECKOUT_SESSION_ID}`
+            : order.from === "text"
+              ? `${origin}/text/link?paid={CHECKOUT_SESSION_ID}`
+              : welcome,
       }
     : {
         success_url: welcome,
@@ -84,8 +87,12 @@ export async function createCheckoutSession(
     ...(email ? { customer_email: email } : {}),
     metadata,
   };
+  // Paid from the link OVOA texted: no app to set up, just back to the conversation.
+  const fromJoin = !order.band && order.from === "join";
   const afterSubmit = {
-    message: "Next, we'll show you how to put OVOA on your iPhone. It takes about a minute.",
+    message: fromJoin
+      ? "Next, back to Messages. OVOA keeps everything from your conversation so far."
+      : "Next, we'll show you how to put OVOA on your iPhone. It takes about a minute.",
   };
 
   if (!order.band) {
