@@ -148,3 +148,40 @@ export const getPublicTextNumber = createServerFn({ method: "GET" }).handler(
     }
   },
 );
+
+export type Joined =
+  { ok: true; phone: string; number: string | null } | { ok: false; error: string };
+
+// ovoa.ai/join?id=…: the link OVOA texts a trial number when its free texts
+// run out. Signed in, this links that number to the account (jarvis-api
+// POST /texting/join), and what the trial made comes along.
+export const joinText = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "").slice(0, 64) }))
+  .handler(async ({ data }): Promise<Joined> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { accountApiUrl, sameOrigin, sessionToken } = await import("./account.server");
+    const request = getRequest();
+    if (!sameOrigin(request)) return { ok: false, error: "Open the link OVOA texted you again." };
+    const token = sessionToken(request);
+    if (!token) return { ok: false, error: "You're signed out. Sign in again." };
+    try {
+      const res = await fetch(`${accountApiUrl()}/texting/join`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ id: data.id }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const body = (await res.json().catch(() => ({}))) as Partial<{
+        phone: string;
+        number: string | null;
+        error: string;
+      }>;
+      if (res.status === 429) return { ok: false, error: "Too many tries. Wait a few minutes." };
+      if (!res.ok || !body.phone)
+        return { ok: false, error: body.error ?? "That didn't work. Try again." };
+      return { ok: true, phone: body.phone, number: body.number ?? null };
+    } catch (error) {
+      console.error("[join] POST /texting/join", error);
+      return { ok: false, error: "Can't reach OVOA right now. Try again in a minute." };
+    }
+  });

@@ -18,6 +18,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FitRouteImport } from './routes/fit'
 import { Route as ImessageRouteImport } from './routes/imessage'
+import { Route as JoinRouteImport } from './routes/join'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -98,6 +99,11 @@ const FitRoute = FitRouteImport.update({
 const ImessageRoute = ImessageRouteImport.update({
   id: '/imessage',
   path: '/imessage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinRoute = JoinRouteImport.update({
+  id: '/join',
+  path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LandingRoute = LandingRouteImport.update({
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
+  '/join': typeof JoinRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
@@ -345,6 +352,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
+  '/join': typeof JoinRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
   '/imessage': typeof ImessageRoute
+  '/join': typeof JoinRoute
   '/landing': typeof LandingRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/mcp': typeof McpRoute
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/fit'
     | '/imessage'
+    | '/join'
     | '/landing'
     | '/llms.txt'
     | '/mcp'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/fit'
     | '/imessage'
+    | '/join'
     | '/landing'
     | '/llms.txt'
     | '/mcp'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/fit'
     | '/imessage'
+    | '/join'
     | '/landing'
     | '/llms.txt'
     | '/mcp'
@@ -584,6 +596,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   FitRoute: typeof FitRoute
   ImessageRoute: typeof ImessageRoute
+  JoinRoute: typeof JoinRoute
   LandingRoute: typeof LandingRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   McpRoute: typeof McpRoute
@@ -685,6 +698,13 @@ declare module '@tanstack/react-router' {
       path: '/imessage'
       fullPath: '/imessage'
       preLoaderRoute: typeof ImessageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join': {
+      id: '/join'
+      path: '/join'
+      fullPath: '/join'
+      preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/landing': {
@@ -952,6 +972,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   FitRoute: FitRoute,
   ImessageRoute: ImessageRoute,
+  JoinRoute: JoinRoute,
   LandingRoute: LandingRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   McpRoute: McpRoute,
