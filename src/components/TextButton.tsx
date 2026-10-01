@@ -48,7 +48,7 @@ export function TextButtonPage({
   }, [autoOpen, number, device, hello]);
 
   return (
-    <main className="flex min-h-dvh flex-col items-center bg-white text-[#060606]">
+    <main className="flex min-h-dvh flex-col items-center bg-gradient-to-b from-white from-60% to-[#e5e5ea] text-[#060606]">
       <div className="w-full">
         <MembershipHeader hideText />
       </div>
@@ -74,9 +74,9 @@ export function TextButtonPage({
           <a
             href={smsHref(number, hello, device)}
             data-track="Text OVOA"
-            className="mt-8 flex h-14 w-full items-center justify-center rounded-full bg-[#0a84ff] text-[17px] font-semibold text-white"
+            className="mt-8 flex h-[72px] w-full animate-[ovoa-nudge_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full bg-[#0a84ff] text-[22px] font-bold text-white shadow-[0_10px_30px_rgba(10,132,255,0.45)] ring-4 ring-[#0a84ff]/15 transition active:scale-95"
           >
-            Text OVOA
+            Text OVOA <span aria-hidden="true">→</span>
           </a>
         ) : device === "desktop" ? (
           <div className="mt-8 flex flex-col items-center">
@@ -91,7 +91,7 @@ export function TextButtonPage({
 
         <Link
           to="/landing"
-          className="mt-5 text-lg font-medium text-[#060606] underline underline-offset-4"
+          className="mt-9 text-sm text-neutral-500 underline underline-offset-4"
         >
           More
         </Link>
@@ -118,7 +118,7 @@ export function TextButtonPage({
         )}
       </div>
 
-      <nav className="flex flex-col items-center gap-3 pb-6 text-neutral-400">
+      <nav className="flex flex-col items-center gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-neutral-500">
         <div className="flex gap-4 text-xs">
           <Link to="/early-access">Plans</Link>
           <Link to="/privacy">Privacy</Link>
@@ -137,7 +137,7 @@ function Example() {
       aria-label="An example: you text “Find a time for coffee with Sam next week and send the invite.” OVOA replies “Sam’s free Tuesday at 10 or Thursday at 2. Which works for you?”"
       className="mt-7 flex w-full flex-col gap-1.5 text-left text-[15px] leading-snug"
     >
-      <p className="max-w-[82%] self-end rounded-[20px] rounded-br-md bg-[#0a84ff] px-3.5 py-2 text-white">
+      <p className="max-w-[82%] self-end rounded-[20px] rounded-br-md bg-[#d6e8ff] px-3.5 py-2 text-[#1c3d66]">
         Find a time for coffee with Sam next week and send the invite.
       </p>
       <p className="max-w-[82%] self-start rounded-[20px] rounded-bl-md bg-[#e9e9eb] px-3.5 py-2">
@@ -155,7 +155,7 @@ function FollowThroughExample() {
       aria-label="An example: you text “Remind me to call the dentist Thursday morning.” OVOA replies “Done. I’ll text you Thursday at 9.” Then on Thursday at 9:00 AM OVOA texts “It’s 9. Time to call the dentist.”"
       className="mt-7 flex w-full flex-col gap-1.5 text-left text-[15px] leading-snug"
     >
-      <p className="max-w-[82%] self-end rounded-[20px] rounded-br-md bg-[#0a84ff] px-3.5 py-2 text-white">
+      <p className="max-w-[82%] self-end rounded-[20px] rounded-br-md bg-[#d6e8ff] px-3.5 py-2 text-[#1c3d66]">
         Remind me to call the dentist Thursday morning.
       </p>
       <p className="max-w-[82%] self-start rounded-[20px] rounded-bl-md bg-[#e9e9eb] px-3.5 py-2">

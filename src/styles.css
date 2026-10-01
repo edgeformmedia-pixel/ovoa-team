@@ -1227,3 +1227,12 @@
 .clear-text .band-composer input::placeholder {
   opacity: 0.55;
 }
+
+/* The front door's Text OVOA button breathes a little so the eye lands on it. */
+@keyframes ovoa-nudge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="ovoa-nudge"] { animation: none !important; }
+}
