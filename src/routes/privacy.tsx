@@ -124,7 +124,8 @@ function Privacy() {
           Apple Health, and heart rate from OVOA Fit. The heart rate, daily steps and workouts it
           reads are synced to OVOA to show your trends and answer your questions, and deleted after
           14 days (the day summaries stay). Only the numbers a reply needs go to the AI. We never
-          use health data for ads or marketing, and OVOA doesn&rsquo;t write to Apple Health. This
+          use health data for ads or marketing. If you allow it, OVOA writes one thing to Apple Health:
+          the heart rate OVOA Fit measures. This
           is for your own picture of how you&rsquo;re doing, not a medical record, and OVOA is not a
           medical device.
         </p>
@@ -411,7 +412,7 @@ function Privacy() {
       <section>
         <h2>Children</h2>
         <p>
-          OVOA is not meant for children under 13, and we don&rsquo;t knowingly collect their data.
+          OVOA is only for people 18 and older, and we don&rsquo;t knowingly collect data from anyone younger.
         </p>
       </section>
 
