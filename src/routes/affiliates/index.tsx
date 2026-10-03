@@ -61,6 +61,7 @@ function earnings(bandCents: number) {
     {
       title: "Plus a CPM",
       copy: "We also pay per 1,000 views of your posts about OVOA. Your rate is agreed when you're approved.",
+      apply: true,
     },
   ];
 }
@@ -206,6 +207,11 @@ function Affiliates() {
               <article key={t.title} className="rounded-[1.75rem] bg-landing-control/70 p-7">
                 <h3 className="text-xl font-semibold">{t.title}</h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-landing-muted">{t.copy}</p>
+                {"apply" in t && (
+                  <a href="#apply" className="mt-3 inline-block text-[15px] font-semibold underline underline-offset-4">
+                    Apply to get your rate
+                  </a>
+                )}
               </article>
             ))}
           </div>

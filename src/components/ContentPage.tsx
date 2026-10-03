@@ -99,8 +99,8 @@ export function ContentPage({
         <section className="mt-16 rounded-3xl bg-landing-control px-6 py-8 text-center sm:px-10">
           <h2 className="text-2xl font-semibold">Try it in Messages.</h2>
           <p className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-landing-muted">
-            Text OVOA like you&rsquo;d text a friend. The first texts are free, with no app and no
-            sign-up.
+            Text OVOA like you&rsquo;d text a friend. Your first 15 texts are free, with no app and
+            no sign-up.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <TextOvoaLink className="inline-flex h-11 items-center gap-2 rounded-full bg-[#0a84ff] px-6 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5">

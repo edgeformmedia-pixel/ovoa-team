@@ -115,7 +115,12 @@ export const startTextLink = createServerFn({ method: "POST" }).handler(
       if (res.status === 429)
         return { ok: false, error: "Too many codes. Wait a few minutes and try again." };
       if (!res.ok || !body.number || !body.body)
-        return { ok: false, error: body.error ?? "That didn't work. Try again." };
+        return {
+          ok: false,
+          // A coded answer (needs_plan, …) isn't a sentence to show.
+          error:
+            body.error && !/^[a-z_]+$/.test(body.error) ? body.error : "That didn't work. Try again.",
+        };
       return { ok: true, number: body.number, body: body.body, expiresAt: body.expiresAt ?? 0 };
     } catch (error) {
       console.error("[text] POST /texting/link", error);
