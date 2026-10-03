@@ -412,7 +412,7 @@ function Privacy() {
       <section>
         <h2>Children</h2>
         <p>
-          OVOA is not meant for children under 13, and we don&rsquo;t knowingly collect their data.
+          OVOA is only for people 18 and older, and we don&rsquo;t knowingly collect data from anyone younger.
         </p>
       </section>
 

@@ -126,7 +126,7 @@ function Terms() {
       <section>
         <h2>Using OVOA</h2>
         <ul>
-          <li>You must be at least 13, and old enough to agree to these terms where you live.</li>
+          <li>You must be at least 18 to use OVOA.</li>
           <li>Keep your password to yourself. You&rsquo;re responsible for your account.</li>
           <li>
             Don&rsquo;t use OVOA to break the law, to harm or harass anyone, or to record people
