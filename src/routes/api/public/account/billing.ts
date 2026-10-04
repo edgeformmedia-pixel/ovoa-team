@@ -16,9 +16,6 @@ export const Route = createFileRoute("/api/public/account/billing")({
         const { stripe } = await import("@/lib/membership/stripe.server");
 
         const account = `${new URL(request.url).origin}/account`;
-        // "Cancel plan" posts intent=cancel: straight to Stripe's one-step
-        // cancel confirmation instead of the full portal.
-        const cancel = new URLSearchParams(await request.clone().text()).get("intent") === "cancel";
         if (!sameOrigin(request)) return new Response("Forbidden", { status: 403 });
         const token = sessionToken(request);
         const found = token ? await lookupAccount(token) : null;
@@ -43,20 +40,6 @@ export const Route = createFileRoute("/api/public/account/billing")({
             customer: member.stripe_customer_id,
             return_url: account,
             configuration: config?.id,
-            flow_data:
-              cancel &&
-              member.stripe_subscription_id &&
-              isEntitled(member.status) &&
-              !member.cancel_at_period_end
-                ? {
-                    type: "subscription_cancel",
-                    subscription_cancel: { subscription: member.stripe_subscription_id },
-                    after_completion: {
-                      type: "redirect",
-                      redirect: { return_url: `${account}?error=canceled` },
-                    },
-                  }
-                : undefined,
           });
           return Response.redirect(portal.url, 303);
         } catch (error) {

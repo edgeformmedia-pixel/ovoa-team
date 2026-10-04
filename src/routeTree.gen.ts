@@ -14,7 +14,6 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AiWristbandRouteImport } from './routes/ai-wristband'
 import { Route as AppRouteImport } from './routes/app'
-import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FitRouteImport } from './routes/fit'
@@ -47,7 +46,6 @@ import { Route as ApiPublicTRouteImport } from './routes/api/public/t'
 import { Route as ApiPublicAccountAppleRouteImport } from './routes/api/public/account/apple'
 import { Route as ApiPublicAccountAppleCallbackRouteImport } from './routes/api/public/account/apple-callback'
 import { Route as ApiPublicAccountBillingRouteImport } from './routes/api/public/account/billing'
-import { Route as ApiPublicAccountClaimRouteImport } from './routes/api/public/account/claim'
 import { Route as ApiPublicAccountGoogleRouteImport } from './routes/api/public/account/google'
 import { Route as ApiPublicAccountGoogleCallbackRouteImport } from './routes/api/public/account/google-callback'
 import { Route as ApiPublicAccountSessionRouteImport } from './routes/api/public/account/session'
@@ -81,11 +79,6 @@ const AiWristbandRoute = AiWristbandRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CancelRoute = CancelRouteImport.update({
-  id: '/cancel',
-  path: '/cancel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -250,11 +243,6 @@ const ApiPublicAccountBillingRoute = ApiPublicAccountBillingRouteImport.update({
   path: '/api/public/account/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAccountClaimRoute = ApiPublicAccountClaimRouteImport.update({
-  id: '/api/public/account/claim',
-  path: '/api/public/account/claim',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicAccountGoogleRoute = ApiPublicAccountGoogleRouteImport.update({
   id: '/api/public/account/google',
   path: '/api/public/account/google',
@@ -312,7 +300,6 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
   '/app': typeof AppRoute
-  '/cancel': typeof CancelRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
@@ -345,7 +332,6 @@ export interface FileRoutesByFullPath {
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
-  '/api/public/account/claim': typeof ApiPublicAccountClaimRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
   '/api/public/account/session': typeof ApiPublicAccountSessionRoute
@@ -362,7 +348,6 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
   '/app': typeof AppRoute
-  '/cancel': typeof CancelRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
@@ -395,7 +380,6 @@ export interface FileRoutesByTo {
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
-  '/api/public/account/claim': typeof ApiPublicAccountClaimRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
   '/api/public/account/session': typeof ApiPublicAccountSessionRoute
@@ -413,7 +397,6 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/ai-wristband': typeof AiWristbandRoute
   '/app': typeof AppRoute
-  '/cancel': typeof CancelRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
   '/fit': typeof FitRoute
@@ -446,7 +429,6 @@ export interface FileRoutesById {
   '/api/public/account/apple': typeof ApiPublicAccountAppleRoute
   '/api/public/account/apple-callback': typeof ApiPublicAccountAppleCallbackRoute
   '/api/public/account/billing': typeof ApiPublicAccountBillingRoute
-  '/api/public/account/claim': typeof ApiPublicAccountClaimRoute
   '/api/public/account/google': typeof ApiPublicAccountGoogleRoute
   '/api/public/account/google-callback': typeof ApiPublicAccountGoogleCallbackRoute
   '/api/public/account/session': typeof ApiPublicAccountSessionRoute
@@ -465,7 +447,6 @@ export interface FileRouteTypes {
     | '/account'
     | '/ai-wristband'
     | '/app'
-    | '/cancel'
     | '/checkout'
     | '/faq'
     | '/fit'
@@ -498,7 +479,6 @@ export interface FileRouteTypes {
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
-    | '/api/public/account/claim'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
     | '/api/public/account/session'
@@ -515,7 +495,6 @@ export interface FileRouteTypes {
     | '/account'
     | '/ai-wristband'
     | '/app'
-    | '/cancel'
     | '/checkout'
     | '/faq'
     | '/fit'
@@ -548,7 +527,6 @@ export interface FileRouteTypes {
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
-    | '/api/public/account/claim'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
     | '/api/public/account/session'
@@ -565,7 +543,6 @@ export interface FileRouteTypes {
     | '/account'
     | '/ai-wristband'
     | '/app'
-    | '/cancel'
     | '/checkout'
     | '/faq'
     | '/fit'
@@ -598,7 +575,6 @@ export interface FileRouteTypes {
     | '/api/public/account/apple'
     | '/api/public/account/apple-callback'
     | '/api/public/account/billing'
-    | '/api/public/account/claim'
     | '/api/public/account/google'
     | '/api/public/account/google-callback'
     | '/api/public/account/session'
@@ -616,7 +592,6 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AiWristbandRoute: typeof AiWristbandRoute
   AppRoute: typeof AppRoute
-  CancelRoute: typeof CancelRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
   FitRoute: typeof FitRoute
@@ -649,7 +624,6 @@ export interface RootRouteChildren {
   ApiPublicAccountAppleRoute: typeof ApiPublicAccountAppleRoute
   ApiPublicAccountAppleCallbackRoute: typeof ApiPublicAccountAppleCallbackRoute
   ApiPublicAccountBillingRoute: typeof ApiPublicAccountBillingRoute
-  ApiPublicAccountClaimRoute: typeof ApiPublicAccountClaimRoute
   ApiPublicAccountGoogleRoute: typeof ApiPublicAccountGoogleRoute
   ApiPublicAccountGoogleCallbackRoute: typeof ApiPublicAccountGoogleCallbackRoute
   ApiPublicAccountSessionRoute: typeof ApiPublicAccountSessionRoute
@@ -696,13 +670,6 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cancel': {
-      id: '/cancel'
-      path: '/cancel'
-      fullPath: '/cancel'
-      preLoaderRoute: typeof CancelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -929,13 +896,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAccountBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/account/claim': {
-      id: '/api/public/account/claim'
-      path: '/api/public/account/claim'
-      fullPath: '/api/public/account/claim'
-      preLoaderRoute: typeof ApiPublicAccountClaimRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/account/google': {
       id: '/api/public/account/google'
       path: '/api/public/account/google'
@@ -1008,7 +968,6 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   AiWristbandRoute: AiWristbandRoute,
   AppRoute: AppRoute,
-  CancelRoute: CancelRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
   FitRoute: FitRoute,
@@ -1042,7 +1001,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAccountAppleRoute: ApiPublicAccountAppleRoute,
   ApiPublicAccountAppleCallbackRoute: ApiPublicAccountAppleCallbackRoute,
   ApiPublicAccountBillingRoute: ApiPublicAccountBillingRoute,
-  ApiPublicAccountClaimRoute: ApiPublicAccountClaimRoute,
   ApiPublicAccountGoogleRoute: ApiPublicAccountGoogleRoute,
   ApiPublicAccountGoogleCallbackRoute: ApiPublicAccountGoogleCallbackRoute,
   ApiPublicAccountSessionRoute: ApiPublicAccountSessionRoute,
