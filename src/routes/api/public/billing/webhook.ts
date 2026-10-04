@@ -17,6 +17,9 @@ import { createFileRoute } from "@tanstack/react-router";
 // charge.refunded marks an OVOA Fit order refunded and voids partner
 // commission on the refunded money.
 //
+// The Stripe account is shared with other products, so each handler skips
+// anything that isn't an OVOA price or an OVOA checkout (sync.server.ts).
+//
 // Every handler is idempotent, so Stripe's retries and duplicate deliveries are
 // harmless. A 500 makes Stripe retry for up to three days.
 
@@ -53,7 +56,7 @@ export const Route = createFileRoute("/api/public/billing/webhook")({
             case "customer.subscription.created":
             case "customer.subscription.updated":
             case "customer.subscription.deleted":
-              await sync.syncSubscription(object.id);
+              await sync.syncSubscriptionEvent(object.id);
               break;
             case "invoice.paid":
               await sync.handleInvoicePaid(event.data.object);

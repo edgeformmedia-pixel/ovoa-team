@@ -166,6 +166,33 @@ function billingOf(price: StripePrice | undefined): { plan: MemberPlan; tier: Pa
   return { plan: price?.recurring?.interval === "year" ? "annual" : "monthly", tier };
 }
 
+// This Stripe account also sells other products, and the webhook hears about
+// all of them. A subscription or checkout is OVOA's only if one of its prices is
+// an OVOA price (ovoa_* lookup key, which includes the old ovoa_member_*) or the
+// checkout that made it tagged it with an OVOA plan, an OVOA Fit or its checkout
+// session. Anything else is somebody else's sale: never written to members or
+// band_orders, and never sent a TestFlight invite.
+function isOvoaSubscription(sub: StripeSubscription): boolean {
+  const meta = sub.metadata ?? {};
+  return (
+    sub.items.data.some((i) => tierOf(i.price?.lookup_key) !== null) ||
+    isPlanId(meta["plan"]) ||
+    meta["band"] === "1" ||
+    Boolean(meta["checkout_session"])
+  );
+}
+
+function isOvoaCheckout(session: StripeCheckoutSession): boolean {
+  return (
+    isBandCheckout(session) ||
+    isPlanId(session.metadata?.["plan"]) ||
+    Boolean(session.line_items?.data.some((li) => tierOf(li.price?.lookup_key) !== null)) ||
+    (typeof session.subscription === "object" &&
+      session.subscription !== null &&
+      isOvoaSubscription(session.subscription))
+  );
+}
+
 // ---------- Members ----------
 
 async function insertOrUpdate(
@@ -246,6 +273,14 @@ export async function syncSubscription(
     },
   );
   return syncTestflight(member);
+}
+
+// The webhook's subscription events: OVOA's are synced, anyone else's are
+// ignored (null), so the event is answered 200 and Stripe stops retrying it.
+export async function syncSubscriptionEvent(id: string): Promise<Member | null> {
+  const sub = await retrieveSubscription(id);
+  if (!isOvoaSubscription(sub)) return null;
+  return syncSubscription(sub);
 }
 
 // Free days that came with an OVOA Fit and haven't been started yet. `card` is the
@@ -368,6 +403,7 @@ export async function syncCheckoutSession(sessionId: string): Promise<CheckoutRe
 
 async function syncCheckout(session: StripeCheckoutSession): Promise<CheckoutResult | null> {
   if (session.status !== "complete") return null;
+  if (!isOvoaCheckout(session)) return null;
 
   const email = (
     session.customer_details?.email ??
@@ -726,8 +762,10 @@ export async function handleInvoicePaid(invoice: StripeInvoice) {
   const subscriptionId =
     idOf(invoice.subscription) ?? invoice.parent?.subscription_details?.subscription ?? null;
   if (!subscriptionId) return;
+  const sub = await retrieveSubscription(subscriptionId);
+  if (!isOvoaSubscription(sub)) return;
   // Also makes sure the member exists if this event beat the checkout one.
-  const member = await syncSubscription(subscriptionId);
+  const member = await syncSubscription(sub);
   await recordCommission(member, {
     sourceId: invoice.id,
     paymentIntentId: idOf(invoice.payment_intent),
