@@ -20,6 +20,7 @@ import {
 import type { TrialOffer } from "./email.server";
 import type { AdminInvite } from "./invites.server";
 import type { CommissionKind } from "./store.server";
+import type { PeopleOverview, PersonDetail } from "./people.server";
 
 // Server-only modules are imported inside each handler: this file also ships
 // to the browser, where the handlers are swapped for RPC calls.
@@ -1072,4 +1073,28 @@ export const setMemberAppEmail = createServerFn({ method: "POST" })
     const appEmail = !data.appEmail || data.appEmail === row.email ? null : data.appEmail;
     await store().updateMember(row.id, { app_email: appEmail });
     return { ok: true };
+  });
+
+// The People page: everyone the site has seen, with what they did and bought.
+// Read-only. `days` is how far back to look (1 to 365).
+export const getPeople = createServerFn({ method: "POST" })
+  .inputValidator(
+    adminInput((input) => {
+      const days = Number(input["days"]);
+      return { days: Number.isInteger(days) && days >= 1 && days <= 365 ? days : 30 };
+    }),
+  )
+  .handler(async ({ data }): Promise<PeopleOverview> => {
+    await requireAdmin(data.key);
+    const { loadPeople } = await import("./people.server");
+    return loadPeople(data.days);
+  });
+
+// One person's visits and what they did in each. `person` is an email or "v:<visitor id>".
+export const getPerson = createServerFn({ method: "POST" })
+  .inputValidator(adminInput((input) => ({ person: String(input["person"] ?? "").slice(0, 200) })))
+  .handler(async ({ data }): Promise<PersonDetail> => {
+    await requireAdmin(data.key);
+    const { loadPerson } = await import("./people.server");
+    return loadPerson(data.person);
   });

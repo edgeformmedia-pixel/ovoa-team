@@ -38,6 +38,7 @@ import { Route as CompareChatgptRouteImport } from './routes/compare/chatgpt'
 import { Route as CompareSiriRouteImport } from './routes/compare/siri'
 import { Route as EarlyAccessIndexRouteImport } from './routes/early-access/index'
 import { Route as EarlyAccessAdminRouteImport } from './routes/early-access/admin'
+import { Route as EarlyAccessPeopleRouteImport } from './routes/early-access/people'
 import { Route as EarlyAccessWelcomeRouteImport } from './routes/early-access/welcome'
 import { Route as TextLinkRouteImport } from './routes/text_.link'
 import { Route as ApiPublicMembershipRouteImport } from './routes/api/public/membership'
@@ -203,6 +204,11 @@ const EarlyAccessAdminRoute = EarlyAccessAdminRouteImport.update({
   path: '/early-access/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EarlyAccessPeopleRoute = EarlyAccessPeopleRouteImport.update({
+  id: '/early-access/people',
+  path: '/early-access/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EarlyAccessWelcomeRoute = EarlyAccessWelcomeRouteImport.update({
   id: '/early-access/welcome',
   path: '/early-access/welcome',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/people': typeof EarlyAccessPeopleRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
@@ -375,6 +382,7 @@ export interface FileRoutesByTo {
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/people': typeof EarlyAccessPeopleRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text/link': typeof TextLinkRoute
   '/affiliates': typeof AffiliatesIndexRoute
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   '/compare/chatgpt': typeof CompareChatgptRoute
   '/compare/siri': typeof CompareSiriRoute
   '/early-access/admin': typeof EarlyAccessAdminRoute
+  '/early-access/people': typeof EarlyAccessPeopleRoute
   '/early-access/welcome': typeof EarlyAccessWelcomeRoute
   '/text_/link': typeof TextLinkRoute
   '/affiliates/': typeof AffiliatesIndexRoute
@@ -476,6 +485,7 @@ export interface FileRouteTypes {
     | '/compare/chatgpt'
     | '/compare/siri'
     | '/early-access/admin'
+    | '/early-access/people'
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates/'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/compare/chatgpt'
     | '/compare/siri'
     | '/early-access/admin'
+    | '/early-access/people'
     | '/early-access/welcome'
     | '/text/link'
     | '/affiliates'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/compare/chatgpt'
     | '/compare/siri'
     | '/early-access/admin'
+    | '/early-access/people'
     | '/early-access/welcome'
     | '/text_/link'
     | '/affiliates/'
@@ -624,6 +636,7 @@ export interface RootRouteChildren {
   CompareChatgptRoute: typeof CompareChatgptRoute
   CompareSiriRoute: typeof CompareSiriRoute
   EarlyAccessAdminRoute: typeof EarlyAccessAdminRoute
+  EarlyAccessPeopleRoute: typeof EarlyAccessPeopleRoute
   EarlyAccessWelcomeRoute: typeof EarlyAccessWelcomeRoute
   TextLinkRoute: typeof TextLinkRoute
   AffiliatesIndexRoute: typeof AffiliatesIndexRoute
@@ -853,6 +866,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarlyAccessAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/early-access/people': {
+      id: '/early-access/people'
+      path: '/early-access/people'
+      fullPath: '/early-access/people'
+      preLoaderRoute: typeof EarlyAccessPeopleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/early-access/welcome': {
       id: '/early-access/welcome'
       path: '/early-access/welcome'
@@ -1009,6 +1029,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareChatgptRoute: CompareChatgptRoute,
   CompareSiriRoute: CompareSiriRoute,
   EarlyAccessAdminRoute: EarlyAccessAdminRoute,
+  EarlyAccessPeopleRoute: EarlyAccessPeopleRoute,
   EarlyAccessWelcomeRoute: EarlyAccessWelcomeRoute,
   TextLinkRoute: TextLinkRoute,
   AffiliatesIndexRoute: AffiliatesIndexRoute,

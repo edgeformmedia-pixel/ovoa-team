@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
@@ -212,6 +212,9 @@ function Admin() {
   return (
     <main className="min-h-dvh bg-landing-canvas text-landing-ink">
       <MembershipHeader>
+        <Link to="/early-access/people" className={smallButton}>
+          People
+        </Link>
         <button type="button" className={smallButton} onClick={() => void refresh(key)}>
           Refresh
         </button>
