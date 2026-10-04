@@ -91,6 +91,8 @@ const SEARCH_ERRORS: Record<string, string> = {
   "google-cancel": "Google sign-in was cancelled. Nothing changed.",
   "google-state": "That Google sign-in took too long or came from another tab. Try again.",
   google: "Google sign-in didn't go through. Try again, or use your email.",
+  canceled:
+    "Your plan is canceled. You keep it until the end of what you've paid for, and nothing more is charged.",
   billing: "Billing didn't open. Try again, or email support@ovoa.ai.",
 };
 
@@ -691,7 +693,9 @@ function SignedIn({
 
       <dl className="mt-8 rounded-2xl border border-landing-line px-5">
         {!settings && <Row label="Name">{data.name || "Not set"}</Row>}
-        <Row label="Email">{data.email}</Row>
+        <Row label="Email">
+          {data.email.endsWith("@phone.ovoa.ai") ? "None, your number is your account. Connect Gmail below if you like." : data.email}
+        </Row>
         <Row label="Plan">
           <span className="font-semibold">{plan.name}</span>
           <span className="mt-0.5 block text-sm text-landing-muted">{plan.detail}</span>
@@ -709,6 +713,14 @@ function SignedIn({
           <form method="post" action="/api/public/account/billing">
             <button type="submit" className={paid ? primaryButton : secondaryButton}>
               Manage billing
+            </button>
+          </form>
+        )}
+        {data.billing && paid && data.membership?.renewsAt && (
+          <form method="post" action="/api/public/account/billing">
+            <input type="hidden" name="intent" value="cancel" />
+            <button type="submit" className={secondaryButton}>
+              Cancel plan
             </button>
           </form>
         )}
