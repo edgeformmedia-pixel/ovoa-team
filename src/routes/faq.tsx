@@ -27,7 +27,7 @@ function faqsFor(data: PlansResult | undefined) {
     },
     {
       q: "Can I just text OVOA?",
-      a: `Yes. OVOA answers iMessage like a contact, with no app needed: open ovoa.ai/text on your iPhone and say hi. Your first 5 texts are free with no account, 5 more after you give it your email, then texting is part of Base (${baseMonthly}). It texts you first too, with your brief, reminders and check-ins, up to 12 a day. iMessage only, so not Android or SMS yet.`,
+      a: `Yes. OVOA answers iMessage like a contact, with no app needed: open ovoa.ai/text on your iPhone and say hi. Your first 15 texts are free with no account and nothing asked, then OVOA texts you a link to the plans (Base is ${baseMonthly}). It texts you first too, with your brief, reminders and check-ins, up to 12 a day. iMessage only, so not Android or SMS yet.`,
     },
     {
       q: "Can OVOA build me a website?",

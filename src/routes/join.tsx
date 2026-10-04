@@ -95,12 +95,16 @@ function JoinView() {
         ) : data.state === "out" ? (
           id === null ? (
             <NoLink />
+          ) : id ? (
+            <Claim id={id}>
+              <SignIn
+                apple={data.apple}
+                google={data.google}
+                price={perLabel(planOf(plans, "base", "monthly"))}
+              />
+            </Claim>
           ) : (
-            <SignIn
-              apple={data.apple}
-              google={data.google}
-              price={perLabel(planOf(plans, "base", "monthly"))}
-            />
+            <Loader2 className="mx-auto mt-16 size-6 animate-spin" aria-hidden="true" />
           )
         ) : id ? (
           <Linking id={id} data={data} plans={plans} />
@@ -144,6 +148,47 @@ function NoLink() {
   );
 }
 
+/** Signed out with the link: the number's account is signed in, no email (api/public/account/claim). */
+function Claim({ id, children }: { id: string; children: ReactNode }) {
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let stop = false;
+    fetch("/api/public/account/claim", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+      .then(async (res) => {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        if (stop) return;
+        if (!res.ok) return setError(body.error ?? "That didn't work. Try again.");
+        try {
+          localStorage.removeItem(KEY);
+        } catch {
+          // Nothing to clean up.
+        }
+        window.location.replace("/join");
+      })
+      .catch(() => !stop && setError("Can't reach OVOA right now. Try again in a minute."));
+    return () => {
+      stop = true;
+    };
+  }, [id]);
+  if (error)
+    return (
+      <>
+        <Notice>{error}</Notice>
+        {children}
+      </>
+    );
+  return (
+    <div className="mt-16 flex flex-col items-center gap-3 text-sm text-landing-muted">
+      <Loader2 className="size-6 animate-spin" aria-hidden="true" />
+      Getting your number ready&hellip;
+    </div>
+  );
+}
+
 function SignIn({ apple, google, price }: { apple: boolean; google: boolean; price: string }) {
   const button = (on: boolean, href: string, dark: boolean, children: ReactNode) => {
     const style = dark
@@ -165,8 +210,8 @@ function SignIn({ apple, google, price }: { apple: boolean; google: boolean; pri
         Keep OVOA.
       </h1>
       <p className="mt-4 text-[16px] leading-relaxed text-landing-muted">
-        Sign in so everything you&rsquo;ve texted OVOA is saved to you, then it&rsquo;s {price} for
-        Base. Your number links itself. Cancel anytime.
+        Already have an OVOA account? Sign in and your number links to it, then it&rsquo;s {price}
+        for Base. Cancel anytime.
       </p>
       <div className="mt-8 grid gap-3">
         {button(

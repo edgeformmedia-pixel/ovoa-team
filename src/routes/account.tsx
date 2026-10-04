@@ -691,7 +691,11 @@ function SignedIn({
 
       <dl className="mt-8 rounded-2xl border border-landing-line px-5">
         {!settings && <Row label="Name">{data.name || "Not set"}</Row>}
-        <Row label="Email">{data.email}</Row>
+        <Row label="Email">
+          {data.email.endsWith("@phone.ovoa.ai")
+            ? "None, your number is your account. Connect Gmail below if you like."
+            : data.email}
+        </Row>
         <Row label="Plan">
           <span className="font-semibold">{plan.name}</span>
           <span className="mt-0.5 block text-sm text-landing-muted">{plan.detail}</span>

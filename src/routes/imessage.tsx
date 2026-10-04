@@ -36,7 +36,7 @@ function faqsFor(data: PlansResult | undefined): Faq[] {
     },
     {
       q: "How much does it cost?",
-      a: `Your first 5 texts are free with no account. Give OVOA your email and you get 5 more. After that, texting is part of OVOA Base at ${base}, which also includes every other AI feature and 300,000 credits a month. Plus and Pro give you more credits.`,
+      a: `Your first 15 texts are free with no account and nothing asked. Then OVOA texts you a link to the plans: texting is part of OVOA Base at ${base}, which also includes every other AI feature and 300,000 credits a month. Plus and Pro give you more credits.`,
     },
     {
       q: "What happens to my texts?",

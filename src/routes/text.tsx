@@ -6,8 +6,8 @@ import { breadcrumbs, jsonLd, pageHead } from "@/lib/seo";
 
 // Text OVOA: the front door. No sign-in, no number to type: a phone opens
 // Messages with a ready-made hello to OVOA, a computer shows a QR code for it.
-// The first texts are free with no account; OVOA itself asks for an email and
-// then a plan as the thread goes on. Linking a number to an existing account
+// The first 15 texts are free with no account and nothing asked; then OVOA
+// texts a link to the plans (/join). Linking a number to an existing account
 // lives on /text/link. What texting OVOA can do, at length, is /imessage.
 // The page is the homepage's, in the same A/B version (lib/ab.ts).
 
