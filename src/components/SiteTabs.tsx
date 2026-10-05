@@ -1,12 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 
-// The three things OVOA is, as tabs: the iMessage bot (the front door), the
-// iPhone app, and OVOA Fit. Every page's header carries them; the tab for the
+// The three things OVOA is, as tabs: OVOA Fit (the front door), the iMessage
+// bot, and the iPhone app. Every page's header carries them; the tab for the
 // section you're in is underlined.
 const TABS = [
-  { to: "/", label: "Text OVOA", match: ["/", "/text", "/imessage", "/websites", "/compare"] },
+  { to: "/", label: "OVOA Fit", match: ["/", "/fit", "/ai-wristband", "/checkout"] },
+  { to: "/imessage", label: "Text OVOA", match: ["/text", "/imessage", "/websites", "/compare"] },
   { to: "/app", label: "OVOA app", match: ["/app"] },
-  { to: "/fit", label: "OVOA Fit", match: ["/fit", "/ai-wristband", "/checkout"] },
 ] as const;
 
 function isIn(pathname: string, match: readonly string[]) {
