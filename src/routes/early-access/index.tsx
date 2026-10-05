@@ -1,11 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ChevronDown, ChevronLeft, LockKeyhole, Minus } from "lucide-react";
 import { useRef, useState } from "react";
-import OvoaIphoneDemo from "@/components/OvoaIphoneDemo";
 import { EmbeddedCheckout } from "@/components/membership/EmbeddedCheckout";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { TASKS_SCRIPT } from "@/lib/demo-scripts";
 import { getPlans } from "@/lib/membership/membership.functions";
 import {
   FOUNDING_PRICE_LINE,
@@ -13,8 +11,6 @@ import {
   PLAN_FEATURES,
   PLAN_NAMES,
   bandPrice,
-  CREDITS_FAQ,
-  creditsLine,
   isSold,
   perLabel,
   planOf,
@@ -123,6 +119,16 @@ function priceOf(data: PlansResult, column: PlanColumn, period: BillingPeriod) {
   };
 }
 
+const TIER_BELOW: Record<PaidTier, PlanColumn> = { base: "free", plus: "base", pro: "plus" };
+
+// A plan card lists only what that plan adds over the one below it, so the
+// four cards don't repeat the same checklist.
+function featuresAdded(column: PlanColumn) {
+  if (column === "free") return PLAN_FEATURES.filter((f) => f.free !== false);
+  const below = TIER_BELOW[column];
+  return PLAN_FEATURES.filter((f) => f[column] !== false && f[column] !== f[below]);
+}
+
 function PlanColumnCard({
   column,
   data,
@@ -171,16 +177,16 @@ function PlanColumnCard({
       </p>
       <p className={`mt-3 min-h-10 text-sm ${muted}`}>{terms}</p>
 
-      <ul className="mt-6 space-y-2.5">
-        {PLAN_FEATURES.map((f) => {
+      {column !== "free" && (
+        <p className={`mt-6 text-[13px] font-semibold ${muted}`}>
+          Everything in {PLAN_NAMES[TIER_BELOW[column]]}, plus:
+        </p>
+      )}
+      <ul className={`${column === "free" ? "mt-6" : "mt-3"} space-y-2.5`}>
+        {featuresAdded(column).map((f) => {
           const value = f[column];
           return (
-            <li
-              key={f.label}
-              className={`flex items-start gap-2.5 text-[14px] leading-snug ${
-                value === false ? muted : ""
-              }`}
-            >
+            <li key={f.label} className="flex items-start gap-2.5 text-[14px] leading-snug">
               <Cell value={value} dark={dark} />
               <span>
                 {f.label}
@@ -298,6 +304,7 @@ function EarlyAccess() {
   const { error, canceled } = Route.useSearch();
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [picked, setPicked] = useState<PaidTier | null>(null);
+  const [showMore, setShowMore] = useState(false);
   const plansRef = useRef<HTMLElement>(null);
 
   // Opening or closing checkout reshapes the section: bring its top into view.
@@ -323,42 +330,22 @@ function EarlyAccess() {
       a: `The OVOA assistant: chat and talk to it, and it handles reminders, email, calendar, money questions, memory and a morning brief. Press OVOA Fit, ask, and hear the answer, or turn on the hands-free wake word and Always listen so you don't have to press anything. ${perLabel(baseMonthly)}, or ${perLabel(planOf(data, "base", "annual"))}.`,
     },
     {
-      q: "What's in Plus?",
-      a: `Everything in Base, plus the background agent, which runs jobs on its own and reports back, and ${creditsLine("plus")}. ${perLabel(planOf(data, "plus", "monthly"))}, or ${perLabel(planOf(data, "plus", "annual"))}.`,
-    },
-    {
-      q: "What's in Pro?",
-      a: `Everything in Plus, with ${creditsLine("pro")}. ${perLabel(planOf(data, "pro", "monthly"))}, or ${perLabel(planOf(data, "pro", "annual"))}.`,
-    },
-    {
-      ...CREDITS_FAQ,
-    },
-    {
       q: "Is there a free trial?",
       a: `Not on its own: Base, Plus and Pro are paid from the first day, and the free plan is there to try OVOA first. Each OVOA Fit comes with ${bandTrialDays} days of Base free.`,
-    },
-    {
-      q: "Is it finished?",
-      a: "No. OVOA is in beta: the app, the assistant and OVOA Fit. Things can break, and new builds come often. Members tell us what to fix first.",
-    },
-    {
-      q: "How does TestFlight work?",
-      a: "TestFlight is Apple's official app for trying iPhone apps before they reach the App Store. Install TestFlight from the App Store, open your OVOA invite or link, and tap Install. OVOA then updates itself as we ship new builds.",
     },
     {
       q: "How do I cancel?",
       a: "Tap Manage billing on your welcome page (bookmark it after checkout), or email support@ovoa.ai and we'll do it for you. You keep your plan until the end of the period you've paid for.",
     },
     {
-      q: "What happens when OVOA reaches the App Store?",
-      a: "Your plan moves with your account, at the price you joined at. You won't pay twice.",
-    },
-    { q: "Android?", a: "iPhone only for now." },
-    {
       q: "Refunds?",
       a: "If a charge goes through and OVOA isn't for you, email support@ovoa.ai within 14 days and we'll refund it.",
     },
   ];
+
+  // Plus and Pro sit behind a "compare" button, and only when they can be bought.
+  const moreColumns = (["plus", "pro"] as const).filter((t) => isSold(data, t, period));
+  const columns: PlanColumn[] = ["free", "base", ...(showMore ? moreColumns : [])];
 
   const banner =
     error === "not-configured" || (!configured && error)
@@ -373,58 +360,25 @@ function EarlyAccess() {
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
       <MembershipHeader />
 
-      <section className="px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:pb-28">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
-          <div className="max-w-2xl">
-            <p className="flex items-center gap-2 text-sm font-medium">
-              <BetaBadge />
-              <span className="text-landing-muted">iMessage and iPhone</span>
-            </p>
-            <h1 className="mt-4 text-[clamp(2.6rem,6.5vw,5.25rem)] font-semibold leading-[0.98] tracking-normal">
-              Start free. Add the assistant when you want it.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Your first texts to OVOA are free. Base keeps the assistant going for{" "}
-              {perLabel(baseMonthly)}, Plus adds the background agent, and Pro gives you the most
-              usage.
-            </p>
-            <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
-              <a
-                href="#plans"
-                className="inline-flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-landing-action px-8 text-sm font-semibold text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0"
-              >
-                See plans
-              </a>
-              <p className="text-sm text-landing-muted">{FOUNDING_PRICE_LINE}</p>
-            </div>
-          </div>
-          <div className="relative mx-auto w-[min(76vw,300px)]">
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-[-25%] top-[12%] bottom-[8%] rounded-full bg-landing-action/20 blur-3xl"
-            />
-            <div className="relative">
-              <OvoaIphoneDemo script={TASKS_SCRIPT} maxWidth={300} defaultSound={false} />
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section
         id="plans"
         ref={plansRef}
-        className="scroll-mt-14 border-t border-landing-line px-5 py-20 sm:px-8 sm:py-28"
+        className="scroll-mt-14 px-5 pb-16 pt-12 sm:px-8 sm:pb-20 sm:pt-16"
       >
         <div className="mx-auto max-w-[1200px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="flex items-center gap-2 text-sm font-medium text-landing-muted">
-                Plans <BetaBadge />
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <BetaBadge />
+                <span className="text-landing-muted">iMessage and iPhone</span>
               </p>
-              <h2 className="mt-3 text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
-                Pick your plan. Keep the price.
-              </h2>
-              <p className="mt-3 text-base text-landing-muted">{FOUNDING_PRICE_LINE}</p>
+              <h1 className="mt-4 text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
+                Start free. Add the assistant when you want it.
+              </h1>
+              <p className="mt-3 text-base text-landing-muted sm:text-lg">
+                Your first texts to OVOA are free. Base keeps the assistant going for{" "}
+                {perLabel(baseMonthly)}. {FOUNDING_PRICE_LINE}
+              </p>
             </div>
 
             <div
@@ -468,18 +422,40 @@ function EarlyAccess() {
           {picked ? (
             <PlanCheckout tier={picked} data={data} period={period} onBack={() => pick(null)} />
           ) : (
-            <div className="mt-10 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {(["free", "base", "plus", "pro"] as const).map((column) => (
-                <PlanColumnCard
-                  key={column}
-                  column={column}
-                  data={data}
-                  period={period}
-                  enabled={column === "free" || isSold(data, column, period)}
-                  onPick={pick}
-                />
-              ))}
-            </div>
+            <>
+              <div
+                className={`mt-10 grid gap-3 md:grid-cols-2 ${
+                  columns.length > 2 ? "xl:grid-cols-4" : "mx-auto max-w-[820px]"
+                }`}
+              >
+                {columns.map((column) => (
+                  <PlanColumnCard
+                    key={column}
+                    column={column}
+                    data={data}
+                    period={period}
+                    enabled={column === "free" || isSold(data, column, period)}
+                    onPick={pick}
+                  />
+                ))}
+              </div>
+              {moreColumns.length > 0 && (
+                <div className="mt-5 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowMore((v) => !v)}
+                    aria-expanded={showMore}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full border border-landing-line px-5 text-sm font-semibold transition-colors hover:border-landing-muted"
+                  >
+                    {showMore ? "Hide Plus and Pro" : "Need more? Compare Plus and Pro"}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`size-4 transition-transform ${showMore ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {!picked && (
@@ -511,7 +487,7 @@ function EarlyAccess() {
         </div>
       </section>
 
-      <section className="bg-landing-ink px-5 py-20 text-landing-action-foreground sm:px-8 sm:py-28">
+      <section className="bg-landing-ink px-5 py-14 text-landing-action-foreground sm:px-8 sm:py-20">
         <div className="mx-auto max-w-[1200px]">
           <p className="text-sm font-medium text-landing-action-foreground/60">How it works</p>
           <h2 className="mt-3 max-w-3xl text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
@@ -533,7 +509,7 @@ function EarlyAccess() {
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 sm:py-28">
+      <section className="px-5 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <p className="text-sm font-medium text-landing-muted">Questions</p>
@@ -556,6 +532,14 @@ function EarlyAccess() {
                 </p>
               </details>
             ))}
+            <p className="py-5 text-base">
+              <Link to="/faq" className="font-semibold underline underline-offset-4">
+                All questions
+              </Link>{" "}
+              <span className="text-landing-muted">
+                (credits, Plus and Pro, TestFlight, Android and more)
+              </span>
+            </p>
           </div>
         </div>
       </section>
@@ -564,9 +548,9 @@ function EarlyAccess() {
         <div className="mx-auto max-w-[1200px] text-[13px] leading-relaxed text-landing-muted">
           <h2 className="text-sm font-semibold text-landing-ink">Plan terms, in short</h2>
           <p className="mt-3 max-w-3xl">
-            Base, Plus and Pro are subscriptions to the OVOA service, billed monthly or yearly from the
-            day you sign up until you cancel. A plan that comes with an OVOA Fit starts after its{" "}
-            {bandTrialDays} free days, which begin when you start them, unless you cancel first.
+            Base, Plus and Pro are subscriptions to the OVOA service, billed monthly or yearly from
+            the day you sign up until you cancel. A plan that comes with an OVOA Fit starts after
+            its {bandTrialDays} free days, which begin when you start them, unless you cancel first.
             Cancel anytime from Manage billing or by emailing support@ovoa.ai; you keep your plan
             until the end of the period you paid for. OVOA is beta software delivered through Apple
             TestFlight, and features can change. Refunds: email support@ovoa.ai within 14 days of a
