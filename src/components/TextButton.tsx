@@ -89,10 +89,7 @@ export function TextButtonPage({
           <div className="mt-8 h-14" />
         )}
 
-        <Link
-          to="/landing"
-          className="mt-9 text-sm text-neutral-500 underline underline-offset-4"
-        >
+        <Link to="/landing" className="mt-9 text-sm text-neutral-500 underline underline-offset-4">
           More
         </Link>
 
@@ -121,6 +118,8 @@ export function TextButtonPage({
       <nav className="flex flex-col items-center gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-neutral-500">
         <div className="flex gap-4 text-xs">
           <Link to="/early-access">Plans</Link>
+          <Link to="/app">OVOA app</Link>
+          <Link to="/fit">OVOA Fit</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
         </div>

@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { SiteTabs } from "@/components/SiteTabs";
 import { TextOvoaLink } from "@/components/TextOvoaLink";
 
 export function MembershipHeader({
@@ -19,14 +18,11 @@ export function MembershipHeader({
         >
           OVOA
         </Link>
-        <div className="hidden sm:block">
-          <SiteTabs />
-        </div>
         <div className="flex items-center gap-4 sm:gap-5">
           {children}
           <Link
             to="/early-access"
-            className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
+            className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
           >
             Plans
           </Link>
@@ -40,9 +36,6 @@ export function MembershipHeader({
             <TextOvoaLink className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5" />
           )}
         </div>
-      </div>
-      <div className="flex justify-center border-t border-landing-line/60 py-1.5 sm:hidden">
-        <SiteTabs />
       </div>
     </header>
   );
