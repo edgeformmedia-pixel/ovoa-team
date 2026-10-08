@@ -10,10 +10,12 @@ import { TextOvoaLink } from "@/components/TextOvoaLink";
 // The price lives at checkout, not here. Texting OVOA without a band is /text.
 
 const STEPS = [
-  { word: "Press", line: "One button. Say what you need." },
-  { word: "Ask", line: "OVOA handles it in the background." },
-  { word: "Feel", line: "A buzz tells you when it's done." },
+  { word: "One tap", line: "Command your AI agents. Say it, and it's done." },
+  { word: "Double tap", line: "Take a note. Saved, titled and searchable." },
+  { word: "Feel it", line: "A buzz tells you when it's handled." },
 ];
+
+const AGENTS = ["Claude", "ChatGPT", "Muse", "Dot"];
 
 const TRACKS = ["Heart rate", "Sleep", "Recovery", "Activity"];
 
@@ -65,7 +67,7 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
       <section className="bg-landing-ink px-6 py-28 text-landing-action-foreground sm:py-40">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-[clamp(2.25rem,6vw,4.5rem)] font-semibold leading-[1.02] tracking-tight">
-            Press. Ask. Done.
+            Tap. Speak. Done.
           </h2>
           <div className="mt-20 grid gap-14 sm:grid-cols-3 sm:gap-10">
             {STEPS.map(({ word, line }, i) => (
@@ -106,6 +108,28 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="bg-landing-ink px-6 py-28 text-center text-landing-action-foreground sm:py-36">
+        <h2 className="mx-auto max-w-3xl text-[clamp(2.25rem,6vw,4.5rem)] font-semibold leading-[1.02] tracking-tight">
+          Plugs into the AI you already use.
+        </h2>
+        <p className="mx-auto mt-5 max-w-md text-lg text-landing-action-foreground/60">
+          Link the button to any agent. No setup headache.
+        </p>
+        <ul className="mt-12 flex flex-wrap justify-center gap-3">
+          {AGENTS.map((a) => (
+            <li
+              key={a}
+              className="rounded-full border border-landing-action-foreground/20 px-6 py-3 text-lg font-medium"
+            >
+              {a}
+            </li>
+          ))}
+          <li className="rounded-full border border-landing-action-foreground/20 px-6 py-3 text-lg text-landing-action-foreground/60">
+            and more
+          </li>
+        </ul>
       </section>
 
       <section className="border-t border-landing-line px-6 py-24 sm:py-32">
