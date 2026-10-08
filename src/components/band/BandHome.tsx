@@ -48,7 +48,6 @@ const AGENTS = [
   "Mistral",
   "Notion",
   "Zapier",
-  "n8n",
 ];
 
 function AgentMark({ name }: { name: string }) {
