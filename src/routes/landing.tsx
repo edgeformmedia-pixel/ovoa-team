@@ -1,37 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Bell,
-  Brain,
-  CalendarCheck,
-  HeartPulse,
-  type LucideIcon,
-  MessageCircle,
-  MessageSquareText,
-  Repeat,
-  Smartphone,
-} from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import OvoaIphoneDemo, { type DemoStep } from "@/components/OvoaIphoneDemo";
-import { HowItWorksDemo } from "@/components/HowItWorksDemo";
-import { ScrollScrubVideo } from "@/components/ScrollScrubVideo";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import bandFront from "@/assets/product/band-front-cutout.webp";
 import bandProfile from "@/assets/product/band-profile-cutout.webp";
 import bandSensors from "@/assets/product/band-sensors-cutout.webp";
-import cyclingBand from "@/assets/sports/cycling-band.webp";
-import runningBand from "@/assets/sports/running-band.webp";
-import swimmingBand from "@/assets/sports/swimming-band.webp";
-import { HEALTH_SCRIPT, NOTES_SCRIPT, RULES_SCRIPT, TASKS_SCRIPT } from "@/lib/demo-scripts";
+import { TASKS_SCRIPT } from "@/lib/demo-scripts";
 import { getPlans } from "@/lib/membership/membership.functions";
 import { bandPrice, bandProductJsonLd, perLabel, planOf } from "@/lib/membership/copy";
-import {
-  AFFILIATE_PERCENT,
-  COMMISSION_MONTHS,
-  bandCommissionCents,
-  formatMoney,
-  type PlansResult,
-} from "@/lib/membership/plans";
+import type { PlansResult } from "@/lib/membership/plans";
 import { ORGANIZATION, WEBSITE, appJsonLd, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA: the AI assistant that gets things done";
@@ -70,46 +48,6 @@ export const Route = createFileRoute("/landing")({
     ],
   }),
 });
-
-const CAPABILITIES: { icon: LucideIcon; title: string; copy: string }[] = [
-  {
-    icon: MessageSquareText,
-    title: "Text or talk",
-    copy: "Type in the app or say it out loud. OVOA gets plain, messy, real-life requests.",
-  },
-  {
-    icon: CalendarCheck,
-    title: "Tasks, done",
-    copy: "Scheduling, messages and follow-ups, handled from start to finish.",
-  },
-  {
-    icon: Repeat,
-    title: "Standing rules",
-    copy: "Routines that run in the background and report back every time they fire.",
-  },
-  {
-    icon: Brain,
-    title: "Perfect memory",
-    copy: "Notes saved word for word and found again the moment you ask.",
-  },
-  {
-    icon: HeartPulse,
-    title: "Health, with OVOA Fit",
-    copy: "Continuous heart rate and motion, with your history in the app.",
-  },
-  {
-    icon: Bell,
-    title: "Asks when it matters",
-    copy: "When a decision is yours, OVOA checks in instead of guessing.",
-  },
-];
-
-const BUZZES: { pattern: ("short" | "long")[]; label: string; meaning: string }[] = [
-  { pattern: ["short"], label: "One short", meaning: "Heard you" },
-  { pattern: ["short", "short"], label: "Two short", meaning: "On it" },
-  { pattern: ["short", "short", "short"], label: "Three short", meaning: "Needs your answer" },
-  { pattern: ["long"], label: "One long", meaning: "Done" },
-];
 
 function PhoneFeature({
   eyebrow,
@@ -179,6 +117,27 @@ function PhoneFeature({
   );
 }
 
+const PRODUCTS: { to: "/text" | "/app" | "/fit"; name: string; copy: string; cta: string }[] = [
+  {
+    to: "/text",
+    name: "Text OVOA",
+    copy: "The assistant in iMessage. No app, no sign-up, and your first texts are free.",
+    cta: "Start texting",
+  },
+  {
+    to: "/app",
+    name: "OVOA app",
+    copy: "The same assistant with voice, your contacts and Reminders, and health data. Free beta.",
+    cta: "Get the app",
+  },
+  {
+    to: "/fit",
+    name: "OVOA Fit",
+    copy: "A woven wristband with one button: press it and talk. Heart rate included.",
+    cta: "See OVOA Fit",
+  },
+];
+
 function Landing() {
   const data = Route.useLoaderData();
   const band = bandPrice(data);
@@ -189,12 +148,12 @@ function Landing() {
 
       <section className="px-6 pb-16 pt-14 text-center sm:pb-24 sm:pt-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-normal">
-            Just text OVOA.
-          </h2>
+          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[1.02] tracking-normal">
+            The assistant that actually does things.
+          </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-            The assistant that actually does things, right in iMessage. No app, no sign-up. Your
-            first texts are free.
+            Text it or talk to it like a person. OVOA plans, schedules, remembers and follows
+            through, then lets you know when it&rsquo;s done, or when it needs you.
           </p>
           <Link
             to="/text"
@@ -203,41 +162,7 @@ function Landing() {
             <MessageCircle aria-hidden="true" className="size-5" />
             Text OVOA
           </Link>
-          <p className="mt-6 text-sm text-landing-muted">
-            Want the iPhone app too?{" "}
-            <Link
-              to="/account"
-              className="font-medium text-landing-ink underline underline-offset-4"
-            >
-              Get the beta
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      <ScrollScrubVideo note="Beta · Free to download on iPhone" />
-
-      <HowItWorksDemo />
-
-      <section className="border-t border-landing-line bg-landing-canvas px-6 py-24 text-center sm:py-36">
-        <div className="mx-auto max-w-4xl">
-          <p className="text-sm font-medium text-landing-muted">Meet OVOA</p>
-          <h2 className="mt-4 text-[clamp(2.35rem,6vw,5.5rem)] font-semibold leading-[1.02] tracking-normal text-landing-ink">
-            The assistant that actually does things.
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-muted sm:text-2xl">
-            Text it or talk to it like a person. OVOA plans, schedules, remembers and follows
-            through, then lets you know when it’s done, or when it needs you.
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/text"
-              className="inline-flex h-12 items-center rounded-full bg-landing-action px-7 text-[15px] font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
-            >
-              Text OVOA now
-            </Link>
-            <p className="text-sm text-landing-muted">Free to try. Just iMessage, no app needed.</p>
-          </div>
+          <p className="mt-4 text-sm text-landing-muted">Free to try. iPhone only.</p>
         </div>
       </section>
 
@@ -253,305 +178,55 @@ function Landing() {
         script={TASKS_SCRIPT}
       />
 
-      <PhoneFeature
-        eyebrow="Standing rules"
-        title="Set it once. It keeps going."
-        body="Turn anything into a routine. OVOA runs it in the background and reports back every time it fires, from a morning brief to a heads-up when you’re running late."
-        points={[
-          "Runs on a schedule or a trigger",
-          "Reports back every time",
-          "Pause or delete it anytime",
-        ]}
-        script={RULES_SCRIPT}
-        dark
-        reverse
-      />
-
-      <PhoneFeature
-        eyebrow="Memory"
-        title="It remembers, so you don’t have to."
-        body="Codes, names, ideas, the thing you promised to do. Tell OVOA once and it saves your exact words, ready whenever you ask."
-        points={["Saved word for word", "Searchable in the app", "Just ask to get it back"]}
-        script={NOTES_SCRIPT}
-      />
-
-      <PhoneFeature
-        eyebrow="Health · with OVOA Fit"
-        title="Knows how you’re really doing."
-        body="Pair OVOA Fit and OVOA gets a pulse. Ask about today’s run, your heart rate or how active you’ve been, and get a straight answer."
-        points={["Continuous heart rate", "Motion and activity", "History in the app"]}
-        script={HEALTH_SCRIPT}
-        dark
-        reverse
-      />
-
-      <section className="bg-landing-canvas px-6 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="text-sm font-medium text-landing-muted">Everything in one conversation</p>
-            <h2 className="mt-3 text-[clamp(2.25rem,5vw,4.75rem)] font-semibold leading-[1.02] tracking-normal text-landing-ink">
-              One chat. Your whole day.
-            </h2>
-          </div>
-          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {CAPABILITIES.map(({ icon: Icon, title, copy }) => (
-              <article key={title} className="rounded-[1.75rem] bg-landing-control/70 p-7 sm:p-8">
-                <Icon aria-hidden="true" className="size-7 stroke-[1.6] text-landing-action" />
-                <h3 className="mt-6 text-2xl font-semibold tracking-normal text-landing-ink">
-                  {title}
-                </h3>
-                <p className="mt-2 text-base leading-relaxed text-landing-muted sm:text-lg">
-                  {copy}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="band"
-        className="scroll-mt-4 bg-landing-ink px-6 py-24 text-center text-landing-action-foreground sm:py-36"
-      >
-        <div className="mx-auto max-w-4xl">
-          <p className="text-sm font-medium">
-            <span className="text-landing-action">Beta</span>
-            <span className="text-landing-action-foreground/60"> · {band}</span>
-          </p>
-          <h2 className="mt-4 text-[clamp(2.75rem,8vw,7rem)] font-semibold leading-[0.96] tracking-normal">
-            OVOA Fit
+      <section className="bg-landing-canvas px-6 py-20 sm:py-28">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-semibold leading-[1.04] tracking-normal">
+            Three ways to use OVOA.
           </h2>
-          <p className="mt-3 text-[clamp(1.5rem,3.2vw,2.75rem)] font-semibold leading-tight text-landing-action-foreground/85">
-            Brings OVOA to your wrist.
-          </p>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-2xl">
-            Your Jarvis, one press away. OVOA Fit is a woven wristband with a single button: press
-            it and talk. No phone, no screen. It answers in buzzes, reads your heart rate and keeps
-            going all day.
-          </p>
-          <div className="mx-auto mt-14 grid max-w-3xl gap-px overflow-hidden rounded-[1.75rem] bg-landing-action-foreground/12 text-left sm:grid-cols-2">
-            {BUZZES.map((buzz) => (
-              <div key={buzz.meaning} className="flex items-center gap-5 bg-landing-ink p-6">
-                <span aria-hidden="true" className="flex w-20 shrink-0 items-center gap-1.5">
-                  {buzz.pattern.map((kind, i) => (
-                    <span
-                      key={i}
-                      className={`h-2.5 rounded-full bg-landing-action ${kind === "long" ? "w-9" : "w-2.5"}`}
-                    />
-                  ))}
-                </span>
-                <span>
-                  <span className="block text-sm text-landing-action-foreground/55">
-                    {buzz.label}
-                  </span>
-                  <span className="block text-lg font-medium">{buzz.meaning}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-landing-canvas px-4 py-24 sm:px-6 sm:py-36">
-        <div className="mx-auto max-w-[1440px]">
-          <div className="mb-10 max-w-4xl sm:mb-14">
-            <p className="text-lg font-semibold text-landing-ink sm:text-xl">
-              OVOA Fit goes where you go
-            </p>
-            <h2 className="mt-3 text-[clamp(3rem,7vw,6.5rem)] font-semibold leading-[0.96] tracking-normal text-landing-ink">
-              Built for the moments you can’t reach for your phone.
-            </h2>
-          </div>
-
-          <div className="grid gap-2 lg:grid-cols-3">
-            {[
-              {
-                src: cyclingBand,
-                alt: "Cyclist wearing the OVOA Fit during an outdoor ride",
-                title: "Ride farther",
-                copy: "Ask OVOA for your pace mid-climb. Heart rate and motion sensing ride along the whole way.",
-                position: "object-center",
-                zoom: "",
-              },
-              {
-                src: runningBand,
-                alt: "Runner wearing the OVOA Fit on an outdoor track",
-                title: "Find your pace",
-                copy: "A light woven fit and a quick buzz when OVOA has news, so your eyes stay on the next stride.",
-                position: "object-[42%_center]",
-                zoom: "",
-              },
-              {
-                src: swimmingBand,
-                alt: "Swimmer wearing the OVOA Fit beside a pool",
-                title: "Made to move",
-                copy: "Water-resistant and made for all-day wear, from the pool to everything after.",
-                position: "object-[70%_center]",
-                zoom: "scale-[1.35] origin-[50%_100%]",
-              },
-            ].map((sport) => (
+          <div className="mt-10 grid gap-3 md:grid-cols-3">
+            {PRODUCTS.map((product) => (
               <article
-                key={sport.title}
-                className="group relative min-h-[34rem] overflow-hidden rounded-[1.75rem] bg-landing-control sm:min-h-[42rem] lg:min-h-[38rem]"
+                key={product.to}
+                className="flex flex-col rounded-[1.75rem] bg-landing-control/70 p-7"
               >
-                <div className={`absolute inset-0 ${sport.zoom}`}>
-                  <img
-                    src={sport.src}
-                    alt={sport.alt}
-                    loading="lazy"
-                    decoding="async"
-                    className={`size-full object-cover ${sport.position} transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.025]`}
-                  />
-                </div>
-                <div className="absolute inset-x-0 bottom-[25%] h-[24%] bg-gradient-to-t from-landing-ink/65 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 min-h-[29%] rounded-t-[1.75rem] border-t border-landing-action-foreground/15 bg-landing-ink/70 p-6 text-landing-action-foreground backdrop-blur-md sm:p-8">
-                  <h3 className="text-3xl font-semibold leading-tight tracking-normal sm:text-4xl">
-                    {sport.title}
-                  </h3>
-                  <p className="mt-2 max-w-sm text-base leading-relaxed text-landing-action-foreground/88 sm:text-lg">
-                    {sport.copy}
-                  </p>
-                </div>
+                <h3 className="text-2xl font-semibold tracking-normal">{product.name}</h3>
+                <p className="mt-2 text-base leading-relaxed text-landing-muted">{product.copy}</p>
+                <Link
+                  to={product.to}
+                  className="mt-auto inline-flex pt-6 text-sm font-semibold underline underline-offset-4"
+                >
+                  {product.cta}
+                </Link>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-landing-control/55 py-20 sm:py-28">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 sm:px-10 lg:grid-cols-2 lg:gap-20 lg:px-14">
-          <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
-            <img
-              src={bandFront}
-              alt="The OVOA Fit, a black woven wristband with a side button and status light"
-              loading="lazy"
-              className="size-full object-contain"
-            />
-          </div>
-          <div className="max-w-xl lg:pr-10">
-            <p className="text-sm font-medium text-landing-muted">One button</p>
-            <h2 className="mt-3 text-[clamp(2.25rem,4.5vw,4.5rem)] font-semibold leading-[1.04] tracking-normal text-landing-ink">
-              Press. Speak. Done.
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Press the button and ask OVOA for anything. One buzz means it heard you. One long buzz
-              means it’s done. Your phone stays in your pocket.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-landing-canvas py-20 sm:py-28">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 sm:px-10 lg:grid-cols-2 lg:gap-20 lg:px-14">
-          <div className="max-w-xl lg:order-1 lg:pl-10">
-            <p className="text-sm font-medium text-landing-muted">Notes</p>
-            <h2 className="mt-3 text-[clamp(2.25rem,4.5vw,4.5rem)] font-semibold leading-[1.04] tracking-normal text-landing-ink">
-              Catch the thought before it’s gone.
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Double-tap and speak. OVOA Fit saves what you say word for word, and OVOA finds it again
-              whenever you ask.
-            </p>
-          </div>
-          <div className="relative mx-auto aspect-square w-full max-w-[38rem] lg:order-2">
-            <img
-              src={bandProfile}
-              alt="Side profile of the OVOA Fit showing its single button"
-              loading="lazy"
-              className="size-full object-contain"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-landing-control/55 py-20 sm:py-28">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 sm:px-10 lg:grid-cols-2 lg:gap-20 lg:px-14">
-          <div className="relative mx-auto aspect-square w-full max-w-[38rem]">
-            <img
-              src={bandSensors}
-              alt="Underside of the OVOA Fit showing the heart rate sensors"
-              loading="lazy"
-              className="size-full object-contain"
-            />
-          </div>
-          <div className="max-w-xl lg:pr-10">
-            <p className="text-sm font-medium text-landing-muted">Health and motion</p>
-            <h2 className="mt-3 text-[clamp(2.25rem,4.5vw,4.5rem)] font-semibold leading-[1.04] tracking-normal text-landing-ink">
-              Sensing that stays with you.
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-landing-muted sm:text-xl">
-              Heart rate and motion sensing run in the background, so OVOA always has the full
-              picture. The woven, water-resistant strap is made to be forgotten about.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-landing-ink px-6 py-24 text-center text-landing-action-foreground sm:py-32">
+      <section className="bg-landing-ink px-6 py-20 text-center text-landing-action-foreground sm:py-28">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium">
-            <span className="text-landing-action">Beta</span>
-            <span className="text-landing-action-foreground/60"> · iMessage</span>
-          </p>
-          <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal">
+          <h2 className="text-[clamp(2.25rem,5vw,4rem)] font-semibold leading-[1.02] tracking-normal">
             Use OVOA today.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-action-foreground/70 sm:text-xl">
             Say hi and your first texts are free. When you want more, the assistant is {base}, and
-            the price you join at is kept while you&rsquo;re a member.
+            the price you join at is kept while you&rsquo;re a member. OVOA Fit is {band}, one time,
+            with {data.bandTrialDays} days of the assistant included.
           </p>
-          <Link
-            to="/text"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
-          >
-            Text OVOA
-          </Link>
-          <p className="mt-4 text-sm text-landing-action-foreground/60">
-            <Link to="/early-access" className="underline underline-offset-4">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/text"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0"
+            >
+              Text OVOA
+            </Link>
+            <Link
+              to="/early-access"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-landing-action-foreground/25 px-8 text-sm font-medium transition-colors hover:border-landing-action-foreground/60"
+            >
               See plans
             </Link>
-          </p>
-        </div>
-      </section>
-
-      <section className="bg-landing-canvas px-6 py-24 text-center sm:py-36">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-landing-muted">OVOA Fit · {band} · Beta</p>
-          <h2 className="mt-4 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[1.02] tracking-normal text-landing-ink">
-            Say hello to your Jarvis.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-landing-muted sm:text-xl">
-            {band}, one time, with {data.bandTrialDays} days of the OVOA assistant included. Then{" "}
-            {base} if you keep it, or just the free app.
-          </p>
-          <Link
-            to="/checkout"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-landing-action px-8 text-sm font-medium text-landing-action-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-landing-action active:translate-y-0"
-          >
-            Get OVOA Fit
-          </Link>
-        </div>
-      </section>
-
-      <section className="border-t border-landing-line bg-landing-control/55 px-6 py-14 text-center sm:py-16">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-landing-muted">
-            For creators, coaches and newsletter writers
-          </p>
-          <Link
-            to="/affiliates"
-            className="group mt-3 inline-flex items-center gap-3 text-[clamp(1.5rem,4vw,2.75rem)] font-semibold leading-tight tracking-normal text-landing-ink transition-colors hover:text-landing-action focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-landing-action"
-          >
-            Affiliate? Work with us
-            <ArrowRight
-              aria-hidden="true"
-              className="size-[0.8em] shrink-0 transition-transform group-hover:translate-x-1"
-            />
-          </Link>
-          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-landing-muted sm:text-lg">
-            Earn {AFFILIATE_PERCENT}% of what the people you send pay for {COMMISSION_MONTHS}{" "}
-            months, plus {formatMoney(bandCommissionCents(data.band))} on every OVOA Fit.
-          </p>
+          </div>
         </div>
       </section>
 
