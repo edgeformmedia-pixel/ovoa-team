@@ -14,6 +14,17 @@ export const pretty = (e164: string) =>
 /** The text the Text OVOA buttons put in Messages, ready to send. */
 export const HELLO = "Hi OVOA!";
 
+/**
+ * The hello with the partner's ?ref= code on the end ("Hi OVOA! #maya"), so the
+ * first text carries it into the trial (api texting.ts reads and strips it).
+ * Browser only: the code is in the ovoa_ref cookie (membership/referral.ts).
+ */
+export function withRef(body: string): string {
+  if (typeof document === "undefined") return body;
+  const m = /(?:^|;\s*)ovoa_ref=([a-z0-9-]{3,24})(?:;|$)/.exec(document.cookie);
+  return m ? `${body} #${m[1]}` : body;
+}
+
 export type Device ="iphone" | "android" | "desktop";
 
 export function useDevice(): Device | null {
