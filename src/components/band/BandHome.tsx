@@ -44,10 +44,6 @@ const AGENTS = [
   "Hermes",
   "OpenClaw",
   "Perplexity",
-  "Copilot",
-  "Mistral",
-  "Notion",
-  "Zapier",
 ];
 
 function AgentMark({ name }: { name: string }) {
