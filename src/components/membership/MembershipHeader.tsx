@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { SiteTabs } from "@/components/SiteTabs";
-import { TextOvoaLink } from "@/components/TextOvoaLink";
 
+// The site is one product, OVOA Fit: logo, Account and Buy. (hideText is kept so
+// existing callers compile; there is no Text OVOA button to hide any more.)
 export function MembershipHeader({
   children,
-  hideText = false,
 }: {
   children?: ReactNode;
   hideText?: boolean;
@@ -19,26 +18,14 @@ export function MembershipHeader({
         >
           OVOA
         </Link>
-        <div className="hidden sm:block">
-          <SiteTabs />
-        </div>
         <div className="flex items-center gap-4 sm:gap-5">
           {children}
-          <Link
-            to="/early-access"
-            className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block"
-          >
-            Plans
-          </Link>
           <Link
             to="/account"
             className="text-xs text-landing-muted transition-colors hover:text-landing-ink"
           >
             Account
           </Link>
-          {!hideText && (
-            <TextOvoaLink className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block" />
-          )}
           <Link
             to="/checkout"
             data-track="Buy OVOA Fit (header)"
@@ -47,9 +34,6 @@ export function MembershipHeader({
             Buy
           </Link>
         </div>
-      </div>
-      <div className="flex justify-center border-t border-landing-line/60 py-1.5 sm:hidden">
-        <SiteTabs />
       </div>
     </header>
   );

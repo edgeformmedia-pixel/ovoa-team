@@ -4,7 +4,6 @@ import bandProfile from "@/assets/product/band-profile-cutout.webp";
 import bandSensors from "@/assets/product/band-sensors-cutout.webp";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { TextOvoaLink } from "@/components/TextOvoaLink";
 
 // The home page: OVOA Fit, the band. Few words, big product, one button.
 // The price lives at checkout, not here. Texting OVOA without a band is /text.
@@ -194,16 +193,6 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
         >
           Buy
         </Link>
-      </section>
-
-      <section className="px-6 py-14 text-center">
-        <p className="text-landing-muted">
-          No band? You can also{" "}
-          <TextOvoaLink className="underline underline-offset-4 transition-colors hover:text-landing-ink">
-            text OVOA
-          </TextOvoaLink>
-          .
-        </p>
       </section>
 
       <div className="mx-auto max-w-md px-6 pb-8">
