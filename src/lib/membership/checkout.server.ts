@@ -22,7 +22,7 @@
 // what they buy unlocks the app account they're signed in to.
 
 import { accountEmail } from "@/lib/account/account.server";
-import { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, formatMoney, type PlanId } from "./plans";
+import { BAND_TRIAL_DAYS, NO_BAND_TRIAL_DAYS, VIDEO_COOKIE, cleanVideo, formatMoney, type PlanId } from "./plans";
 import { stripe } from "./stripe.server";
 import { loadPrices } from "./sync.server";
 
@@ -48,6 +48,8 @@ export async function createCheckoutSession(
   const planPrice = prices.plans.get(plan);
   if (order.band ? !prices.band || (withAi && !planPrice) : !planPrice) return null;
 
+  const videoCookie = new RegExp(`(?:^|;\\s*)${VIDEO_COOKIE}=([^;]+)`).exec(request.headers.get("cookie") ?? "")?.[1];
+  const video = cleanVideo(videoCookie ? decodeURIComponent(videoCookie) : null);
   const metadata = {
     ...(withAi ? { plan } : {}),
     // An OVOA Fit's free days, started later (read by startBandTrial).
@@ -55,6 +57,7 @@ export async function createCheckoutSession(
       ? { band: "1", ...(withAi ? { trial_days: String(BAND_TRIAL_DAYS) } : {}) }
       : {}),
     ...(ref ? { ref } : {}),
+    ...(video ? { video } : {}),
   };
 
   const welcome = `${origin}/early-access/welcome?session_id={CHECKOUT_SESSION_ID}`;
