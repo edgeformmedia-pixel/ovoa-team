@@ -9,7 +9,7 @@ import { breadcrumbs, jsonLd, ogImageMeta } from "@/lib/seo";
 
 const PAGE_TITLE = "OVOA FAQ: plans, OVOA Fit and the beta";
 const PAGE_DESCRIPTION =
-  "Answers about OVOA and the OVOA Fit: what's free, what Base, Plus and Pro add, the beta and TestFlight, battery, water resistance, the microphone and privacy.";
+  "Answers about OVOA and the OVOA Fit: what's free, what Base, Plus and Pro add, the beta and the app, battery, water resistance, the microphone and privacy.";
 
 // Prices in the answers come from the live plans, never typed in here.
 function faqsFor(data: PlansResult | undefined) {
@@ -57,8 +57,8 @@ function faqsFor(data: PlansResult | undefined) {
       a: "No. OVOA is in beta: the iPhone app, the assistant and OVOA Fit are all still being built. Things can break and new builds come often. Your plan's price is kept while you're a member.",
     },
     {
-      q: "How does TestFlight work?",
-      a: "TestFlight is Apple's own app for trying iPhone apps before they reach the App Store. Install TestFlight from the App Store, open your OVOA invite or link on your iPhone, and tap Install. OVOA then updates itself as we ship new builds. When OVOA reaches the App Store, your account and plan come with you.",
+      q: "Where do I get the iPhone app?",
+      a: "OVOA is on the App Store. Search for OVOA, install it, and sign in with the account you bought with. It's still in beta, so new builds come often.",
     },
     {
       q: "How much is OVOA Fit?",
