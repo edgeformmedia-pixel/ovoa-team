@@ -37,8 +37,15 @@ export function MembershipHeader({
             Account
           </Link>
           {!hideText && (
-            <TextOvoaLink className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5" />
+            <TextOvoaLink className="hidden text-xs text-landing-muted transition-colors hover:text-landing-ink sm:block" />
           )}
+          <Link
+            to="/checkout"
+            data-track="Buy OVOA Fit (header)"
+            className="inline-flex h-8 items-center rounded-full bg-landing-action px-3.5 text-xs font-semibold text-landing-action-foreground transition-transform hover:-translate-y-0.5"
+          >
+            Buy
+          </Link>
         </div>
       </div>
       <div className="flex justify-center border-t border-landing-line/60 py-1.5 sm:hidden">
