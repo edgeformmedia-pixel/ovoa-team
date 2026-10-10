@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { REF_COOKIE, REF_COOKIE_DAYS, cleanRef } from "./plans";
+import { REF_COOKIE, REF_COOKIE_DAYS, VIDEO_COOKIE, cleanRef, cleanVideo } from "./plans";
 import { recordReferralClick } from "./membership.functions";
 
 // ovoa.ai/anything?ref=code remembers the partner for REF_COOKIE_DAYS. The
@@ -11,6 +11,10 @@ export function useReferralCapture() {
     if (!ref) return;
     const secure = window.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${REF_COOKIE}=${ref}; Max-Age=${REF_COOKIE_DAYS * 86400}; Path=/; SameSite=Lax${secure}`;
+    // The video that sent them goes with it; a new partner link without one clears the old tag.
+    const q = new URLSearchParams(window.location.search);
+    const video = cleanVideo(q.get("v") ?? q.get("utm_campaign"));
+    document.cookie = `${VIDEO_COOKIE}=${video ?? ""}; Max-Age=${video ? REF_COOKIE_DAYS * 86400 : 0}; Path=/; SameSite=Lax${secure}`;
 
     // One click per browser per partner.
     const seen = `ovoa_ref_seen_${ref}`;
