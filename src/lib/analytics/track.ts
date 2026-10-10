@@ -56,10 +56,10 @@ function session() {
     for (const k of ["utm_source", "utm_medium", "utm_campaign", "ref"]) start[k] = q.get(k) ?? "";
     // Returning partner visitors: no ?ref= on this visit, but the 90-day
     // ovoa_ref cookie still says whose link brought them.
-    if (!start.ref) start.ref = /(?:^|;\s*)ovoa_ref=([a-z0-9-]{3,24})(?:;|$)/.exec(document.cookie)?.[1] ?? "";
+    if (!start["ref"]) start["ref"] = /(?:^|;\s*)ovoa_ref=([a-z0-9-]{3,24})(?:;|$)/.exec(document.cookie)?.[1] ?? "";
     // TikTok, Instagram and Facebook's in-app browsers send no referrer, so a
     // bio-link click would count as "direct". Their user agents name them.
-    if (!start.referrer && !start.utm_source) {
+    if (!start["referrer"] && !start["utm_source"]) {
       const app = /musical_ly|BytedanceWebview|TikTok/i.test(navigator.userAgent)
         ? "tiktok"
         : /Instagram/i.test(navigator.userAgent)
@@ -68,8 +68,8 @@ function session() {
             ? "facebook"
             : "";
       if (app) {
-        start.utm_source = app;
-        start.utm_medium = "inapp-browser";
+        start["utm_source"] = app;
+        start["utm_medium"] = "inapp-browser";
       }
     }
   }
