@@ -31,7 +31,7 @@ export function SiteFooter() {
         ))}
       </nav>
       <p className="mt-3 text-[11px] text-muted-foreground/70">
-        OVOA Fit is beta hardware. The iPhone app comes through TestFlight.
+        OVOA Fit is beta hardware.
       </p>
       <LanguageMenu />
     </footer>
