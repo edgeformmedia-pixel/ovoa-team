@@ -197,8 +197,13 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
       </section>
 
       <section className="px-6 py-14 text-center">
-        <p className="text-landing-muted">No band? OVOA works by text.</p>
-        <TextOvoaLink className="mt-3 inline-flex h-11 items-center rounded-full bg-[#0a84ff] px-6 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5" />
+        <p className="text-landing-muted">
+          No band? You can also{" "}
+          <TextOvoaLink className="underline underline-offset-4 transition-colors hover:text-landing-ink">
+            text OVOA
+          </TextOvoaLink>
+          .
+        </p>
       </section>
 
       <div className="mx-auto max-w-md px-6 pb-8">
