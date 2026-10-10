@@ -2,21 +2,14 @@ import { Link } from "@tanstack/react-router";
 
 import { LanguageMenu } from "@/components/LanguagePrompt";
 
-// Every public page is linked from here, so search engines (and people) can
-// reach each one from any other.
+// The few pages a band buyer needs. The Text OVOA, app and compare pages still
+// work at their own addresses (and in the sitemap) but are not linked.
 const links = [
-  { to: "/", label: "Home" },
-  { to: "/text", label: "Text OVOA" },
-  { to: "/imessage", label: "AI in iMessage" },
-  { to: "/websites", label: "Websites by text" },
-  { to: "/app", label: "OVOA app" },
-  { to: "/fit", label: "OVOA Fit" },
-  { to: "/ai-wristband", label: "How OVOA Fit works" },
-  { to: "/checkout", label: "Buy OVOA Fit" },
-  { to: "/early-access", label: "Plans" },
-  { to: "/compare", label: "Compare" },
-  { to: "/about", label: "About" },
+  { to: "/", label: "OVOA Fit" },
+  { to: "/ai-wristband", label: "How it works" },
+  { to: "/checkout", label: "Buy" },
   { to: "/faq", label: "FAQ" },
+  { to: "/about", label: "About" },
   { to: "/affiliates", label: "Affiliates" },
   { to: "/account", label: "Account" },
   { to: "/privacy", label: "Privacy" },
@@ -38,7 +31,7 @@ export function SiteFooter() {
         ))}
       </nav>
       <p className="mt-3 text-[11px] text-muted-foreground/70">
-        OVOA is in beta: the iPhone app comes through TestFlight, and OVOA Fit is beta hardware.
+        OVOA Fit is beta hardware. The iPhone app comes through TestFlight.
       </p>
       <LanguageMenu />
     </footer>
