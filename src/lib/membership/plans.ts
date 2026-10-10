@@ -265,6 +265,16 @@ export function cleanRef(value: unknown): string | null {
   return REF_PATTERN.test(ref) ? ref : null;
 }
 
+// Which video sent them: ovoa.ai/?ref=maya&v=hook3 (or utm_campaign=hook3).
+// Kept beside the ref cookie and written into the Stripe checkout metadata, so
+// a sale can be traced to the video as well as the partner.
+export const VIDEO_COOKIE = "ovoa_video";
+export function cleanVideo(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const v = value.trim().toLowerCase();
+  return /^[a-z0-9_-]{1,40}$/.test(v) ? v : null;
+}
+
 export const CHECKOUT_SESSION_PATTERN = /^cs_(test|live)_[A-Za-z0-9]{10,200}$/;
 
 export const TESTFLIGHT_APP_URL = "https://apps.apple.com/us/app/testflight/id899247664";
