@@ -6,7 +6,7 @@ import { MembershipHeader } from "@/components/membership/MembershipHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 // The home page: OVOA Fit, the band. Few words, big product, one button.
-// The price lives at checkout, not here. Texting OVOA without a band is /text.
+// Hero, how it works, price, Buy, short FAQ. Everything else is off this page.
 
 const STEPS = [
   { word: "One tap", line: "Command your AI agents. Say it, and it's done." },
@@ -53,10 +53,33 @@ const SPECS = [
   { value: "No screen", label: "Just a buzz" },
 ];
 
+const FAQ = [
+  {
+    q: "What does it do?",
+    a: "Press the button and say it: OVOA schedules, reminds, takes notes and gets things done. It buzzes when it's handled.",
+  },
+  {
+    q: "Do I need an iPhone?",
+    a: "Yes. OVOA Fit works with the free OVOA iPhone app.",
+  },
+  {
+    q: "What's included?",
+    a: "The band, plus free days of the assistant. After that the free app still works, or you can keep a plan.",
+  },
+  {
+    q: "Is it water resistant? How long is the battery?",
+    a: "Rain, sweat and hand washing are fine. The battery lasts all day with heart rate running.",
+  },
+  {
+    q: "Where does it ship?",
+    a: "US addresses. It's beta hardware made in small batches.",
+  },
+];
+
 const buy =
   "inline-flex h-14 items-center justify-center rounded-full bg-landing-ink px-10 text-base font-semibold text-landing-action-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-0.5 active:translate-y-0";
 
-export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
+export function BandHome({ price, trialDays }: { price?: string; trialDays: number }) {
   return (
     <main className="min-h-dvh overflow-x-clip bg-landing-canvas text-landing-ink">
       <MembershipHeader />
@@ -75,7 +98,9 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
           <Link to="/checkout" data-track="Buy OVOA Fit (hero)" className={buy}>
             Buy
           </Link>
-          <p className="text-sm text-landing-muted">Ships to the US · Beta</p>
+          <p className="text-sm text-landing-muted">
+            {price ? `${price} · ` : ""}Ships to the US · Beta
+          </p>
         </div>
         <div className="relative mx-auto mt-6 aspect-[4/3] w-full max-w-4xl">
           <div
@@ -184,6 +209,7 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
           Meet OVOA Fit.
         </h2>
         <p className="mt-5 text-lg text-landing-action-foreground/60">
+          {price ? `${price}, one time. ` : ""}
           {trialDays} days of the assistant included.
         </p>
         <Link
@@ -193,6 +219,20 @@ export function BandHome({ trialDays }: { price?: string; trialDays: number }) {
         >
           Buy
         </Link>
+      </section>
+
+      <section className="px-6 py-20">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="text-center text-3xl font-semibold tracking-tight">Questions</h2>
+          <div className="mt-8 divide-y divide-landing-line border-y border-landing-line">
+            {FAQ.map(({ q, a }) => (
+              <details key={q} className="group py-4">
+                <summary className="cursor-pointer list-none text-base font-medium">{q}</summary>
+                <p className="mt-2 text-landing-muted">{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
       </section>
 
       <div className="mx-auto max-w-md px-6 pb-8">
