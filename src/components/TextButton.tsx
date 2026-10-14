@@ -74,7 +74,7 @@ export function TextButtonPage({
           <a
             href={smsHref(number, hello, device)}
             data-track="Text OVOA"
-            className="mt-8 flex h-[72px] w-full animate-[ovoa-nudge_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full bg-[#0a84ff] text-[22px] font-bold text-white shadow-[0_10px_30px_rgba(10,132,255,0.45)] ring-4 ring-[#0a84ff]/15 transition active:scale-95"
+            className="mt-16 flex h-[72px] w-full items-center justify-center gap-2 rounded-full bg-[#0a84ff] text-[22px] font-bold text-white transition active:scale-95"
           >
             Text OVOA <span aria-hidden="true">→</span>
           </a>

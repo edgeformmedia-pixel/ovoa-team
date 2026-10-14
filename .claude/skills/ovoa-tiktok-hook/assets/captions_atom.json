@@ -1,0 +1,9 @@
+[
+ {"text": "HELLO", "start": 0.0, "end": 1.2, "y": 0.38, "size": 0.12},
+ {"text": "COMING TO YOU FROM", "start": 1.4, "end": 2.55, "y": 0.38, "size": 0.085},
+ {"text": "THE OVOA UNIVERSE", "start": 2.55, "end": 3.9, "y": 0.38, "size": 0.085},
+ {"text": "TRACKS YOUR HEALTH", "start": 4.1, "end": 5.1, "y": 0.4, "size": 0.085},
+ {"text": "BUZZES WHEN IT MATTERS", "start": 5.15, "end": 6.4, "y": 0.4, "size": 0.075},
+ {"text": "ONE BUTTON", "start": 6.45, "end": 7.6, "y": 0.4, "size": 0.1},
+ {"text": "VISIT OVOA.AI", "start": 7.65, "end": 9.0, "y": 0.4, "size": 0.1}
+]

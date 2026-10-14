@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#000;width:480px;height:854px;overflow:hidden}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 28px;box-sizing:border-box}
+.card{font-family:Impact,"Arial Black",sans-serif;font-size:62px;line-height:1.08;color:#fff;text-transform:uppercase;letter-spacing:.5px;position:absolute;left:28px;right:28px;top:50%;transform:translateY(-50%);}
+.card .r{color:#ff1f1f}
+.w{opacity:0;display:inline-block;margin:0 5px;transform:scale(1.25);transition:opacity .04s,transform .12s}
+.w.on{opacity:1;transform:scale(1)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+#photos{position:absolute;inset:0;display:none;background:#fff}
+#photos img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none}
+#url{position:absolute;left:0;right:0;bottom:70px;text-align:center;font-family:Impact,sans-serif;font-size:54px;color:#ffe600;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 0 18px #ffc400;display:none}
+</style></head><body>
+<div id="stage"></div><div id="flash"></div>
+<div id="photos"><img id="p0" src="../refs/1_band_angle.png"><img id="p1" src="../refs/2_band_front_and_back.png"><img id="p2" src="../refs/3_band_on_wrist.png"><div id="url">OVOA.AI</div></div>
+<script>
+// [text, red words count, word interval ms, hold ms]
+const cards=[
+ ["Now I have your attention.",3,150,900],
+ ["This is OVOA.",0,200,750],
+ ["It tracks your health.",0,170,800],
+ ["It buzzes when it matters.",0,150,850],
+ ["It has one button.",0,190,800],
+ ["Are these bands worth a follow?",5,130,1000]
+];
+const stage=document.getElementById('stage');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function run(){
+  await sleep(250);
+  for(const [t,red,iv,hold] of cards){
+    stage.innerHTML='';const c=document.createElement('div');c.className='card';stage.appendChild(c);
+    const words=t.split(' ');
+    words.forEach((w,i)=>{const s=document.createElement('span');s.className='w'+(i<red?' r':'');s.textContent=w;c.appendChild(s)});
+    for(const s of c.children){s.classList.add('on');await sleep(iv)}
+    await sleep(hold);
+    stage.innerHTML='';await sleep(90);
+  }
+  const f=document.getElementById('flash');f.style.opacity=1;await sleep(160);
+  document.getElementById('photos').style.display='block';f.style.opacity=0;
+  for(let i=0;i<3;i++){const im=document.getElementById('p'+i);im.style.display='block';await sleep(700);im.style.display='none'}
+  document.getElementById('p2').style.display='block';document.getElementById('url').style.display='block';
+  await sleep(1100);
+  document.title='done';
+}
+run();
+</script></body></html>

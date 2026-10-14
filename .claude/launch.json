@@ -1,0 +1,107 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "account-stack",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/account-smoke.mjs",
+        "--hold"
+      ],
+      "port": 8794
+    },
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "8080"
+      ],
+      "port": 8080
+    },
+    {
+      "name": "dev-8081",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "8081"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "dev-8093",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "8093"
+      ],
+      "port": 8093
+    },
+    {
+      "name": "site-worker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:worker",
+        "--",
+        "--port",
+        "8791"
+      ],
+      "port": 8791
+    },
+    {
+      "name": "admin-worker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../admin.ovoa.ai",
+        "run",
+        "dev:worker"
+      ],
+      "port": 8799
+    },
+    {
+      "name": "admin-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../admin.ovoa.ai",
+        "run",
+        "dev"
+      ],
+      "port": 5188,
+      "autoPort": true
+    },
+    {
+      "name": "jarvis-api-sites",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/thoma/OneDrive/Documents/GitHub/ovoa-app/jarvis/api/node_modules/wrangler/bin/wrangler.js",
+        "dev",
+        "-c",
+        "C:/Users/thoma/OneDrive/Documents/GitHub/ovoa-app/jarvis/api/wrangler.jsonc",
+        "--local",
+        "--port",
+        "8817",
+        "--persist-to",
+        "C:/Users/thoma/OneDrive/Documents/GitHub/ovoa-app/jarvis/api/.wrangler/sites-test",
+        "--var",
+        "DEBUG_KEY:localtest",
+        "--var",
+        "EMAIL_CODES_TO_LOG:1",
+        "--var",
+        "SITES_WILDCARD:off"
+      ],
+      "port": 8817
+    }
+  ]
+}
