@@ -50,5 +50,5 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const data = Route.useLoaderData();
-  return <BandHome trialDays={data.bandTrialDays} />;
+  return <BandHome price={bandPrice(data)} trialDays={data.bandTrialDays} />;
 }

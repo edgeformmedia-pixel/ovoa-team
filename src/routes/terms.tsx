@@ -49,7 +49,7 @@ function Terms() {
       <section>
         <h2>OVOA is in beta</h2>
         <p>
-          The iPhone app is pre-release software delivered through Apple&rsquo;s TestFlight, the
+          The iPhone app is beta software, the
           assistant is still being built, and OVOA Fit is beta hardware. Features can change, break
           or be removed, and OVOA may be unavailable at times. Don&rsquo;t rely on OVOA for anything
           where a missed reminder, a wrong answer or a failed alert could cause harm.
@@ -82,7 +82,7 @@ function Terms() {
         <p>
           Base, Plus and Pro are subscriptions to the OVOA service. You pay from the day you sign up, and
           your card is charged again every month or year until you cancel. What you pay for is the
-          service, not access to TestFlight: the free app is free. Each plan&rsquo;s credits
+          service, not access to the app: the free app is free. Each plan&rsquo;s credits
           measure AI use and refill every day up to the daily amount above; what you do uses them at
           its real cost, so a spoken reply uses more than a typed one. When a day&rsquo;s credits run
           out, OVOA tells you and says when they refill. Unused credits don&rsquo;t carry over and have
