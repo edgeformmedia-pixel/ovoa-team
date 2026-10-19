@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MembershipHeader } from "@/components/membership/MembershipHeader";
-import { Qr, pretty, smsHref, smsQr, useDevice } from "@/components/texting";
+import { Qr, pretty, smsHref, smsQr, useDevice, withRef } from "@/components/texting";
 import { AB_HELLO, type Variant } from "@/lib/ab";
 import { joinWaitlist } from "@/lib/waitlist.functions";
 
@@ -34,7 +34,7 @@ export function TextButtonPage({
   autoOpen?: boolean;
 }) {
   const device = useDevice();
-  const hello = AB_HELLO[variant];
+  const hello = device ? withRef(AB_HELLO[variant]) : AB_HELLO[variant];
   const copy = COPY[variant];
   const opened = useRef(false);
   const [notify, setNotify] = useState(false);

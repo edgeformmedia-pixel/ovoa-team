@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { smsHref, useDevice } from "@/components/texting";
+import { smsHref, useDevice, withRef } from "@/components/texting";
 import { cookieVariant, helloFor } from "@/lib/ab";
 import { getPublicTextNumber } from "@/lib/account/texting.functions";
 
@@ -43,7 +43,7 @@ export function TextOvoaLink({
   if (number && device === "iphone") {
     return (
       <a
-        href={smsHref(number, helloFor(cookieVariant(document.cookie)), device)}
+        href={smsHref(number, withRef(helloFor(cookieVariant(document.cookie))), device)}
         data-track="Text OVOA"
         className={className}
       >
