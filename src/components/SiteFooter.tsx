@@ -17,7 +17,7 @@ const links = [
   { to: "/compare", label: "Compare" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
-  { to: "/affiliates", label: "Affiliates" },
+  { to: "/affiliates", label: "Creators & partners" },
   { to: "/account", label: "Account" },
   { to: "/privacy", label: "Privacy" },
   { to: "/terms", label: "Terms" },
